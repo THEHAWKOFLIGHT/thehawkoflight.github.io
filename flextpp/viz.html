@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FlexTPP Animation</title>
+<style>
+  body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  canvas { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  var W = 780, H = 640, dpr = window.devicePixelRatio || 1;
+  var canvas = document.getElementById('c');
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  if(!ctx.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+      if(typeof r==='number') r=[r,r,r,r];
+      var tl=r[0]||0;
+      this.moveTo(x+tl,y); this.lineTo(x+w-tl,y);
+      this.arcTo(x+w,y,x+w,y+tl,tl); this.lineTo(x+w,y+h-tl);
+      this.arcTo(x+w,y+h,x+w-tl,y+h,tl); this.lineTo(x+tl,y+h);
+      this.arcTo(x,y+h,x,y+h-tl,tl); this.lineTo(x,y+tl);
+      this.arcTo(x,y,x+tl,y,tl); this.closePath();
+    };
+  }
+
+  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
+  var BG='#fdfdfe';
+  var CONT_COL='#D79B00', DISC_COL='#5B9BD5';
+
+  function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
+  function clamp01(t){ return t<0?0:t>1?1:t; }
+
+  function haloText(text,x,y,fill,hp){
+    hp=hp||3; ctx.save();
+    ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
+    ctx.lineJoin='round'; ctx.miterLimit=2;
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle=fill; ctx.fillText(text,x,y);
+    ctx.restore();
+  }
+
+  // Token definitions — EHR-like events
+  var tokens = [
+    {text:'Δt=0.012', type:'cont', evStart:true, evLabel:'Day 1'},
+    {text:'LAB RESULT', type:'disc'},
+    {text:'Serum Glucose', type:'disc'},
+    {text:'116.0', type:'cont'},
+
+    {text:'Δt=7.251', type:'cont', evStart:true, evLabel:'Day 8'},
+    {text:'PROCEDURE', type:'disc'},
+    {text:'Blood coll.', type:'disc'},
+
+    {text:'Δt=0.301', type:'cont', evStart:true, evLabel:'Day 8'},
+    {text:'LAB RESULT', type:'disc'},
+    {text:'Whole Glucose', type:'disc'},
+    {text:'102.0', type:'cont'},
+
+    {text:'Δt=5.24', type:'cont', evStart:true, evLabel:'Day 13'},
+    {text:'PROCEDURE', type:'disc'},
+    {text:'CBC Panel', type:'disc'},
+
+    {text:'Δt=2.31', type:'cont', evStart:true, evLabel:'Day 15'},
+    {text:'LAB RESULT', type:'disc'},
+    {text:'HbA1c', type:'disc'},
+    {text:'7.2%', type:'cont'}
+  ];
+  var N_TOK = tokens.length;
+
+  // Compute token widths
+  ctx.font = '600 13px "Google Sans","Noto Sans",sans-serif';
+  var tokW = tokens.map(function(tok){ return Math.max(70, ctx.measureText(tok.text).width + 20); });
+
+  // Compute appearance times
+  var tokTime = [];
+  var tt = 1.5;
+  for(var i=0; i<N_TOK; i++){
+    if(tokens[i].evStart && i>0) tt += 0.4;
+    tokTime.push(tt);
+    tt += 0.55;
+  }
+  var GEN_END = tt + 1.0;
+  var LOOP = GEN_END + 3.0;
+
+  // Pre-generate random bar heights and density shapes for each token
+  var discBars = [];
+  var contCurve = [];
+  for(var i=0; i<N_TOK; i++){
+    var bars = [];
+    for(var j=0; j<5; j++) bars.push(0.15 + Math.random()*0.85);
+    // Make one bar dominant
+    var maxIdx = Math.floor(Math.random()*5);
+    bars[maxIdx] = 0.85 + Math.random()*0.15;
+    discBars.push(bars);
+    // Density: peak position and width
+    contCurve.push({mu: 0.3+Math.random()*0.4, sigma: 0.08+Math.random()*0.12});
+  }
+
+  var TOK_Y = 235, TOK_H = 34, TOK_GAP = 5, EVENT_XGAP = 18;
+  var RIBBON_LEFT = 60;
+
+  // Smooth scroll state
+  var scrollX = 0, scrollTarget = 0;
+
+  var startTime = null;
+  function getT(){ return ((performance.now()/1000)-startTime) % LOOP; }
+
+  function drawTitle(t){
+    var a = clamp01(t/0.6);
+    ctx.save(); ctx.globalAlpha = ease(a);
+    ctx.font = '700 22px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign = 'center';
+    haloText('FlexTPP: Mixed-Type Event Sequences', W/2, 35, '#1a1a1a');
+    ctx.font = '13px "Noto Sans",sans-serif';
+    haloText('Autoregressive transformer with discrete + continuous heads', W/2, 55, '#999');
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+
+  function drawPatientBadge(t){
+    var a = clamp01((t-0.3)/0.5);
+    if(a<=0) return;
+    ctx.save(); ctx.globalAlpha = ease(a);
+    var bx = 60, by = 72, bw = 660, bh = 30;
+    ctx.fillStyle = '#f0f4f8';
+    ctx.strokeStyle = '#d0d8e4';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,5); ctx.fill(); ctx.stroke();
+    ctx.font = '500 12px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign = 'center';
+    haloText('Patient 1  |  M  |  DOB 1951  |  Diagnosis: Type 2 Diabetes', bx+bw/2, by+20, '#666');
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+
+  function getCurIdx(t){
+    var idx = -1;
+    for(var i=N_TOK-1; i>=0; i--){ if(t>=tokTime[i]){ idx=i; break; } }
+    return idx;
+  }
+
+  function drawTokenRibbon(t){
+    var curIdx = getCurIdx(t);
+    if(curIdx < 0) return;
+
+    // Compute cumulative x positions
+    var xpos = [];
+    var cx = 0;
+    for(var i=0; i<N_TOK; i++){
+      if(tokens[i].evStart && i>0) cx += EVENT_XGAP;
+      xpos.push(cx);
+      cx += tokW[i] + TOK_GAP;
+    }
+
+    // Scroll target: keep current token near x=520
+    var TARGET_X = 500;
+    scrollTarget = Math.max(0, xpos[curIdx] + tokW[curIdx]/2 - TARGET_X);
+    // Smooth interpolation
+    scrollX += (scrollTarget - scrollX) * 0.08;
+
+    ctx.save();
+
+    // "Generated sequence:" label
+    ctx.font = '600 14px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign = 'left';
+    haloText('Generated sequence:', RIBBON_LEFT, TOK_Y - 50, '#555');
+
+    // Type legend
+    ctx.font = '11px "Noto Sans",sans-serif';
+    var legX = 500;
+    ctx.beginPath(); ctx.roundRect(legX, TOK_Y-62, 12, 12, 3);
+    ctx.fillStyle = CONT_COL; ctx.globalAlpha=0.25; ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.strokeStyle=CONT_COL; ctx.lineWidth=1.5; ctx.stroke();
+    haloText('continuous', legX+16, TOK_Y-52, '#888');
+
+    legX += 100;
+    ctx.beginPath(); ctx.roundRect(legX, TOK_Y-62, 12, 12, 3);
+    ctx.fillStyle = DISC_COL; ctx.globalAlpha=0.25; ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.strokeStyle=DISC_COL; ctx.lineWidth=1.5; ctx.stroke();
+    haloText('discrete', legX+16, TOK_Y-52, '#888');
+
+    // Draw event separators and labels
+    for(var i=0; i<N_TOK; i++){
+      if(!tokens[i].evStart) continue;
+      if(t < tokTime[i]) continue;
+      var ap = clamp01((t - tokTime[i])/0.3);
+      var x = RIBBON_LEFT + xpos[i] - scrollX;
+      if(x < 20 || x > W-20) continue;
+      ctx.globalAlpha = ease(ap) * 0.6;
+      if(i > 0){
+        ctx.setLineDash([3,3]);
+        ctx.strokeStyle = '#bbb';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x-EVENT_XGAP/2, TOK_Y-35);
+        ctx.lineTo(x-EVENT_XGAP/2, TOK_Y+TOK_H+15);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.globalAlpha = ease(ap);
+      ctx.font = '500 11px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign = 'left';
+      haloText(tokens[i].evLabel, x, TOK_Y-25, '#888');
+    }
+
+    // Draw tokens
+    for(var i=0; i<=curIdx; i++){
+      var ap = clamp01((t - tokTime[i])/0.25);
+      if(ap <= 0) continue;
+      var ea = ease(ap);
+      var x = RIBBON_LEFT + xpos[i] - scrollX;
+      var w = tokW[i];
+
+      if(x+w < 10 || x > W-10) continue;
+
+      var isCur = (i === curIdx);
+      var col = tokens[i].type === 'cont' ? CONT_COL : DISC_COL;
+
+      // Token box
+      ctx.globalAlpha = ea * (isCur ? 1 : 0.85);
+      ctx.fillStyle = tokens[i].type === 'cont' ? '#FFF8E7' : '#EBF3FB';
+      ctx.strokeStyle = col;
+      ctx.lineWidth = isCur ? 2.5 : 1.5;
+      ctx.beginPath(); ctx.roundRect(x, TOK_Y, w*ea, TOK_H, 6);
+      ctx.fill(); ctx.stroke();
+
+      // Pulse glow on current
+      if(isCur && ap > 0.5){
+        var pulse = 0.5 + 0.5*Math.sin(t*5);
+        ctx.globalAlpha = pulse * 0.15;
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.roundRect(x-3, TOK_Y-3, w+6, TOK_H+6, 8);
+        ctx.fill();
+        ctx.globalAlpha = ea;
+      }
+
+      // Token text
+      if(ea > 0.6){
+        var ta = clamp01((ea-0.6)/0.4);
+        ctx.globalAlpha = ta * (isCur ? 1 : 0.85);
+        ctx.font = '600 12px "Google Sans","Noto Sans",sans-serif';
+        ctx.textAlign = 'center';
+        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+4.5, col === CONT_COL ? '#9A7200' : '#3670A0');
+      }
+
+      // Type label below
+      ctx.globalAlpha = ea * 0.5;
+      ctx.font = '10px "Noto Sans",sans-serif';
+      ctx.textAlign = 'center';
+      haloText(tokens[i].type === 'cont' ? 'cont' : 'disc', x+w/2, TOK_Y+TOK_H+12, '#aaa');
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawArchitecture(t){
+    var a = clamp01((t-0.8)/0.6);
+    if(a<=0) return;
+    ctx.save(); ctx.globalAlpha = ease(a);
+
+    var ay = 340, ah = 90;
+    var curIdx = getCurIdx(t);
+    var curType = curIdx>=0 ? tokens[curIdx].type : null;
+
+    // Background panel
+    ctx.fillStyle = '#fafbfd';
+    ctx.strokeStyle = '#e0e4ec';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(60, ay, 660, ah, 8);
+    ctx.fill(); ctx.stroke();
+
+    // Embedding block
+    var bx=90, by=ay+15, bw=80, bh=35;
+    ctx.fillStyle='#f0f0f5'; ctx.strokeStyle='#bbb'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6); ctx.fill(); ctx.stroke();
+    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Embedding',bx+bw/2,by+bh/2+4,'#666');
+
+    // + PE
+    ctx.font='11px "Noto Sans",sans-serif';
+    haloText('+ PE',bx+bw+15,by+bh/2+4,'#aaa');
+
+    // Arrow
+    drawArrow(bx+bw+35, by+bh/2, bx+bw+70, by+bh/2, '#bbb');
+
+    // Transformer block
+    var tx=bx+bw+75, tw=180;
+    ctx.fillStyle='#e8e0f0'; ctx.strokeStyle=PURPLE; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(tx,by-5,tw,bh+10,8); ctx.fill(); ctx.stroke();
+    ctx.font='700 13px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Autoregressive',tx+tw/2,by+12,PURPLE);
+    haloText('Transformer',tx+tw/2,by+28,PURPLE);
+
+    // Arrows to heads
+    var headY = by+bh/2;
+    drawArrow(tx+tw+5, headY-8, tx+tw+50, headY-20, '#bbb');
+    drawArrow(tx+tw+5, headY+8, tx+tw+50, headY+20, '#bbb');
+
+    // Discrete head
+    var dx=tx+tw+55, dw=110;
+    var discActive = curType==='disc';
+    ctx.fillStyle = discActive?'#EBF3FB':'#f5f5f5';
+    ctx.strokeStyle = discActive?DISC_COL:'#ccc';
+    ctx.lineWidth = discActive?2:1;
+    ctx.beginPath(); ctx.roundRect(dx,by-12,dw,28,5); ctx.fill(); ctx.stroke();
+    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('φ_disc → Cat()',dx+dw/2,by+5,discActive?'#3670A0':'#999');
+
+    // Continuous head
+    var cy2=by+bh-12;
+    var contActive = curType==='cont';
+    ctx.fillStyle = contActive?'#FFF8E7':'#f5f5f5';
+    ctx.strokeStyle = contActive?CONT_COL:'#ccc';
+    ctx.lineWidth = contActive?2:1;
+    ctx.beginPath(); ctx.roundRect(dx,cy2,dw,28,5); ctx.fill(); ctx.stroke();
+    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('φ_cont → Flow()',dx+dw/2,cy2+17,contActive?'#9A7200':'#999');
+
+    // Causal mask note
+    ctx.font='italic 10px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('causal attention mask',tx+tw/2,ay+ah-8,'#bbb');
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function drawArrow(x1,y1,x2,y2,col){
+    ctx.strokeStyle=col; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    var ang=Math.atan2(y2-y1,x2-x1);
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-6*Math.cos(ang-0.4),y2-6*Math.sin(ang-0.4));
+    ctx.lineTo(x2-6*Math.cos(ang+0.4),y2-6*Math.sin(ang+0.4));
+    ctx.closePath();
+    ctx.fillStyle=col; ctx.fill();
+  }
+
+  function drawDistributions(t){
+    var curIdx = getCurIdx(t);
+    if(curIdx < 0) return;
+    var a = clamp01((t - tokTime[curIdx])/0.3);
+    if(a<=0) return;
+
+    ctx.save(); ctx.globalAlpha = ease(a);
+    var py = 455, pw = 290, ph = 150;
+
+    // Discrete distribution panel
+    var dx = 80;
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(dx,py,pw,ph,8); ctx.fill(); ctx.stroke();
+    ctx.font='600 12px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Discrete Head: Categorical', dx+pw/2, py+18, DISC_COL);
+
+    // Bar chart
+    var bars = discBars[curIdx];
+    var barW = 36, barGap = 10, barMaxH = 90;
+    var bx0 = dx + (pw - (bars.length*(barW+barGap)-barGap))/2;
+    var barBase = py+ph-20;
+    var labels = ['Lab','Proc','Med','Diag','EOS'];
+    for(var j=0; j<bars.length; j++){
+      var bh = bars[j]*barMaxH*ease(a);
+      var bx = bx0 + j*(barW+barGap);
+      ctx.fillStyle = DISC_COL;
+      ctx.globalAlpha = ease(a) * (tokens[curIdx].type==='disc'?0.7:0.25);
+      ctx.beginPath(); ctx.roundRect(bx, barBase-bh, barW, bh, 3); ctx.fill();
+      ctx.globalAlpha = ease(a);
+      ctx.font='9px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      haloText(labels[j], bx+barW/2, barBase+11, '#aaa');
+    }
+
+    // Continuous distribution panel
+    var cx = 410;
+    ctx.globalAlpha = ease(a);
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(cx,py,pw,ph,8); ctx.fill(); ctx.stroke();
+    ctx.font='600 12px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Continuous Head: NF Density', cx+pw/2, py+18, CONT_COL);
+
+    // Density curve
+    var crvLeft=cx+20, crvRight=cx+pw-20, crvBase=py+ph-20, crvTop=py+35;
+    var crvH=crvBase-crvTop;
+    var cc = contCurve[curIdx];
+    ctx.beginPath();
+    ctx.moveTo(crvLeft, crvBase);
+    var contAlpha = tokens[curIdx].type==='cont' ? 0.7 : 0.25;
+    for(var px=0; px<=1; px+=0.01){
+      var xp = crvLeft + px*(crvRight-crvLeft);
+      var g = Math.exp(-0.5*Math.pow((px-cc.mu)/cc.sigma,2));
+      var yp = crvBase - g*crvH*0.85*ease(a);
+      ctx.lineTo(xp, yp);
+    }
+    ctx.lineTo(crvRight, crvBase);
+    ctx.closePath();
+    ctx.fillStyle = CONT_COL;
+    ctx.globalAlpha = ease(a)*contAlpha*0.3;
+    ctx.fill();
+    ctx.globalAlpha = ease(a)*contAlpha;
+    ctx.strokeStyle = CONT_COL;
+    ctx.lineWidth = 2;
+    // Redraw just the curve part (not the base line)
+    ctx.beginPath();
+    for(var px=0; px<=1; px+=0.01){
+      var xp = crvLeft + px*(crvRight-crvLeft);
+      var g = Math.exp(-0.5*Math.pow((px-cc.mu)/cc.sigma,2));
+      var yp = crvBase - g*crvH*0.85*ease(a);
+      if(px===0) ctx.moveTo(xp,yp); else ctx.lineTo(xp,yp);
+    }
+    ctx.stroke();
+
+    // Axis line
+    ctx.globalAlpha = ease(a)*0.4;
+    ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(crvLeft,crvBase); ctx.lineTo(crvRight,crvBase); ctx.stroke();
+    ctx.font='9px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    ctx.globalAlpha = ease(a);
+    haloText('value', cx+pw/2, crvBase+12, '#aaa');
+
+    // Current prediction label
+    if(curIdx >= 0){
+      ctx.font='500 11px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      var predText = 'Predicting: ' + tokens[curIdx].text + ' (' + tokens[curIdx].type + ')';
+      haloText(predText, W/2, py+ph+18, '#888');
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function frame(){
+    if(startTime===null) startTime=performance.now()/1000;
+    var t=getT();
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+
+    drawTitle(t);
+    drawPatientBadge(t);
+    drawTokenRibbon(t);
+    drawArchitecture(t);
+    drawDistributions(t);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
