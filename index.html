@@ -4,12 +4,242 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kai Nelson</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="adapo/static/css/bulma.min.css">
+
   <style>
-    body { font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fafafa; color: #333; }
-    h1 { font-weight: 400; font-size: 1.5rem; }
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      color: #2c2c2c;
+      -webkit-font-smoothing: antialiased;
+      font-size: 1.02rem;
+    }
+    a { color: #3d6098; transition: color 0.15s ease; }
+    a:hover { color: #1d3f6e; text-decoration: underline; }
+
+    .section { padding: 1.8rem 1.5rem; }
+    .section + .section { border-top: 1px solid #eaedf2; }
+
+    .section-heading {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 600;
+      font-size: 1.5rem;
+      color: #1a1a1a;
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    /* ---- Highlight boxes ---- */
+    .highlight-box {
+      background: #f7f8fb;
+      border: 1px solid #e2e6ee;
+      border-left: 4px solid #6C8EBF;
+      border-radius: 6px;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1rem;
+      line-height: 1.65;
+      font-size: 0.95rem;
+    }
+    .highlight-box:last-child { margin-bottom: 0; }
+    .highlight-box p { color: #3a3a3a; margin-bottom: 0.35rem; }
+    .highlight-box p:last-child { margin-bottom: 0; }
+
+    /* ---- Header ---- */
+    .site-header { padding: 2.5rem 1.5rem 0.5rem; }
+    .name-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 0.2rem;
+    }
+    .affiliation {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 0.15rem;
+    }
+    .contact-line {
+      font-size: 0.88rem;
+      color: #777;
+    }
+    .contact-line a { color: #3d6098; }
+
+    /* ---- Publication entries ---- */
+    .pub-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 0.2rem;
+    }
+    .pub-authors { font-size: 0.9rem; color: #555; margin-bottom: 0.2rem; }
+    .pub-links { font-size: 0.85rem; }
+    .pub-links a { margin-right: 0.6rem; }
+
+    .venue-tag {
+      display: inline-block;
+      font-family: 'Google Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15em 0.6em;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .award-tag {
+      display: inline-block;
+      font-family: 'Google Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15em 0.6em;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      margin-left: 0.3rem;
+      background: #F8CECC;
+      color: #B85450;
+    }
+
+    .v-orange { background: #FFE6CC; color: #D79B00; }
+    .v-blue   { background: #DAE8FC; color: #6C8EBF; }
+    .v-green  { background: #D5E8D4; color: #82B366; }
+    .v-grey   { background: #e8e8e8; color: #666; }
+
+    /* ---- Animation embed ---- */
+    .viz-frame {
+      margin-top: 0.8rem;
+      border: 1px solid #e8e8ed;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+      background: linear-gradient(180deg, #fdfdfe, #f4f4f8);
+    }
+    .viz-frame iframe {
+      display: block;
+      border: none;
+      width: 780px;
+      height: 640px;
+      max-width: 100%;
+    }
+
+    /* ---- Footer ---- */
+    .site-footer {
+      padding: 1.5rem;
+      border-top: 1px solid #eaedf2;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    @media screen and (max-width: 768px) {
+      .name-title { font-size: 1.5rem; }
+      .section { padding: 1.2rem 1rem; }
+      .highlight-box { padding: 1rem 1.1rem; }
+    }
   </style>
 </head>
 <body>
-  <h1>Kai Nelson</h1>
+
+<!-- ===== Header ===== -->
+<section class="site-header">
+  <div class="container is-max-desktop">
+    <h1 class="name-title">Kai Nelson</h1>
+    <p class="affiliation">PhD Student, Computer Science &mdash; UC Berkeley</p>
+    <p class="affiliation" style="font-size: 0.88rem; color: #777;">Advisors: Aditi Krishnapriyan, Sergey Levine</p>
+    <p class="contact-line">
+      <a href="mailto:kai_nelson@berkeley.edu">kai_nelson@berkeley.edu</a>
+    </p>
+  </div>
+</section>
+
+<!-- ===== Publications ===== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title section-heading">Publications</h2>
+
+    <!-- ADAPO -->
+    <div class="highlight-box" style="border-left-color: #D79B00;">
+      <span class="venue-tag v-orange">In Review &mdash; ICML 2026</span>
+      <p class="pub-title">Adversarial Distribution Alignment with Partial Observations (ADAPO)</p>
+      <p class="pub-authors"><strong>Nelson, K.</strong>, Kreiman, T., Levine, S., Krishnapriyan, A.</p>
+      <p class="pub-links"><a href="adapo/">Project Page</a></p>
+      <div class="viz-frame">
+        <iframe src="adapo/?viz" scrolling="no" loading="lazy"></iframe>
+      </div>
+    </div>
+
+    <!-- NeurIPS 2025 -->
+    <div class="highlight-box" style="border-left-color: #6C8EBF;">
+      <span class="venue-tag v-blue">NeurIPS 2025</span>
+      <span class="award-tag">Spotlight &mdash; Top 2%</span>
+      <p class="pub-title">Learning Conditional Marked Event Sequences with Mixed Data Types</p>
+      <p class="pub-authors">Draxler, F., Meng, Y., <strong>Nelson, K.</strong>, Laskowski, L., Yang, Y., Karaletsos, T., &amp; Mandt, S.</p>
+      <p class="pub-links"><a href="https://openreview.net/forum?id=11098" target="_blank">OpenReview</a></p>
+    </div>
+
+    <!-- AISTATS 2025 -->
+    <div class="highlight-box" style="border-left-color: #82B366;">
+      <span class="venue-tag v-green">AISTATS 2025</span>
+      <span class="award-tag">Best Paper + Oral &mdash; Top 0.5%</span>
+      <p class="pub-title">EventFlow: Forecasting Continuous-Time Event Data with Flow Matching</p>
+      <p class="pub-authors">Kerrigan, G., <strong>Nelson, K.</strong></p>
+      <p class="pub-links">
+        <a href="https://arxiv.org/pdf/2410.07430" target="_blank">Paper</a>
+        <a href="https://openreview.net/forum?id=fmTY6QQHnQ" target="_blank">OpenReview</a>
+      </p>
+    </div>
+
+    <!-- IEEE TGRS -->
+    <div class="highlight-box" style="border-left-color: #6C8EBF;">
+      <span class="venue-tag v-blue">IEEE TGRS 2024</span>
+      <p class="pub-title">A Generative Diffusion Model for Probabilistic Ensembles of Precipitation Maps Conditioned on Multisensor Satellite Observations</p>
+      <p class="pub-authors">Guilloteau, C., Kerrigan, G., <strong>Nelson, K.</strong> et al.</p>
+      <p class="pub-links"><a href="https://arxiv.org/pdf/2409.16319" target="_blank">Paper</a></p>
+    </div>
+
+    <!-- Score-based Likelihood -->
+    <div class="highlight-box" style="border-left-color: #999;">
+      <span class="venue-tag v-grey">In Review</span>
+      <p class="pub-title">Score-based Likelihood Ratios for Authorship Verification with Stylometric Text Embeddings</p>
+      <p class="pub-authors">Longjohn, R., G., <strong>Nelson, K.</strong> et al.</p>
+    </div>
+
+    <!-- INMM 1 -->
+    <div class="highlight-box" style="border-left-color: #999;">
+      <span class="venue-tag v-grey">INMM/ESARDA 2022</span>
+      <p class="pub-title">Feature Extraction and Design for Gamma-ray Spectra for Radionuclide Identification</p>
+      <p class="pub-authors"><strong>Nelson, K.</strong> et al.</p>
+    </div>
+
+    <!-- INMM 2 -->
+    <div class="highlight-box" style="border-left-color: #999;">
+      <span class="venue-tag v-grey">INMM/ESARDA 2022</span>
+      <p class="pub-title">Classifier Comparison for Radionuclide Identification with Gamma-ray Spectra</p>
+      <p class="pub-authors">Romo, J. R., <strong>Nelson, K.</strong> et al.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Projects ===== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title section-heading">Projects</h2>
+
+    <div class="highlight-box" style="border-left-color: #9673A6;">
+      <p class="pub-title">Score-Based Diffusion / Bridge Diffusion</p>
+      <p>Implemented state-of-the-art diffusion model via SDEs, as well as common extensions such as conditional diffusion, image infilling, and bridge diffusion.</p>
+      <p class="pub-links"><a href="https://github.com/Stephen-Robbins/Score_Based_Diffusion" target="_blank">GitHub</a></p>
+    </div>
+
+    <div class="highlight-box" style="border-left-color: #9673A6;">
+      <p class="pub-title">Image Segmentation via Densely Connected Graphical Model</p>
+      <p>Implemented image segmentation via a densely connected graphical model with Gaussian kernel factors. Reimplementation of the work of Kr&auml;henb&uuml;hl and Koltun.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">Kai Nelson &middot; UC Berkeley</footer>
+
 </body>
 </html>

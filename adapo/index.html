@@ -26,6 +26,17 @@
     .hero { padding: 0 !important; }
     .hero-body { padding: 1.2rem 1.5rem 0.8rem !important; }
   </style>
+  <script>if(location.search.indexOf('viz')>-1)document.documentElement.classList.add('viz-only');</script>
+  <style>
+    html.viz-only body{margin:0;padding:0;overflow:hidden;background:transparent}
+    html.viz-only .hero,
+    html.viz-only .section:not(#alignment-viz),
+    html.viz-only .footer{display:none!important}
+    html.viz-only #alignment-viz{padding:0!important;margin:0!important;border:none!important}
+    html.viz-only #alignment-viz .highlight-box{display:none!important}
+    html.viz-only #alignment-viz div[style*="text-align"]{margin-top:0!important}
+    html.viz-only #alignCanvas{border:none!important;box-shadow:none!important;border-radius:0!important}
+  </style>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script defer src="./static/js/fontawesome.all.min.js"></script>
