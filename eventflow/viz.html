@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EventFlow Animation</title>
+<style>
+  body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  canvas { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  var W = 780, H = 640, dpr = window.devicePixelRatio || 1;
+  var canvas = document.getElementById('c');
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // roundRect polyfill for older browsers
+  if(!ctx.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+      if(typeof r === 'number') r = [r,r,r,r];
+      var tl=r[0]||0;
+      this.moveTo(x+tl,y);
+      this.lineTo(x+w-tl,y);
+      this.arcTo(x+w,y,x+w,y+tl,tl);
+      this.lineTo(x+w,y+h-tl);
+      this.arcTo(x+w,y+h,x+w-tl,y+h,tl);
+      this.lineTo(x+tl,y+h);
+      this.arcTo(x,y+h,x,y+h-tl,tl);
+      this.lineTo(x,y+tl);
+      this.arcTo(x,y,x+tl,y,tl);
+      this.closePath();
+    };
+  }
+
+  // Colors
+  var BLUE = '#6C8EBF', ORANGE = '#D79B00', GREEN = '#82B366', PURPLE = '#9673A6';
+  var BG = '#fdfdfe';
+
+  // Timeline geometry
+  var TL = { x: 80, y: 110, w: 620, split: 0.55 }; // split = fraction that is history
+  var TL_END = TL.x + TL.w;
+  var TL_SPLIT = TL.x + TL.w * TL.split;
+  var DOT_R = 5;
+
+  // History events (times as fraction of history region 0-1)
+  var histTimes = [0.05, 0.15, 0.22, 0.38, 0.45, 0.52, 0.68, 0.75, 0.88, 0.95];
+  var histX = histTimes.map(function(t){ return TL.x + t * TL.w * TL.split; });
+  // Y jitter for event marks on timeline
+  var histMarkY = histTimes.map(function(){ return -12 - Math.random() * 25; });
+
+  // Predicted events (times as fraction of prediction region 0-1)
+  var predTimes = [0.15, 0.35, 0.55, 0.72, 0.9];
+  var predX = predTimes.map(function(t){ return TL_SPLIT + t * (TL_END - TL_SPLIT); });
+  var predMarkY = predTimes.map(function(){ return -12 - Math.random() * 25; });
+  var N_PRED = predTimes.length;
+
+  // Flow plot geometry
+  var FP = { x: 160, y: 280, w: 460, h: 280 };
+
+  // Random initial positions (at s=0, random in event-time axis)
+  var initY = [];
+  for(var i = 0; i < N_PRED; i++) initY.push(FP.y + 30 + Math.random() * (FP.h - 60));
+  // Target positions (at s=1, mapped to predicted event times)
+  var targY = predTimes.map(function(t){ return FP.y + FP.h - t * (FP.h - 40) - 20; });
+
+  // Generate flow paths (cubic bezier-ish with some curvature)
+  function flowPath(i, s){
+    // s in [0,1], returns y position
+    var y0 = initY[i], y1 = targY[i];
+    // Add some curvature
+    var mid = (y0 + y1) / 2 + (i % 2 === 0 ? -40 : 40);
+    // Quadratic bezier: (1-s)^2*y0 + 2*(1-s)*s*mid + s^2*y1
+    return (1-s)*(1-s)*y0 + 2*(1-s)*s*mid + s*s*y1;
+  }
+
+  // Easing
+  function ease(t){ return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; }
+  function clamp01(t){ return t < 0 ? 0 : t > 1 ? 1 : t; }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+
+  // Color interpolation (hex to rgb)
+  function hexRgb(h){
+    var v = parseInt(h.slice(1),16);
+    return [(v>>16)&255, (v>>8)&255, v&255];
+  }
+  function blendHex(c1, c2, t){
+    var a = hexRgb(c1), b = hexRgb(c2);
+    var r = Math.round(a[0]+(b[0]-a[0])*t);
+    var g = Math.round(a[1]+(b[1]-a[1])*t);
+    var bl = Math.round(a[2]+(b[2]-a[2])*t);
+    return 'rgb('+r+','+g+','+bl+')';
+  }
+
+  // Phase timing (seconds)
+  var P = {
+    A_start: 0,    A_end: 2.5,    // Timeline + history events appear
+    B_start: 2.5,  B_end: 4.2,    // Prediction horizon highlights
+    C_start: 4.2,  C_end: 6.0,    // Count prediction + flow plot axes
+    D_start: 6.0,  D_end: 7.5,    // Random dots appear at s=0
+    E_start: 7.5,  E_end: 11.5,   // Flow: dots travel s=0 to s=1
+    F_start: 11.5, F_end: 14.0,   // Final dots appear on timeline
+    TOTAL: 17.0                     // 3s pause then loop
+  };
+
+  var startTime = null;
+  function getT(){ return ((performance.now() / 1000) - startTime) % P.TOTAL; }
+
+  function drawTimeline(t){
+    var ap = clamp01((t - P.A_start) / 1.0); // line draws in first 1s
+    if(ap <= 0) return;
+
+    ctx.save();
+    // Main line
+    var endX = TL.x + TL.w * ease(ap);
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(TL.x, TL.y);
+    ctx.lineTo(endX, TL.y);
+    ctx.stroke();
+
+    // Arrow at end
+    if(ap > 0.95){
+      ctx.beginPath();
+      ctx.moveTo(TL_END + 8, TL.y);
+      ctx.lineTo(TL_END - 2, TL.y - 5);
+      ctx.lineTo(TL_END - 2, TL.y + 5);
+      ctx.closePath();
+      ctx.fillStyle = '#888';
+      ctx.fill();
+    }
+
+    // "time" label
+    if(ap > 0.8){
+      var la = clamp01((ap - 0.8) / 0.2);
+      ctx.globalAlpha = la;
+      ctx.font = 'italic 14px "Noto Sans", sans-serif';
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'center';
+      ctx.fillText('time', TL.x + TL.w / 2, TL.y + 30);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  }
+
+  function drawHistoryEvents(t){
+    var base = P.A_start + 0.8;
+    var dur = P.A_end - base;
+    ctx.save();
+    for(var i = 0; i < histX.length; i++){
+      var delay = i / histX.length * 0.6;
+      var ap = clamp01((t - base - delay) / 0.4);
+      if(ap <= 0) continue;
+
+      var ea = ease(ap);
+      var x = histX[i];
+      var my = histMarkY[i];
+
+      // Vertical tick
+      ctx.strokeStyle = BLUE;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = ea;
+      ctx.beginPath();
+      ctx.moveTo(x, TL.y);
+      ctx.lineTo(x, TL.y + my * ea);
+      ctx.stroke();
+
+      // Dot at top
+      ctx.beginPath();
+      ctx.arc(x, TL.y + my * ea, DOT_R * ea, 0, Math.PI * 2);
+      ctx.fillStyle = BLUE;
+      ctx.fill();
+    }
+
+    // "History" label
+    var labAp = clamp01((t - P.A_end + 0.3) / 0.4);
+    if(labAp > 0){
+      ctx.globalAlpha = ease(labAp);
+      ctx.font = '600 16px "Google Sans", "Noto Sans", sans-serif';
+      ctx.fillStyle = BLUE;
+      ctx.textAlign = 'center';
+      ctx.fillText('History', TL.x + TL.w * TL.split / 2, TL.y + 50);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawPredictionHorizon(t){
+    var ap = clamp01((t - P.B_start) / 0.8);
+    if(ap <= 0) return;
+
+    ctx.save();
+    var ea = ease(ap);
+
+    // Shaded region
+    ctx.globalAlpha = 0.12 * ea;
+    ctx.fillStyle = GREEN;
+    ctx.fillRect(TL_SPLIT, TL.y - 50, (TL_END - TL_SPLIT) * ea, 85);
+    ctx.globalAlpha = 1;
+
+    // Dashed separator line
+    ctx.globalAlpha = ea;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(TL_SPLIT, TL.y - 50);
+    ctx.lineTo(TL_SPLIT, TL.y + 35);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // "Prediction Horizon" label
+    var labAp = clamp01((t - P.B_start - 0.4) / 0.5);
+    if(labAp > 0){
+      ctx.globalAlpha = ease(labAp);
+      ctx.font = '600 16px "Google Sans", "Noto Sans", sans-serif';
+      ctx.fillStyle = GREEN;
+      ctx.textAlign = 'center';
+      ctx.fillText('Prediction Horizon', (TL_SPLIT + TL_END) / 2, TL.y + 50);
+    }
+
+    // "?" marks for unknown events
+    var qAp = clamp01((t - P.B_start - 0.6) / 0.5);
+    if(qAp > 0 && t < P.F_start){
+      ctx.globalAlpha = 0.3 * ease(qAp);
+      ctx.font = '24px "Noto Sans", sans-serif';
+      ctx.fillStyle = '#999';
+      ctx.textAlign = 'center';
+      ctx.fillText('? ? ?', (TL_SPLIT + TL_END) / 2, TL.y - 15);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawCountPrediction(t){
+    var ap = clamp01((t - P.C_start) / 0.8);
+    if(ap <= 0) return;
+
+    ctx.save();
+    var ea = ease(ap);
+    ctx.globalAlpha = ea;
+
+    // Arrow from history to count
+    var ax1 = TL_SPLIT - 20, ay1 = TL.y + 60;
+    var ax2 = 240, ay2 = TL.y + 100;
+    ctx.strokeStyle = '#aaa';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(ax1, ay1);
+    ctx.quadraticCurveTo(ax1 - 30, ay2, ax2, ay2);
+    ctx.stroke();
+    // arrowhead
+    ctx.beginPath();
+    ctx.moveTo(ax2, ay2);
+    ctx.lineTo(ax2 - 6, ay2 - 4);
+    ctx.lineTo(ax2 - 6, ay2 + 4);
+    ctx.closePath();
+    ctx.fillStyle = '#aaa';
+    ctx.fill();
+
+    // Count box
+    var bx = 240, by = TL.y + 85;
+    ctx.fillStyle = '#f0f4f8';
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, 140, 32, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = '600 15px "Google Sans", "Noto Sans", sans-serif';
+    ctx.fillStyle = '#444';
+    ctx.textAlign = 'center';
+    ctx.fillText('Predict n = ' + N_PRED, bx + 70, by + 22);
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawFlowAxes(t){
+    var ap = clamp01((t - P.C_start - 0.3) / 0.8);
+    if(ap <= 0) return;
+
+    ctx.save();
+    var ea = ease(ap);
+    ctx.globalAlpha = ea;
+
+    // Box background
+    ctx.fillStyle = '#fafbfd';
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(FP.x - 10, FP.y - 10, FP.w + 30, FP.h + 30, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Y axis (event time)
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(FP.x, FP.y + FP.h);
+    ctx.lineTo(FP.x, FP.y);
+    ctx.stroke();
+    // arrow
+    ctx.beginPath();
+    ctx.moveTo(FP.x, FP.y - 6);
+    ctx.lineTo(FP.x - 4, FP.y + 2);
+    ctx.lineTo(FP.x + 4, FP.y + 2);
+    ctx.closePath();
+    ctx.fillStyle = '#888';
+    ctx.fill();
+
+    // X axis (flow time s)
+    ctx.beginPath();
+    ctx.moveTo(FP.x, FP.y + FP.h);
+    ctx.lineTo(FP.x + FP.w, FP.y + FP.h);
+    ctx.stroke();
+    // arrow
+    ctx.beginPath();
+    ctx.moveTo(FP.x + FP.w + 6, FP.y + FP.h);
+    ctx.lineTo(FP.x + FP.w - 2, FP.y + FP.h - 4);
+    ctx.lineTo(FP.x + FP.w - 2, FP.y + FP.h + 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // Labels
+    ctx.font = 'italic 13px "Noto Sans", sans-serif';
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'center';
+    ctx.fillText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 25);
+
+    ctx.save();
+    ctx.translate(FP.x - 30, FP.y + FP.h / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('event time', 0, 0);
+    ctx.restore();
+
+    // s=0 and s=1 marks
+    ctx.font = '12px "Noto Sans", sans-serif';
+    ctx.fillStyle = '#aaa';
+    ctx.textAlign = 'center';
+    ctx.fillText('0', FP.x, FP.y + FP.h + 15);
+    ctx.fillText('1', FP.x + FP.w, FP.y + FP.h + 15);
+
+    // Title
+    ctx.font = '600 15px "Google Sans", "Noto Sans", sans-serif';
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.fillText('Flow Matching', FP.x + FP.w / 2, FP.y - 20);
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawRandomDots(t){
+    var ap = clamp01((t - P.D_start) / 0.6);
+    if(ap <= 0) return;
+
+    ctx.save();
+    for(var i = 0; i < N_PRED; i++){
+      var delay = i * 0.08;
+      var da = clamp01((ap - delay) / 0.3);
+      if(da <= 0) continue;
+      var ea = ease(da);
+
+      ctx.globalAlpha = ea;
+      ctx.beginPath();
+      ctx.arc(FP.x + 2, initY[i], 6 * ea, 0, Math.PI * 2);
+      ctx.fillStyle = ORANGE;
+      ctx.fill();
+    }
+
+    // Label
+    var labAp = clamp01((t - P.D_start - 0.3) / 0.4);
+    if(labAp > 0){
+      ctx.globalAlpha = ease(labAp);
+      ctx.font = '12px "Noto Sans", sans-serif';
+      ctx.fillStyle = ORANGE;
+      ctx.textAlign = 'right';
+      ctx.fillText('random init', FP.x - 8, FP.y + FP.h / 2);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawFlow(t){
+    if(t < P.E_start) return;
+    var ap = clamp01((t - P.E_start) / (P.E_end - P.E_start));
+    var s = ease(ap); // flow time progress
+
+    ctx.save();
+    for(var i = 0; i < N_PRED; i++){
+      var x0 = FP.x + 2;
+      var x1 = FP.x + FP.w - 2;
+
+      // Draw trail
+      ctx.beginPath();
+      ctx.moveTo(x0, initY[i]);
+      var steps = Math.floor(s * 40);
+      for(var j = 1; j <= steps; j++){
+        var sj = j / 40;
+        var xj = lerp(x0, x1, sj);
+        var yj = flowPath(i, sj);
+        ctx.lineTo(xj, yj);
+      }
+      // current pos
+      var curX = lerp(x0, x1, s);
+      var curY = flowPath(i, s);
+      ctx.lineTo(curX, curY);
+      ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5;
+      ctx.stroke();
+
+      // Current dot
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(curX, curY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = blendHex(ORANGE, GREEN, s);
+      ctx.fill();
+
+      // Velocity arrow (small)
+      if(s > 0.02 && s < 0.98){
+        var ds = 0.02;
+        var nextY = flowPath(i, Math.min(s + ds, 1));
+        var dx = (x1 - x0) * ds;
+        var dy = nextY - curY;
+        var mag = Math.sqrt(dx*dx + dy*dy);
+        if(mag > 0){
+          var nx = dx / mag * 18;
+          var ny = dy / mag * 18;
+          ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.6;
+          ctx.beginPath();
+          ctx.moveTo(curX, curY);
+          ctx.lineTo(curX + nx, curY + ny);
+          ctx.stroke();
+          // small arrowhead
+          var ang = Math.atan2(ny, nx);
+          ctx.beginPath();
+          ctx.moveTo(curX + nx, curY + ny);
+          ctx.lineTo(curX + nx - 5*Math.cos(ang - 0.5), curY + ny - 5*Math.sin(ang - 0.5));
+          ctx.lineTo(curX + nx - 5*Math.cos(ang + 0.5), curY + ny - 5*Math.sin(ang + 0.5));
+          ctx.closePath();
+          ctx.fillStyle = blendHex(ORANGE, GREEN, s);
+          ctx.globalAlpha = 0.6;
+          ctx.fill();
+        }
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawFinalPredictions(t){
+    var ap = clamp01((t - P.F_start) / 1.0);
+    if(ap <= 0) return;
+
+    ctx.save();
+    // Hide the "? ? ?" by this point (handled in drawPredictionHorizon)
+
+    for(var i = 0; i < N_PRED; i++){
+      var delay = i * 0.1;
+      var da = clamp01((ap - delay) / 0.3);
+      if(da <= 0) continue;
+      var ea = ease(da);
+
+      var x = predX[i];
+      var my = predMarkY[i];
+
+      // Vertical tick
+      ctx.strokeStyle = GREEN;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = ea;
+      ctx.beginPath();
+      ctx.moveTo(x, TL.y);
+      ctx.lineTo(x, TL.y + my * ea);
+      ctx.stroke();
+
+      // Dot
+      ctx.beginPath();
+      ctx.arc(x, TL.y + my * ea, DOT_R * ea, 0, Math.PI * 2);
+      ctx.fillStyle = GREEN;
+      ctx.fill();
+    }
+
+    // "Predicted" label
+    var labAp = clamp01((ap - 0.5) / 0.4);
+    if(labAp > 0){
+      ctx.globalAlpha = ease(labAp);
+      ctx.font = '600 14px "Google Sans", "Noto Sans", sans-serif';
+      ctx.fillStyle = GREEN;
+      ctx.textAlign = 'center';
+      ctx.fillText('Predicted Events', (TL_SPLIT + TL_END) / 2, TL.y - 55);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawLegend(t){
+    if(t < 2) return;
+    var ap = clamp01((t - 2) / 0.5);
+    ctx.save();
+    ctx.globalAlpha = ease(ap);
+
+    var lx = 580, ly = 185;
+    ctx.font = '12px "Noto Sans", sans-serif';
+    ctx.textAlign = 'left';
+
+    // History
+    ctx.beginPath();
+    ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+    ctx.fillStyle = BLUE;
+    ctx.fill();
+    ctx.fillStyle = '#666';
+    ctx.fillText('History', lx + 10, ly + 4);
+
+    // Predicted (only after F)
+    if(t > P.F_start + 0.5){
+      var pa = clamp01((t - P.F_start - 0.5) / 0.4);
+      ctx.globalAlpha = ease(pa);
+      ly += 18;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+      ctx.fillStyle = GREEN;
+      ctx.fill();
+      ctx.fillStyle = '#666';
+      ctx.fillText('Predicted', lx + 10, ly + 4);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawTitle(t){
+    var ap = clamp01(t / 0.6);
+    ctx.save();
+    ctx.globalAlpha = ease(ap);
+    ctx.font = '700 20px "Google Sans", "Noto Sans", sans-serif';
+    ctx.fillStyle = '#1a1a1a';
+    ctx.textAlign = 'center';
+    ctx.fillText('EventFlow: Forecasting with Flow Matching', W / 2, 40);
+
+    ctx.font = '13px "Noto Sans", sans-serif';
+    ctx.fillStyle = '#999';
+    ctx.fillText('Continuous-time event prediction', W / 2, 60);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function frame(){
+    if(startTime === null) startTime = performance.now() / 1000;
+    var t = getT();
+
+    // Clear
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, W, H);
+
+    drawTitle(t);
+    drawTimeline(t);
+    drawHistoryEvents(t);
+    drawPredictionHorizon(t);
+    drawCountPrediction(t);
+    drawFlowAxes(t);
+    drawRandomDots(t);
+    drawFlow(t);
+    drawFinalPredictions(t);
+    drawLegend(t);
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

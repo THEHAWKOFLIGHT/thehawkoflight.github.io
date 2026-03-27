@@ -191,7 +191,7 @@
         <p class="pub-links"><a href="https://openreview.net/forum?id=11098" target="_blank">OpenReview</a></p>
       </div>
 
-      <!-- AISTATS 2025 -->
+      <!-- AISTATS 2025 / EventFlow -->
       <div class="highlight-box" style="border-left-color: #82B366;">
         <span class="venue-tag v-green">AISTATS 2025</span>
         <span class="award-tag">Best Paper + Oral &mdash; Top 0.5%</span>
@@ -201,6 +201,9 @@
           <a href="https://arxiv.org/pdf/2410.07430" target="_blank">Paper</a>
           <a href="https://openreview.net/forum?id=fmTY6QQHnQ" target="_blank">OpenReview</a>
         </p>
+        <div class="viz-frame">
+          <iframe src="eventflow/viz.html" scrolling="no" loading="lazy"></iframe>
+        </div>
       </div>
 
       <!-- IEEE TGRS -->
@@ -240,11 +243,13 @@
 
 <script>
 function scaleViz(){
-  var f=document.querySelector('.viz-frame');
-  if(!f)return;
-  var s=f.offsetWidth/780;
-  f.style.setProperty('--viz-scale',s);
-  f.style.paddingBottom=(640*s)+'px';
+  var frames=document.querySelectorAll('.viz-frame');
+  for(var i=0;i<frames.length;i++){
+    var f=frames[i];
+    var s=f.offsetWidth/780;
+    f.style.setProperty('--viz-scale',s);
+    f.style.paddingBottom=(640*s)+'px';
+  }
 }
 scaleViz();
 window.addEventListener('resize',scaleViz);
