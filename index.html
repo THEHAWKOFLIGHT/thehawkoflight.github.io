@@ -119,13 +119,19 @@
       overflow: hidden;
       box-shadow: 0 1px 6px rgba(0,0,0,0.04);
       background: linear-gradient(180deg, #fdfdfe, #f4f4f8);
+      position: relative;
+      width: 100%;
+      padding-bottom: 82%; /* 640/780 aspect ratio */
     }
     .viz-frame iframe {
-      display: block;
-      border: none;
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 780px;
       height: 640px;
-      max-width: 100%;
+      border: none;
+      transform-origin: top left;
+      transform: scale(var(--viz-scale, 1));
     }
 
     /* ---- Footer ---- */
@@ -166,8 +172,8 @@
 
     <div class="pub-grid">
 
-      <!-- ADAPO — full width -->
-      <div class="highlight-box span-full" style="border-left-color: #9673A6;">
+      <!-- ADAPO -->
+      <div class="highlight-box" style="border-left-color: #9673A6;">
         <p class="pub-title">Adversarial Distribution Alignment with Partial Observations (ADAPO)</p>
         <p class="pub-authors"><strong>Nelson, K.</strong>, Kreiman, T., Levine, S., Krishnapriyan, A.</p>
         <p class="pub-links"><a href="adapo/">Project Page</a></p>
@@ -231,6 +237,18 @@
 </section>
 
 <footer class="site-footer">Kai Nelson &middot; UC Berkeley</footer>
+
+<script>
+function scaleViz(){
+  var f=document.querySelector('.viz-frame');
+  if(!f)return;
+  var s=f.offsetWidth/780;
+  f.style.setProperty('--viz-scale',s);
+  f.style.paddingBottom=(640*s)+'px';
+}
+scaleViz();
+window.addEventListener('resize',scaleViz);
+</script>
 
 </body>
 </html>
