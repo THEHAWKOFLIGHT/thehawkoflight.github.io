@@ -181,8 +181,9 @@
     function blueA(a) { return 'rgba(108,142,191,' + a + ')'; }
     function redA(a)  { return 'rgba(215,155,0,' + a + ')'; }
     function greyA(a) { return 'rgba(140,140,140,' + a + ')'; }
-    function greenA(a){ return 'rgba(130,179,102,' + a + ')'; }
-    function blendBG(t){var r=Math.round(108+(130-108)*t),g=Math.round(142+(179-142)*t),b=Math.round(191+(102-191)*t);return function(a){return 'rgba('+r+','+g+','+b+','+a+')';};}
+    function purpleA(a){ return 'rgba(150,115,166,' + a + ')'; }
+    var PURPLE='#9673A6';
+    function blendBG(t){var r=Math.round(108+(150-108)*t),g=Math.round(142+(115-142)*t),b=Math.round(191+(166-191)*t);return function(a){return 'rgba('+r+','+g+','+b+','+a+')';};}
 
     /* Timing: A=rain+curves(both priors), B=grid, C=skip(TC=TB), D=ghost+marginals, E=alignment, F=annotation+final */
     var TA=8.0, TB=10.5, TC=10.5, TD=16.0, TE=23.5, TF=28.5, TOTAL=34.0;
@@ -893,10 +894,10 @@
              Sub-phase 2 (2.5–5.0s): blue — "Physical prior → recovers joint structure"         */
       else if(t<TF){
         var lt=t-TE;
-        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1,greenA);
+        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1,purpleA);
         drawDotsIn(tgt,N,redA,0.28,2.0,PL);
         drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
-        drawBigMarginals(tx,ty,tx,ty,1,greenA,'ADAPO',tx,ty,'Without Physical Prior');
+        drawBigMarginals(tx,ty,tx,ty,1,purpleA,'ADAPO',tx,ty,'Without Physical Prior');
 
         /* Data-space → canvas coords */
         var cA=_d2c(PL,TMA.mx,TMA.my), cB=_d2c(PL,TMB.mx,TMB.my), cC=_d2c(PL,TMC.mx,TMC.my);
@@ -943,13 +944,13 @@
           ctx.globalAlpha=bA;
           ctx.font='bold 16px "Google Sans","Noto Sans",sans-serif';
           ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillStyle=GREEN;
+          ctx.fillStyle=PURPLE;
           outlinedText('Physical prior',pcx,pcy-10);
           outlinedText('\u2192 recovers joint structure',pcx,pcy+10);
           /* Arrows from centre outward to true mode clusters */
-          _drawCalloutArrow(pcx-20,pcy-24, cA.x,cA.y+10, GREEN,bA*0.55);
-          _drawCalloutArrow(pcx,pcy+28, cB.x,cB.y-10, GREEN,bA*0.55);
-          _drawCalloutArrow(pcx+28,pcy-18, cC.x,cC.y+10, GREEN,bA*0.55);
+          _drawCalloutArrow(pcx-20,pcy-24, cA.x,cA.y+10, PURPLE,bA*0.55);
+          _drawCalloutArrow(pcx,pcy+28, cB.x,cB.y-10, PURPLE,bA*0.55);
+          _drawCalloutArrow(pcx+28,pcy-18, cC.x,cC.y+10, PURPLE,bA*0.55);
           ctx.globalAlpha=1;
         }
 
@@ -958,7 +959,7 @@
 
       /* ===== F2: Final labelled view (TF → TOTAL) ===== */
       else{
-        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1,greenA);
+        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1,purpleA);
         drawDotsIn(tgt,N,redA,0.28,2.5,PL);
 
         /* In-scatter legend — bottom-left corner */
@@ -968,14 +969,14 @@
         ctx.beginPath();ctx.arc(llx+4,lly-5,5,0,6.28);ctx.fillStyle=redA(0.75);ctx.fill();
         ctx.fillStyle='rgba(40,40,40,1)';outlinedText('True',llx+14,lly);
         var nx1=llx+14+ctx.measureText('True').width+18;
-        ctx.beginPath();ctx.arc(nx1+4,lly-5,5,0,6.28);ctx.fillStyle=GREEN;ctx.fill();
+        ctx.beginPath();ctx.arc(nx1+4,lly-5,5,0,6.28);ctx.fillStyle=PURPLE;ctx.fill();
         ctx.fillStyle='rgba(40,40,40,1)';outlinedText('ADAPO',nx1+14,lly);
         var nx2=nx1+14+ctx.measureText('ADAPO').width+18;
         ctx.beginPath();ctx.arc(nx2+4,lly-5,5,0,6.28);ctx.fillStyle=greyA(0.7);ctx.fill();
         ctx.fillStyle='rgba(40,40,40,1)';outlinedText('Without Physical Prior',nx2+14,lly);
 
         drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
-        drawBigMarginals(tx,ty,tx,ty,1,greenA,'ADAPO',tx,ty,'Without Physical Prior');
+        drawBigMarginals(tx,ty,tx,ty,1,purpleA,'ADAPO',tx,ty,'Without Physical Prior');
         drawBottom('\u2713 Same marginals \u2014 prior determines 2D recovery quality',true,GREEN);
       }
     }
