@@ -1,0 +1,375 @@
+/* ============================================================
+   ADAPO – Project Page Stylesheet
+   ============================================================ */
+
+/* ---- Base ------------------------------------------------- */
+body {
+  font-family: 'Noto Sans', sans-serif;
+  color: #2c2c2c;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Links ------------------------------------------------ */
+a {
+  color: #3d6098;
+  transition: color 0.15s ease;
+}
+a:hover {
+  color: #1d3f6e;
+}
+
+/* ---- Section rhythm --------------------------------------- */
+.section {
+  padding: 2.5rem 1.5rem;
+}
+
+.section + .section {
+  border-top: 1px solid #eaedf2;
+}
+
+.hero + .section {
+  border-top: none;
+}
+
+/* Section titles — .title handles Bulma reset, we customize on top */
+.title.section-heading {
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 600;
+  font-size: 1.65rem;
+  color: #1a1a1a;
+  margin-bottom: 1.25rem;
+  margin-top: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+/* ---- Publication header ----------------------------------- */
+.title.publication-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #1a1a1a;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.6rem;
+}
+
+.publication-authors {
+  font-family: 'Google Sans', sans-serif;
+}
+
+.publication-authors a {
+  color: #3d6098 !important;
+  transition: color 0.15s ease;
+}
+
+.publication-authors a:hover {
+  color: #1d3f6e !important;
+  text-decoration: underline;
+}
+
+.author-block {
+  display: inline-block;
+}
+
+.publication-venue {
+  color: #555;
+  width: fit-content;
+  font-weight: bold;
+}
+
+.publication-awards {
+  color: #c0392b;
+  width: fit-content;
+  font-weight: bolder;
+}
+
+/* ---- Publication link buttons ----------------------------- */
+.publication-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0.5rem;
+}
+
+.link-block a,
+.link-block button {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 0.45em 1.1em;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.link-block a:hover,
+.link-block button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.code-btn-label::after {
+  content: none;
+}
+a:hover .code-btn-label {
+  font-size: 0;
+}
+a:hover .code-btn-label::after {
+  content: 'Coming soon';
+  font-size: 0.92rem;
+}
+
+/* ---- Teaser image ----------------------------------------- */
+.teaser-img {
+  max-width: 78%;
+  margin: 0 auto;
+  display: block;
+  border-radius: 6px;
+}
+
+/* ---- Highlight / summary box ------------------------------ */
+.highlight-box {
+  background: #f7f8fb;
+  border: 1px solid #e2e6ee;
+  border-left: 4px solid #6C8EBF;
+  border-radius: 6px;
+  padding: 1.4rem 1.6rem;
+  margin: 1.25rem 0 0.5rem;
+  line-height: 1.7;
+  font-size: 0.97rem;
+}
+
+.highlight-box .title.is-5 {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 1.1rem;
+  color: #1a1a1a;
+}
+
+.highlight-box p {
+  color: #3a3a3a;
+  margin-bottom: 0.75rem;
+}
+
+.highlight-box p:last-child {
+  margin-bottom: 0;
+}
+
+.highlight-box .content p {
+  margin-bottom: 1rem;
+}
+
+.highlight-box .content p:last-child {
+  margin-bottom: 0;
+}
+
+.highlight-box .paper-figure {
+  margin: 1.25rem auto;
+}
+
+.highlight-box pre {
+  background: #eef0f5;
+  border: 1px solid #d8dce6;
+}
+
+.highlight-box .content h3 {
+  margin-top: 1.4rem;
+}
+
+/* ---- Figures ---------------------------------------------- */
+.paper-figure {
+  margin: 1.5rem auto;
+  text-align: center;
+}
+
+.paper-figure img {
+  max-width: 100%;
+  border-radius: 5px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.paper-figure figcaption {
+  font-size: 0.88rem;
+  color: #666;
+  margin-top: 0.6rem;
+  line-height: 1.5;
+  max-width: 85%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.paper-figure.wide img {
+  max-width: 100%;
+}
+
+.paper-figure.narrow img {
+  max-width: 78%;
+}
+
+/* ---- Content typography ----------------------------------- */
+.content p {
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.content p:last-child {
+  margin-bottom: 0;
+}
+
+.section .content h3 {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin-top: 1.6rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}
+
+/* Math display blocks */
+.MathJax_Display,
+mjx-container[display="true"] {
+  margin: 1.4rem 0 !important;
+}
+
+/* Takeaway / bold callout */
+.takeaway {
+  background: #f0f4f8;
+  border-radius: 5px;
+  padding: 0.9rem 1.2rem;
+  margin: 1rem 0;
+  font-size: 0.97rem;
+  line-height: 1.65;
+  border-left: 3px solid #82B366;
+}
+
+/* ---- BibTeX ----------------------------------------------- */
+#BibTeX pre {
+  background: #f5f6f9;
+  border: 1px solid #e2e5ec;
+  border-radius: 6px;
+  padding: 1.1rem 1.3rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  color: #444;
+}
+
+/* ---- Footer ----------------------------------------------- */
+.footer {
+  padding: 2rem 1.5rem 1.5rem;
+  background: #f8f9fb;
+  border-top: 1px solid #eaedf2;
+}
+
+.footer .content p {
+  font-size: 0.82rem;
+  color: #888;
+  line-height: 1.5;
+}
+
+.footer .content a {
+  color: #888;
+  text-decoration: underline;
+  text-decoration-color: #ccc;
+}
+
+.footer .content a:hover {
+  color: #555;
+}
+
+.footer .icon-link {
+  font-size: 25px;
+  color: #000;
+}
+
+/* ---- Animation section ------------------------------------ */
+#alignment-viz {
+  background: transparent;
+}
+
+#alignCanvas {
+  display: block;
+  margin: 0 auto;
+}
+
+.animation-controls {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.animation-controls .button {
+  font-size: 0.82rem;
+  border-radius: 6px;
+}
+
+/* ---- Responsive tweaks ------------------------------------ */
+@media screen and (max-width: 768px) {
+  .publication-title {
+    font-size: 1.5rem !important;
+  }
+  .section {
+    padding: 1.5rem 1rem;
+  }
+  .highlight-box {
+    padding: 1rem 1.1rem;
+  }
+}
+
+/* ---- Utilities (kept from template) ----------------------- */
+.dnerf {
+  font-variant: small-caps;
+}
+
+.publication-video {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%;
+  overflow: hidden;
+  border-radius: 10px !important;
+}
+
+.publication-video iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.results-carousel {
+  overflow: hidden;
+}
+
+.results-carousel .item {
+  margin: 5px;
+  overflow: hidden;
+  border: 1px solid #bbb;
+  border-radius: 10px;
+  padding: 0;
+  font-size: 0;
+}
+
+.interpolation-panel {
+  background: #f5f5f5;
+  border-radius: 10px;
+}
+
+.interpolation-panel .interpolation-image {
+  width: 100%;
+  border-radius: 5px;
+}
+
+.interpolation-panel .slider {
+  margin: 0 !important;
+}
+
+#interpolation-image-wrapper {
+  width: 100%;
+}
+
+#interpolation-image-wrapper img {
+  border-radius: 5px;
+}

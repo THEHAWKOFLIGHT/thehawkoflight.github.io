@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Bridging the Simulation-to-Experiment Gap with ADAPO: Adversarial Distribution Alignment from Partial Observations">
+  <meta name="keywords" content="adversarial, distribution, alignment, partial, observations, simulation, experiment, gap, bridging, adapo">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Bridging the Simulation-to-Experiment Gap with ADAPO: Adversarial Distribution Alignment from Partial Observations</title>
+
+ 
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Castoro&display=swap"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <!--<link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">-->
+  <!--<link rel="stylesheet" href="./static/css/fontawesome.all.min.css">-->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+  
+  <style>
+    body { font-size: 1.05rem; }
+    .hero { padding: 0 !important; }
+    .hero-body { padding: 1.2rem 1.5rem 0.8rem !important; }
+  </style>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <!-- <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>-->
+  <script src="./static/js/index.js"></script>
+  <script src="./static/js/ngl.js"></script>
+  
+  <!-- MathJax Configuration -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        tags: 'ams',
+        packages: {'[+]': ['ams']}
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title publication-title">Bridging the Simulation-to-Experiment Gap with ADAPO: Adversarial Distribution Alignment from Partial Observations</h1>
+          <div class="is-size-5 publication-authors" style="margin-bottom: 0.15rem;">
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/kai-nelson-01a0a3213/">Kai Nelson</a>*<sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://tkreiman.github.io">Tobias Kreiman</a>*<sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://people.eecs.berkeley.edu/~svlevine/">Sergey Levine</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://a1k12.github.io/">Aditi S. Krishnapriyan</a><sup>1</sup></span>
+          </div>
+          <div class="is-size-6 publication-authors" style="color: #777; margin-bottom: 0.1rem;">
+            <span class="author-block"><sup>*</sup>Equal contribution&emsp;<sup>1</sup>UC Berkeley</span>
+          </div>
+
+          <div class="column has-text-centered" style="padding-top: 0.4rem;">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="" class="external-link button is-normal is-dark">
+                  <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a class="external-link button is-normal is-dark" style="cursor: default;" title="Code coming soon" onclick="return false;">
+                  <span class="icon"><i class="fab fa-github"></i></span>
+                  <span class="code-btn-label">Code</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <button id="bibtex-btn" class="external-link button is-normal is-dark" onclick="copyBibtex()">
+                  <span class="icon"><i class="fas fa-copy"></i></span>
+                  <span>BibTeX</span>
+                </button>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <!-- ===== Main figure ===== -->
+  <section class="section" style="padding-top: 0.5rem; padding-bottom: 0.8rem; border-top: none;">
+    <div class="container is-max-desktop">
+      <figure class="paper-figure narrow">
+        <img id="teaser" src="./images/teaser.png" alt="Overview of the ADAPO framework">
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===== Problem statement + animation ===== -->
+  <section class="section" id="alignment-viz" style="padding-top: 1rem;">
+    <div class="container is-max-desktop">
+      <div class="highlight-box">
+        <h2 class="title section-heading" style="margin-bottom: 0.6rem;">The Simulation-to-Experiment Gap</h2>
+        <p>
+          Simulations are cheap, and model the underlying state of the physical world, but incur modeling errors.
+        </p>
+        <p>Experiments provide the ground truth, but are expensive, only providing lossy, incomplete measurements.</p>
+        <p>We want to bridge the gap between the two to build better computational models of the physical world.</p>
+
+        <h2 class="title section-heading" style="margin-top: 1.4rem; margin-bottom: 0.6rem;">Approach</h2>
+        <p>We propose ADAPO, an adversarial algorithm that aligns generative models of underlying states to datasets of experimental observables.</p>
+        <p>We present the first algorithm that aligns generative models to the full distribution of multiple noisy experimental observations, without requiring explicit knowledge of joint structure.</p>
+      </div>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <canvas id="alignCanvas" style="border: 1px solid #e8e8ed; border-radius: 8px; max-width: 100%; background: linear-gradient(180deg, #fdfdfe, #f4f4f8); box-shadow: 0 1px 8px rgba(0,0,0,0.05);"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <script>
+  (function () {
+    /* ============================================================
+       ADAPO – Distributional Alignment Visualization
+       Axes: Rg (nm) vs Ree (nm)  ·  3×3 conformational ensemble
+       ============================================================ */
+    var canvas = document.getElementById('alignCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    var W = 780, H = 640;
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+
+    var N = 250, BINS = 20;
+
+    /* ---- Distributions (normalised 0-1) ----
+       Prior: bimodal — covers two state regions (wide per-mode spread)
+       Target: 3 tight modes — TMA & TMB accessible from prior; TMC outside prior support → vanishes after alignment */
+    /* Prior centres are offset from the target modes so the alignment motion is clearly visible.
+       BD3 is a diffuse, low-weight cloud in the top-right — provides sparse coverage of TMC. */
+    var BD1={mx:0.30,my:0.58,sx:0.12,sy:0.11};  // ~42% weight → aligns to TMA
+    var BD2={mx:0.46,my:0.36,sx:0.12,sy:0.11};  // ~34% weight → aligns to TMB
+    var BD3={mx:0.80,my:0.64,sx:0.17,sy:0.15};  // ~15% weight → diffuse coverage of TMC
+    function sampleBase(n){
+      var p=[];
+      for(var i=0;i<n;i++){
+        var r=Math.random();
+        if(r<0.42){p.push([clamp(BD1.mx+BD1.sx*randn()),clamp(BD1.my+BD1.sy*randn())]);}
+        else if(r<0.76){p.push([clamp(BD2.mx+BD2.sx*randn()),clamp(BD2.my+BD2.sy*randn())]);}
+        else if(r<0.91){p.push([clamp(BD3.mx+BD3.sx*randn()),clamp(BD3.my+BD3.sy*randn())]);}
+        else{p.push([clamp(0.05+0.90*Math.random()),clamp(0.05+0.90*Math.random())]);} // uniform bg
+      }
+      return p;
+    }
+    /* Target mode descriptors (accessible: TMA,TMB  |  inaccessible: TMC) */
+    var TMA={mx:0.18,my:0.74,sig:0.044}, TMB={mx:0.52,my:0.22,sig:0.044}, TMC={mx:0.86,my:0.74,sig:0.040};
+
+    var AX = { xMin: 0.35, xMax: 0.85, xLabel: 'x\u2081',
+               yMin: 0.0,  yMax: 2.0,  yLabel: 'x\u2082' };
+
+    var BLUE = '#6C8EBF', RED = '#D79B00', GREEN = '#82B366';
+    var LIGHT_BLUE_CLR = '#DAE8FC', LIGHT_ORANGE_CLR = '#FFE6CC';
+    function blueA(a) { return 'rgba(108,142,191,' + a + ')'; }
+    function redA(a)  { return 'rgba(215,155,0,' + a + ')'; }
+    function greyA(a) { return 'rgba(140,140,140,' + a + ')'; }
+
+    /* Timing: A=rain+curves(both priors), B=grid, C=skip(TC=TB), D=ghost+marginals, E=alignment, F=annotation+final */
+    var TA=8.0, TB=10.5, TC=10.5, TD=16.0, TE=23.5, TF=28.5, TOTAL=34.0;
+
+    /* ---- Dynamic scatter layout: starts big & centred, shrinks when grid enters ---- */
+    var PL_BIG   = { x: 175, y: 68, w: 410, h: 410 };
+    var PL_SMALL = { x: 68, y: 112, w: 285, h: 285 };
+    var PL = { x: PL_BIG.x, y: PL_BIG.y, w: PL_BIG.w, h: PL_BIG.h };
+    var SHRINK_T0 = 7.2, SHRINK_T1 = 8.6;
+    function getPL(t) {
+      if (t <= SHRINK_T0) return PL_BIG;
+      if (t >= SHRINK_T1) return PL_SMALL;
+      var p = ease((t - SHRINK_T0) / (SHRINK_T1 - SHRINK_T0));
+      return { x: PL_BIG.x+(PL_SMALL.x-PL_BIG.x)*p, y: PL_BIG.y+(PL_SMALL.y-PL_BIG.y)*p,
+               w: PL_BIG.w+(PL_SMALL.w-PL_BIG.w)*p, h: PL_BIG.h+(PL_SMALL.h-PL_BIG.h)*p };
+    }
+
+    function margOf(pl) {
+      /* Top marginal is 52px tall with a 10px gap; right marginal is 48px wide with a 10px gap */
+      return { mt:{x:pl.x, y:pl.y-62, w:pl.w, h:52},
+               mr:{x:pl.x+pl.w+10, y:pl.y, w:48, h:pl.h} };
+    }
+
+    /* =========================================================
+       10-bead chain backbone coordinates (Å)
+       ========================================================= */
+    // Compact state
+    var fCA = [
+      [8.6,-0.1,0.0],[5.4,1.8,-0.4],[5.7,4.2,2.4],[3.5,5.4,5.1],[0.8,3.0,4.9],
+      [-0.6,0.8,2.4],[-1.3,3.5,0.2],[0.9,5.1,-2.6],[4.2,3.5,-3.6],[7.0,5.8,-2.8]
+    ];
+    // Extended state
+    var uCA = [
+      [0.0,0.0,0.0],[3.8,1.0,0.6],[7.2,-0.3,1.2],[10.8,1.4,0.0],[14.5,-0.2,-0.8],
+      [17.8,1.8,1.0],[21.5,-0.4,0.2],[25.0,1.0,-0.6],[28.5,0.3,0.8],[32.0,1.2,-0.3]
+    ];
+
+    /* ---- 9 conformational perturbations for ensemble grid ---- */
+    var NCONF = 9, confPert = [];
+    for (var c = 0; c < NCONF; c++) {
+      var pert = [];
+      for (var i = 0; i < 10; i++) pert.push([
+        Math.sin(c*7.31+i*2.17+0.53)*3.8 + Math.cos(c*2.19+i*5.83)*2.4,
+        Math.cos(c*5.73+i*3.41+1.27)*3.0 + Math.sin(c*4.17+i*2.93)*2.0,
+        Math.sin(c*3.11+i*4.73+2.31)*3.2 + Math.cos(c*6.43+i*1.71)*2.2
+      ]);
+      confPert.push(pert);
+    }
+    function interpVariant(progress, varIdx) {
+      var co=[], pt=confPert[varIdx], ps=1.0-progress*0.6;
+      for (var i=0;i<10;i++) co.push([
+        uCA[i][0]+(fCA[i][0]-uCA[i][0])*progress+pt[i][0]*ps,
+        uCA[i][1]+(fCA[i][1]-uCA[i][1])*progress+pt[i][1]*ps,
+        uCA[i][2]+(fCA[i][2]-uCA[i][2])*progress+pt[i][2]*ps]);
+      return co;
+    }
+
+    /* ==== Math ==== */
+    function randn(){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+    function clamp(v){return Math.max(0.01,Math.min(0.99,v));}
+    function sampleBVN(d,n){var p=[];for(var i=0;i<n;i++){var z1=randn(),z2=randn();p.push([clamp(d.mx+d.sx*z1),clamp(d.my+d.sy*(d.r*z1+Math.sqrt(1-d.r*d.r)*z2))]);}return p;}
+    /* 3-mode target: TMA (upper-left), TMB (lower-center), TMC (upper-right, inaccessible) */
+    function sampleTgt(n){var p=[];for(var i=0;i<n;i++){var r=Math.random();var m=r<0.35?TMA:(r<0.70?TMB:TMC);p.push([clamp(m.mx+m.sig*randn()),clamp(m.my+m.sig*randn())]);}return p;}
+    function ranks(v){var idx=v.map(function(x,i){return{v:x,i:i}});idx.sort(function(a,b){return a.v-b.v});var r=new Array(v.length);idx.forEach(function(o,k){r[o.i]=k});return r;}
+    function hist(v){var h=new Array(BINS).fill(0),bw=1/BINS;for(var i=0;i<v.length;i++)h[Math.min(BINS-1,Math.max(0,Math.floor(v[i]/bw)))]++;var mx=Math.max.apply(null,h);return h.map(function(x){return mx>0?x/mx:0});}
+    function w1d(a,b){var sa=a.slice().sort(function(x,y){return x-y}),sb=b.slice().sort(function(x,y){return x-y}),s=0,n=Math.min(sa.length,sb.length);for(var i=0;i<n;i++)s+=Math.abs(sa[i]-sb[i]);return s/n;}
+    function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+
+    /* ==== Data ==== */
+    var base,tgt,algn,cur,uniform,uniAlgn,uniCur;
+    function initData(){
+      base=sampleBase(N); tgt=sampleTgt(N);
+      /* Uniform prior: N points spread uniformly over [0,1]² */
+      uniform=[];
+      for(var i=0;i<N;i++) uniform.push([clamp(0.05+0.90*Math.random()),clamp(0.05+0.90*Math.random())]);
+      /* Independence coupling: quantile-match x and y SEPARATELY from uniform → target.
+         Marginals match perfectly; joint is the independence product → many vacuous modes. */
+      var uxR=ranks(uniform.map(function(p){return p[0];}));
+      var uyR=ranks(uniform.map(function(p){return p[1];}));
+      var txSrt=tgt.map(function(p){return p[0];}).sort(function(a,b){return a-b;});
+      var tySrt=tgt.map(function(p){return p[1];}).sort(function(a,b){return a-b;});
+      uniAlgn=uniform.map(function(p,i){return[clamp(txSrt[uxR[i]]),clamp(tySrt[uyR[i]])];});
+      uniCur=uniform.map(function(p){return[p[0],p[1]];});
+      /* Nearest-mode assignment — points visibly flow toward target clusters.
+         Proportions are weighted by target mode weight so the marginals land close.
+         A few points are forced to the vacuous cross-product mode (TMC.x, TMB.y)
+         to show that marginal-only alignment cannot recover the true joint. */
+      var wA=0.35, wB=0.35, wC=0.30; // target mode weights (match sampleTgt)
+      algn=base.map(function(p){
+        var sA=wA*Math.exp(-0.5*((p[0]-TMA.mx)*(p[0]-TMA.mx)+(p[1]-TMA.my)*(p[1]-TMA.my))/(TMA.sig*TMA.sig));
+        var sB=wB*Math.exp(-0.5*((p[0]-TMB.mx)*(p[0]-TMB.mx)+(p[1]-TMB.my)*(p[1]-TMB.my))/(TMB.sig*TMB.sig));
+        var sC=wC*Math.exp(-0.5*((p[0]-TMC.mx)*(p[0]-TMC.mx)+(p[1]-TMC.my)*(p[1]-TMC.my))/(TMC.sig*TMC.sig));
+        var m=(sA>=sB&&sA>=sC)?TMA:(sB>=sC?TMB:TMC);
+        return[clamp(m.mx+m.sig*randn()),clamp(m.my+m.sig*randn())];
+      });
+      /* Vacuous-mode artefact at (TMC.x, TMB.y) = (0.86, 0.22) */
+      [28,134,218].forEach(function(vi){
+        if(vi<algn.length) algn[vi]=[clamp(0.86+0.024*randn()),clamp(0.22+0.024*randn())];
+      });
+      cur=base.map(function(p){return[p[0],p[1]]});
+    }
+
+    /* ==== Text outline helper ==== */
+    function outlinedText(txt,x,y){ctx.fillText(txt,x,y);}
+
+    /* ==== Drawing primitives ==== */
+    function clear(){var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#fdfdfe');g.addColorStop(1,'#f4f4f8');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+    function drawStepDots(s){for(var i=0;i<3;i++){ctx.beginPath();ctx.arc(W/2-20+i*20,13,4,0,6.28);if(i===s){ctx.fillStyle='#7a9cc6';ctx.fill();}else{ctx.strokeStyle='#d0d0d8';ctx.lineWidth=1.2;ctx.stroke();}}}
+    function drawTitle(t){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='600 19px "Google Sans","Noto Sans",sans-serif';var tw=ctx.measureText(t).width;ctx.fillStyle='rgba(220,222,228,0.95)';rrect(W/2-tw/2-10,38-14,tw+20,28,5);ctx.fill();ctx.fillStyle='#333';outlinedText(t,W/2,38);}
+    function drawBottom(t,b,c){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(b?'600 ':'')+'15px "Google Sans","Noto Sans",sans-serif';var bw=ctx.measureText(t).width;ctx.fillStyle='rgba(220,222,228,0.95)';rrect(W/2-bw/2-8,H-14-12,bw+16,24,4);ctx.fill();ctx.fillStyle=c||'#555';outlinedText(t,W/2,H-14);}
+
+    function drawGrid(pl){
+      /* Refined bottom + left spine */
+      ctx.strokeStyle='#444';ctx.lineWidth=2.5;ctx.lineCap='square';
+      ctx.beginPath();ctx.moveTo(pl.x,pl.y+pl.h);ctx.lineTo(pl.x+pl.w,pl.y+pl.h);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(pl.x,pl.y);ctx.lineTo(pl.x,pl.y+pl.h);ctx.stroke();
+      ctx.lineCap='butt';
+    }
+    function drawAxesTicks(pl,skipLabels) {
+      /* No numeric ticks — clean minimal style */
+    }
+    function drawDotsIn(pts,n,cfn,a,r,pl){for(var i=0;i<n;i++){var px=pl.x+pts[i][0]*pl.w,py=pl.y+pl.h-pts[i][1]*pl.h;if(px<pl.x||px>pl.x+pl.w||py<pl.y||py>pl.y+pl.h)continue;ctx.beginPath();ctx.arc(px,py,r*1.15,0,6.28);ctx.fillStyle=cfn(a);ctx.fill();}}
+    function tBars(v,cfn,a,mt){var h=hist(v),bw=mt.w/BINS;for(var i=0;i<BINS;i++){var bh=h[i]*mt.h*0.85;if(bh<0.5)continue;ctx.fillStyle=cfn(a*0.6);var bx=mt.x+i*bw+1,by=mt.y+mt.h-bh,bwi=bw-2,r=Math.min(2.5,bh/2);ctx.beginPath();ctx.moveTo(bx+r,by);ctx.lineTo(bx+bwi-r,by);ctx.quadraticCurveTo(bx+bwi,by,bx+bwi,by+r);ctx.lineTo(bx+bwi,by+bh);ctx.lineTo(bx,by+bh);ctx.lineTo(bx,by+r);ctx.quadraticCurveTo(bx,by,bx+r,by);ctx.fill();}}
+    function tLine(v,col,a,mt){var h=hist(v),bw=mt.w/BINS;ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.globalAlpha=a;ctx.setLineDash([5,4]);for(var i=0;i<BINS;i++){var x=mt.x+(i+.5)*bw,y=mt.y+mt.h-h[i]*mt.h*0.85;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+    function rBars(v,cfn,a,mr){var h=hist(v),bh=mr.h/BINS;for(var i=0;i<BINS;i++){var si=BINS-1-i,bw=h[i]*mr.w*0.85;if(bw<0.5)continue;ctx.fillStyle=cfn(a*0.6);var bx=mr.x,by=mr.y+si*bh+1,bhi=bh-2,r=Math.min(2.5,bw/2);ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+bw-r,by);ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+r);ctx.lineTo(bx+bw,by+bhi-r);ctx.quadraticCurveTo(bx+bw,by+bhi,bx+bw-r,by+bhi);ctx.lineTo(bx,by+bhi);ctx.closePath();ctx.fill();}}
+    function rLine(v,col,a,mr){var h=hist(v),bh=mr.h/BINS;ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.globalAlpha=a;ctx.setLineDash([5,4]);for(var i=0;i<BINS;i++){var si=BINS-1-i,y=mr.y+(si+.5)*bh,x=mr.x+h[i]*mr.w*0.85;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+
+    function drawGhost(pl,alpha){
+      if(alpha<0.005)return;
+      drawDotsIn(tgt,N,redA,alpha,3.0,pl);
+      /* Dashed circle around TMC — sparse prior coverage here means less precise recovery */
+      var tcx=pl.x+TMC.mx*pl.w, tcy=pl.y+pl.h-TMC.my*pl.h;
+      if(tcx>=pl.x&&tcx<=pl.x+pl.w&&tcy>=pl.y&&tcy<=pl.y+pl.h){
+        ctx.save();ctx.setLineDash([4,5]);
+        ctx.strokeStyle=redA(Math.min(0.45,alpha*3));ctx.lineWidth=2.5;
+        ctx.beginPath();ctx.arc(tcx,tcy,24,0,6.28);ctx.stroke();
+        ctx.restore();
+      }
+      /* Label pinned to top-left of scatter — three lines for readability */
+      var la=Math.min(1,alpha*5);
+      var lx=pl.x+6, ly=pl.y+8;
+      var line1='True distribution';
+      var line2='(marginals observed independently';
+      var line3='in separate experiments)';
+      ctx.font='bold italic 14px "Google Sans","Noto Sans",sans-serif';
+      var tw1=ctx.measureText(line1).width;
+      ctx.font='italic 13px "Google Sans","Noto Sans",sans-serif';
+      var tw2=ctx.measureText(line2).width, tw3=ctx.measureText(line3).width;
+      var tw=Math.max(tw1,tw2,tw3);
+      ctx.fillStyle='rgba(220,222,228,'+la*0.95+')';
+      rrect(lx-4,ly-2,tw+10,54,4);ctx.fill();
+      ctx.font='bold italic 14px "Google Sans","Noto Sans",sans-serif';
+      ctx.fillStyle=redA(la*0.88);
+      ctx.textAlign='left';ctx.textBaseline='top';
+      outlinedText(line1,lx,ly);
+      ctx.font='italic 13px "Google Sans","Noto Sans",sans-serif';
+      ctx.fillStyle=redA(la*0.88);
+      outlinedText(line2,lx,ly+17);
+      outlinedText(line3,lx,ly+33);
+    }
+    function drawProjections(pl,m,progress,alpha){if(progress<0.01||alpha<0.01)return;var nHL=8,step=Math.floor(N/nHL),lp=Math.min(1,progress*1.4);ctx.setLineDash([3,4]);for(var k=0;k<nHL;k++){var i=k*step+Math.floor(step/2);if(i>=N)continue;var px=pl.x+tgt[i][0]*pl.w,py=pl.y+pl.h-tgt[i][1]*pl.h;if(px<pl.x||px>pl.x+pl.w||py<pl.y||py>pl.y+pl.h)continue;ctx.strokeStyle=redA(alpha*0.45);ctx.lineWidth=1.8;var topY=m.mt.y+m.mt.h;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,py+(topY-py)*lp);ctx.stroke();var rightX=m.mr.x;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+(rightX-px)*lp,py);ctx.stroke();if(lp>0.85){var da=(lp-0.85)/0.15*alpha;ctx.setLineDash([]);ctx.fillStyle=redA(da*0.55);ctx.beginPath();ctx.arc(px,topY,3.5,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(rightX,py,3.5,0,6.28);ctx.fill();ctx.setLineDash([3,4]);}}ctx.setLineDash([]);}
+    function drawMargLabels(m){
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='italic 13px "Google Sans","Noto Sans",sans-serif';ctx.fillStyle='#999';
+      outlinedText('x\u2081',m.mt.x+m.mt.w/2,m.mt.y-9);
+      ctx.save();ctx.translate(m.mr.x+m.mr.w+14,m.mr.y+m.mr.h/2);ctx.rotate(-Math.PI/2);outlinedText('x\u2082',0,0);ctx.restore();
+    }
+
+    function drawScatterFull(pl,pts,tx,ty,isAligned,showW1,alignBlend,secPts,secBlend){
+      /* alignBlend (0→1): morphs blue bars toward target. secPts/secBlend: optional
+         grey secondary layer drawn BEHIND blue (smaller dots, subdued bars). */
+      var blend=(alignBlend!==undefined)?alignBlend:(isAligned?1:0);
+      var m=margOf(pl);drawGrid(pl);drawAxesTicks(pl,true);
+      /* Refined spines for marginal panels */
+      ctx.strokeStyle='#666';ctx.lineWidth=1.8;ctx.lineCap='square';
+      ctx.beginPath();ctx.moveTo(m.mt.x,m.mt.y+m.mt.h);ctx.lineTo(m.mt.x+m.mt.w,m.mt.y+m.mt.h);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(m.mr.x,m.mr.y+m.mr.h);ctx.lineTo(m.mr.x+m.mr.w,m.mr.y+m.mr.h);ctx.stroke();
+      ctx.lineCap='butt';
+      /* ── Grey secondary layer (uniform prior) drawn first, behind blue ── */
+      if(secPts){
+        var sb=(secBlend!==undefined)?secBlend:0;
+        var scx=secPts.map(function(p){return p[0];}),scy=secPts.map(function(p){return p[1];});
+        var sBarsX=scx.map(function(v,i){return v*(1-sb)+tx[i]*sb;});
+        var sBarsY=scy.map(function(v,i){return v*(1-sb)+ty[i]*sb;});
+        tBars(sBarsX,greyA,0.48,m.mt); rBars(sBarsY,greyA,0.48,m.mr);
+        drawDotsIn(secPts,N,greyA,0.30,3.0,pl);
+      }
+      /* ── Primary blue layer ── */
+      drawDotsIn(pts,N,blueA,0.45,3.0,pl);var cx=pts.map(function(p){return p[0]}),cy=pts.map(function(p){return p[1]});
+      /* Interpolate bar values between current and target — no snap, fully smooth */
+      var barsX=cx.map(function(v,i){return v*(1-blend)+tx[i]*blend;});
+      var barsY=cy.map(function(v,i){return v*(1-blend)+ty[i]*blend;});
+      tBars(barsX,blueA,0.7,m.mt);rBars(barsY,blueA,0.7,m.mr);tLine(tx,RED,0.85,m.mt);rLine(ty,RED,0.85,m.mr);drawMargLabels(m);
+      if(showW1){var w1x=w1d(cx,tx),w1y=w1d(cy,ty),lx=m.mr.x+m.mr.w+16;ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='bold 13px "Courier New",monospace';ctx.fillStyle=isAligned?GREEN:'#B85450';
+        outlinedText('W\u2081(x\u2081) = '+w1x.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+12);
+        outlinedText('W\u2081(x\u2082) = '+w1y.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+30);
+        ctx.font='bold 14px "Google Sans","Noto Sans",sans-serif';ctx.beginPath();ctx.arc(lx,pl.y+55,5,0,6.28);ctx.fillStyle=BLUE;ctx.fill();
+        ctx.fillStyle='#222';outlinedText(isAligned?'ADAPO':'Physical Prior',lx+12,pl.y+55);
+        ctx.setLineDash([5,3]);ctx.strokeStyle=RED;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(lx-5,pl.y+73);ctx.lineTo(lx+7,pl.y+73);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='#222';outlinedText('Experimentally observed data',lx+12,pl.y+73);}
+    }
+
+    /* =========================================================
+       3D BACKBONE RENDERING  –  core + 3×3 ensemble grid
+       ========================================================= */
+    function center3D(coords){var cx=0,cy=0,cz=0,n=coords.length;for(var i=0;i<n;i++){cx+=coords[i][0];cy+=coords[i][1];cz+=coords[i][2];}cx/=n;cy/=n;cz/=n;return coords.map(function(p){return[p[0]-cx,p[1]-cy,p[2]-cz];});}
+    function catmull(p0,p1,p2,p3,t){var t2=t*t,t3=t2*t;return{px:0.5*((2*p1.px)+(-p0.px+p2.px)*t+(2*p0.px-5*p1.px+4*p2.px-p3.px)*t2+(-p0.px+3*p1.px-3*p2.px+p3.px)*t3),py:0.5*((2*p1.py)+(-p0.py+p2.py)*t+(2*p0.py-5*p1.py+4*p2.py-p3.py)*t2+(-p0.py+3*p1.py-3*p2.py+p3.py)*t3)};}
+    function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+
+    /* Draw one backbone given centred coords & shared maxExt */
+    function drawBackboneAt(centered,maxExt,rotAngle,alpha,pcx,pcy,maxR,lineW,sphereR){
+      if(alpha<0.01)return;
+      var scale=maxExt>0?(maxR*0.72)/maxExt:3;
+      var cosR=Math.cos(rotAngle),sinR=Math.sin(rotAngle);
+      var pts=centered.map(function(p){var x=p[0]*cosR-p[2]*sinR,z=p[0]*sinR+p[2]*cosR;return{px:pcx+x*scale,py:pcy-p[1]*scale,z:z};});
+      var NR=10,SEGS=5; ctx.lineCap='round';
+      for(var i=0;i<NR-1;i++){var p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(NR-1,i+2)];
+        for(var j=0;j<SEGS;j++){var t1=j/SEGS,t2=(j+1)/SEGS;var a=catmull(p0,p1,p2,p3,t1),b=catmull(p0,p1,p2,p3,t2);
+          var frac=(i+(t1+t2)/2)/(NR-1),zMid=p1.z+(p2.z-p1.z)*(t1+t2)/2;
+          var dF=0.5+0.5*Math.max(0,Math.min(1,(zMid+maxExt)/(2*maxExt)));var hue=240-frac*240;
+          ctx.strokeStyle='hsla('+hue+',75%,48%,'+Math.min(1,alpha*dF)+')';ctx.lineWidth=lineW*dF;
+          ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.stroke();}}
+      var sorted=pts.map(function(p,i){return{px:p.px,py:p.py,z:p.z,i:i};}).sort(function(a,b){return a.z-b.z;});
+      for(var k=0;k<sorted.length;k++){var sp=sorted[k];
+        var dF=0.5+0.5*Math.max(0,Math.min(1,(sp.z+maxExt)/(2*maxExt)));var hue=240-sp.i/(NR-1)*240;
+        ctx.fillStyle='hsla('+hue+',75%,48%,'+Math.min(1,alpha*dF*0.92)+')';
+        ctx.beginPath();ctx.arc(sp.px,sp.py,sphereR*dF,0,6.28);ctx.fill();}
+    }
+
+    /* Compute all 9 variants centred + shared maxExt (uniform progress) */
+    function prepareEnsemble(progress) {
+      var all=[],mxE=0;
+      for(var c=0;c<9;c++){var co=interpVariant(progress,c),ce=center3D(co);all.push(ce);
+        for(var i=0;i<ce.length;i++) for(var j=0;j<3;j++) mxE=Math.max(mxE,Math.abs(ce[i][j]));}
+      return {centered:all, maxExt:mxE};
+    }
+    /* Prior: intermediate / mid-range conformations — the base model covers broad but unresolved states.
+       No cell is at the extended or compact extreme; everything sits somewhere in the middle. */
+    var _wideProgs=[0.30,0.55,0.40,0.65,0.48,0.35,0.60,0.42,0.52];
+    /* Aligned: clearly bimodal — odd cells → very extended (TMA: large Ree, small Rg),
+                                   even cells → very compact (TMB: small Ree, medium Rg).
+       Δ per cell: ~0.55-0.65 of full range → dramatic morph that is unmistakably visible. */
+    var _algnProgs=[0.06,0.92,0.07,0.91,0.05,0.90,0.08,0.93,0.06];
+    function prepareEnsembleFromProgs(progs){
+      var all=[],mxE=0;
+      for(var c=0;c<9;c++){var co=interpVariant(progs[c],c),ce=center3D(co);all.push(ce);
+        for(var i=0;i<ce.length;i++)for(var j=0;j<3;j++)mxE=Math.max(mxE,Math.abs(ce[i][j]));}
+      return{centered:all,maxExt:mxE};
+    }
+    function prepareEnsembleWide(){return prepareEnsembleFromProgs(_wideProgs);}
+
+    /* ── Rotation helper ──────────────────────────────────────────────────────
+       A–D  (t < TD)  : free Y-axis spin; each cell has a unique phase offset.
+
+       E    (TD–TE)   : freeze at the Phase-D angle (seamless), then smoothly
+                        rotate to the OPTIMAL viewing angle (near face-on so the
+                        chain's longest axis — the main fold direction — stays in
+                        the projection plane).  Rotation takes the shortest path.
+                        Jitter is superimposed with a sin(πap) envelope that is
+                        exactly 0 at both ap=0 and ap=1, so both seams are clean.
+
+       F    (t ≥ TE)  : resume spinning from optAngle.  At t=TE:
+                          easeToOpt = ease(1.8) → clamped to 1 → baseAngle = optAngle
+                          jitter    = 0.10·sin(π·1)·... = 0
+                        → value = optAngle + 0.  Phase F starts at the same value.
+                        Zero jump, zero pause — fully seamless.
+    ── */
+    function cellRot(idx, t) {
+      var SPEED = 0.42;
+      /* Face-on to the chain's X-axis (longest end-to-end extent).
+         Small per-cell spread keeps the grid visually varied.         */
+      var optAngle = 0.15 + idx * 0.08;
+
+      if (t < TD) {
+        return idx * 0.70 + t * SPEED;   /* free spin */
+      }
+
+      var frozenAngle = idx * 0.70 + TD * SPEED;
+      /* Shortest-path diff from frozenAngle → optAngle */
+      var diff = optAngle - frozenAngle;
+      while (diff >  Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+
+      if (t < TE) {
+        var ap = ease(Math.min(1, (t - TD) / 5.5));
+        /* Ease to optAngle over the first ~55 % of the morph, hold after */
+        var easeToOpt = ease(Math.min(1, ap * 1.8));
+        var baseAngle = frozenAngle + diff * easeToOpt;
+        /* Jitter: peaks at ap = 0.5, exactly 0 at ap = 0 and ap = 1 */
+        var jitter = 0.10 * Math.sin(Math.PI * ap)
+                   * Math.sin(t * (7.2 + idx * 0.35) + idx * 1.4);
+        return baseAngle + jitter;
+      }
+
+      /* Phase F: spin from optAngle — guaranteed seamless at t = TE */
+      return optAngle + (t - TE) * SPEED;
+    }
+
+    /* 3×3 grid inset — purely visual, no text labels */
+    function drawConfGrid(progress,globalT,alpha,gcx,gcy,gridR){
+      if(alpha<0.01)return;
+      var saveA=ctx.globalAlpha; ctx.globalAlpha=alpha;
+      var bx=gcx-gridR-10,by=gcy-gridR-10,bw=2*gridR+20,bh=2*gridR+20;
+      ctx.shadowColor='rgba(0,0,0,0.07)';ctx.shadowBlur=10;ctx.shadowOffsetY=2;
+      ctx.fillStyle='rgba(255,255,255,0.93)';rrect(bx,by,bw,bh,9);ctx.fill();
+      ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+      ctx.strokeStyle='#dde0e8';ctx.lineWidth=1;rrect(bx,by,bw,bh,9);ctx.stroke();
+
+      /* progress<0 → wide prior ensemble (each cell at a different progress) */
+      var ens=progress<0?prepareEnsembleWide():prepareEnsemble(progress);
+      var cellR=gridR/3.3, gap=cellR*0.35, step=2*cellR+gap;
+      for(var row=0;row<3;row++) for(var col=0;col<3;col++){
+        var idx=row*3+col;
+        var cx=gcx+(col-1)*step, cy=gcy+(row-1)*step;
+        ctx.fillStyle='rgba(240,242,248,0.4)';ctx.beginPath();ctx.arc(cx,cy,cellR*0.92,0,6.28);ctx.fill();
+        ctx.strokeStyle='rgba(200,200,210,0.3)';ctx.lineWidth=0.5;ctx.beginPath();ctx.arc(cx,cy,cellR*0.92,0,6.28);ctx.stroke();
+        drawBackboneAt(ens.centered[idx],ens.maxExt,cellRot(idx,globalT),alpha,cx,cy,cellR*0.85,3,2.2);
+      }
+      ctx.globalAlpha=saveA;
+    }
+
+    /* Curved sample arrows from highlighted scatter dots to the grid panel */
+    function drawSampleArrows(pl,alpha,t){
+      if(alpha<0.01)return;
+      var SIDX=[22,105,200], panelX=GRID_CX-GRID_R-10;
+      var targY=[GRID_CY-GRID_R*0.6, GRID_CY, GRID_CY+GRID_R*0.6];
+      for(var k=0;k<3;k++){
+        var pidx=SIDX[k]; if(pidx>=base.length)continue;
+        var px=pl.x+base[pidx][0]*pl.w, py=pl.y+pl.h-base[pidx][1]*pl.h;
+        if(px<pl.x||px>pl.x+pl.w||py<pl.y||py>pl.y+pl.h)continue;
+        var iy=targY[k];
+        /* pulsing dot */
+        var pulse=1+0.1*Math.sin(t*3.5+k*1.7);
+        ctx.beginPath();ctx.arc(px,py,4.5*pulse,0,6.28);
+        ctx.fillStyle=blueA(alpha*0.85);ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,'+alpha*0.7+')';ctx.lineWidth=1.5;ctx.stroke();
+        /* curved dashed line to panel */
+        ctx.setLineDash([4,3]);
+        ctx.strokeStyle='rgba(80,100,180,'+alpha*0.28+')';ctx.lineWidth=1.1;
+        var cpx=(px+panelX)/2+18, cpy=(py+iy)/2-8;
+        ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(cpx,cpy,panelX,iy);ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    /* 3×3 mini grid (no panel, for before/after)
+       progress<0 → wide prior  |  progress>1 → bimodal aligned  |  else → uniform progress */
+    function drawConfGridSmall(progress,rotAngle,alpha,gcx,gcy,gridR){
+      if(alpha<0.01)return;
+      var saveA=ctx.globalAlpha; ctx.globalAlpha=alpha;
+      var ens=progress<0?prepareEnsembleWide():(progress>1?prepareEnsembleFromProgs(_algnProgs):prepareEnsemble(progress));
+      var cellR=gridR/3.3, gap=cellR*0.3, step=2*cellR+gap;
+      for(var row=0;row<3;row++) for(var col=0;col<3;col++){
+        var idx=row*3+col;
+        var cx=gcx+(col-1)*step, cy=gcy+(row-1)*step;
+        drawBackboneAt(ens.centered[idx],ens.maxExt,rotAngle,alpha,cx,cy,cellR*0.8,2,1.5);
+      }
+      ctx.globalAlpha=saveA;
+    }
+
+    /* 1σ / 2σ ellipses for each prior component — shown briefly after conformations */
+    /* Uniform-prior visual: flat grey fill + dashed border + centred label.
+       Contrasts with the structured blue level curves of the learned prior. */
+    function drawUniformOverlay(pl,alpha){
+      if(alpha<0.01)return;
+      ctx.save();
+      ctx.beginPath();ctx.rect(pl.x,pl.y,pl.w,pl.h);ctx.clip();
+      /* Flat fill — constant density */
+      ctx.fillStyle=greyA(alpha*0.10);
+      ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
+      /* Dashed inset rectangle */
+      ctx.setLineDash([6,4]);ctx.strokeStyle=greyA(alpha*0.42);ctx.lineWidth=3;
+      var ins=14;ctx.strokeRect(pl.x+ins,pl.y+ins,pl.w-2*ins,pl.h-2*ins);ctx.setLineDash([]);
+      ctx.restore();
+    }
+    function drawUniformLabel(pl,alpha){
+      if(alpha<0.01)return;
+      var la=Math.min(1,alpha*2.2);
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font='bold italic 16px "Google Sans","Noto Sans",sans-serif';
+      var uTxt='No physical prior',uTw=ctx.measureText(uTxt).width;
+      ctx.fillStyle='rgba(220,222,228,'+la*0.95+')';
+      rrect(pl.x+pl.w/2-uTw/2-10,pl.y+pl.h/2-14,uTw+20,28,5);ctx.fill();
+      ctx.fillStyle='rgba(40,40,40,'+la*0.88+')';
+      outlinedText(uTxt,pl.x+pl.w/2,pl.y+pl.h/2);
+    }
+
+    function drawLevelCurves(pl,alpha){
+      if(alpha<0.01)return;
+      var comps=[BD1,BD2,BD3];
+      ctx.save();
+      /* Clip to scatter area so fills never bleed outside the plot */
+      ctx.beginPath(); ctx.rect(pl.x,pl.y,pl.w,pl.h); ctx.clip();
+      /* Layered fills: draw 3σ→2σ→1σ for ALL components before stroking.
+         Higher alpha at each sigma so blobs visibly merge where they overlap. */
+      [3,2,1].forEach(function(s,si){
+        var fa=alpha*[0.09,0.15,0.22][si];
+        comps.forEach(function(c){
+          var cx=pl.x+c.mx*pl.w, cy=pl.y+pl.h-c.my*pl.h;
+          ctx.fillStyle=blueA(fa);
+          ctx.beginPath(); ctx.ellipse(cx,cy,c.sx*pl.w*s,c.sy*pl.h*s,0,0,Math.PI*2); ctx.fill();
+        });
+      });
+      /* 1σ solid + 2σ dashed strokes on top */
+      comps.forEach(function(c){
+        var cx=pl.x+c.mx*pl.w, cy=pl.y+pl.h-c.my*pl.h;
+        ctx.setLineDash([]);
+        ctx.strokeStyle=blueA(alpha*0.75); ctx.lineWidth=3;
+        ctx.beginPath(); ctx.ellipse(cx,cy,c.sx*pl.w,c.sy*pl.h,0,0,Math.PI*2); ctx.stroke();
+        ctx.setLineDash([5,4]);
+        ctx.strokeStyle=blueA(alpha*0.35); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.ellipse(cx,cy,c.sx*pl.w*2,c.sy*pl.h*2,0,0,Math.PI*2); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      /* Label — drawn inside clip (bottom-left of plot, away from curves) */
+      var la=Math.min(1,alpha*2.8);
+      ctx.globalAlpha=la;
+      ctx.textAlign='left'; ctx.textBaseline='bottom';
+      ctx.font='bold italic 15px "Google Sans","Noto Sans",sans-serif';
+      var lcTxt='\u03BC\u2080  \u2014  Physical Prior';
+      var lcTw=ctx.measureText(lcTxt).width;
+      ctx.fillStyle='rgba(220,222,228,0.95)';
+      rrect(pl.x+2,pl.y+pl.h-28,lcTw+12,24,4);ctx.fill();
+      ctx.fillStyle=BLUE;
+      outlinedText(lcTxt,pl.x+6,pl.y+pl.h-8);
+      ctx.globalAlpha=1;
+      ctx.restore();
+    }
+
+    /* 3×3 grid that morphs per-cell from wide-prior spread → bimodal aligned state during Phase E */
+    function drawConfGridMorph(ap,globalT,alpha,gcx,gcy,gridR){
+      if(alpha<0.01)return;
+      var saveA=ctx.globalAlpha; ctx.globalAlpha=alpha;
+      var bx=gcx-gridR-10,by=gcy-gridR-10,bw=2*gridR+20,bh=2*gridR+20;
+      ctx.shadowColor='rgba(0,0,0,0.07)';ctx.shadowBlur=10;ctx.shadowOffsetY=2;
+      ctx.fillStyle='rgba(255,255,255,0.93)';rrect(bx,by,bw,bh,9);ctx.fill();
+      ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+      ctx.strokeStyle='#dde0e8';ctx.lineWidth=1;rrect(bx,by,bw,bh,9);ctx.stroke();
+      /* each cell interpolates from its wide-prior progress to its aligned-bimodal progress */
+      var all=[],mxE=0;
+      for(var c=0;c<9;c++){
+        var p=_wideProgs[c]*(1-ap)+_algnProgs[c]*ap;
+        var co=interpVariant(p,c),ce=center3D(co);all.push(ce);
+        for(var i=0;i<ce.length;i++)for(var j=0;j<3;j++)mxE=Math.max(mxE,Math.abs(ce[i][j]));
+      }
+      var cellR=gridR/3.3,gap=cellR*0.35,step=2*cellR+gap;
+      for(var row=0;row<3;row++) for(var col=0;col<3;col++){
+        var idx=row*3+col,cx=gcx+(col-1)*step,cy=gcy+(row-1)*step;
+        ctx.fillStyle='rgba(240,242,248,0.4)';ctx.beginPath();ctx.arc(cx,cy,cellR*0.92,0,6.28);ctx.fill();
+        ctx.strokeStyle='rgba(200,200,210,0.3)';ctx.lineWidth=0.5;ctx.beginPath();ctx.arc(cx,cy,cellR*0.92,0,6.28);ctx.stroke();
+        drawBackboneAt(all[idx],mxE,cellRot(idx,globalT),alpha,cx,cy,cellR*0.85,3,2.2);
+      }
+      ctx.globalAlpha=saveA;
+    }
+
+    /* =========================================================
+       LARGE MARGINAL PANELS  (shown from Phase D onward below the scatter)
+       Two side-by-side histogram panels spanning the full canvas width.
+       ========================================================= */
+    /* Scatter bottom=397, x-ticks ~412, x-label top=417 bottom~430 → 8px gap → panel top 438
+       Panel title (bottom-aligned) at y-6 = 432, so 2px clear of axis label. Comfortable. */
+    var BMX={x:48,  y:456, w:318, h:96};   /* Observable x₁ */
+    var BMY={x:414, y:456, w:318, h:96};   /* Observable x₂ */
+
+    function drawBigMarginals(bxv,byv,txv,tyv,alpha,cfn,barLabel,gBxv,gByv,greyLabel){
+      if(alpha<0.01)return;
+      cfn = cfn || blueA;
+      barLabel = barLabel || 'Physical Prior';
+      greyLabel = greyLabel || 'Uniform Prior';
+      /* Refined spines for big marginal panels */
+      ctx.strokeStyle='rgba(80,80,80,'+alpha+')'; ctx.lineWidth=2;ctx.lineCap='square';
+      ctx.beginPath();ctx.moveTo(BMX.x,BMX.y+BMX.h);ctx.lineTo(BMX.x+BMX.w,BMX.y+BMX.h);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(BMY.x,BMY.y+BMY.h);ctx.lineTo(BMY.x+BMY.w,BMY.y+BMY.h);ctx.stroke();
+      ctx.lineCap='butt';
+      /* Grey bars first (behind), if a second dataset is provided */
+      if(gBxv){ tBars(gBxv,greyA,0.55*alpha,BMX); tBars(gByv,greyA,0.55*alpha,BMY); }
+      /* Primary bars + target line on top */
+      tBars(bxv,cfn,0.70*alpha,BMX); tLine(txv,RED,0.85*alpha,BMX);
+      tBars(byv,cfn,0.70*alpha,BMY); tLine(tyv,RED,0.85*alpha,BMY);
+      /* Observable axis labels above each panel */
+      ctx.font='bold 15px "Google Sans","Noto Sans",sans-serif';
+      ctx.fillStyle='rgba(40,40,40,'+alpha+')';
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      outlinedText('Observable x\u2081',BMX.x+BMX.w/2,BMX.y-6);
+      outlinedText('Observable x\u2082',BMY.x+BMY.w/2,BMY.y-6);
+      /* Legend — three items when grey is present, two otherwise */
+      var ley=BMX.y+BMX.h+22;
+      ctx.font='bold 14px "Google Sans","Noto Sans",sans-serif';
+      ctx.fillStyle='rgba(40,40,40,'+alpha+')';
+      ctx.textAlign='left'; ctx.textBaseline='middle';
+      if(gBxv){
+        /* [grey] greyLabel  [blue] barLabel  [orange--] True */
+        var greyW=ctx.measureText(greyLabel).width;
+        var blueW=ctx.measureText(barLabel).width;
+        var totalW=14+greyW+24+14+blueW+24+20+ctx.measureText('True').width;
+        var lex=W/2-totalW/2;
+        ctx.beginPath();ctx.rect(lex,ley-5,14,10);ctx.fillStyle=greyA(0.55*alpha);ctx.fill();
+        ctx.fillStyle='rgba(40,40,40,'+alpha+')';outlinedText(greyLabel,lex+18,ley);
+        var bx2=lex+18+greyW+24;
+        ctx.beginPath();ctx.rect(bx2,ley-5,14,10);ctx.fillStyle=cfn(0.70*alpha);ctx.fill();
+        ctx.fillStyle='rgba(40,40,40,'+alpha+')';outlinedText(barLabel,bx2+18,ley);
+        var rx=bx2+18+blueW+24;
+        ctx.setLineDash([5,4]);ctx.strokeStyle=redA(alpha);ctx.lineWidth=3.5;
+        ctx.beginPath();ctx.moveTo(rx,ley);ctx.lineTo(rx+20,ley);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='rgba(40,40,40,'+alpha+')';outlinedText('True',rx+24,ley);
+      } else {
+        var lex=W/2-110;
+        ctx.beginPath();ctx.rect(lex,ley-5,14,10);ctx.fillStyle=cfn(0.55*alpha);ctx.fill();
+        ctx.fillStyle='rgba(40,40,40,'+alpha+')';outlinedText(barLabel,lex+18,ley);
+        ctx.setLineDash([5,4]);ctx.strokeStyle=redA(alpha);ctx.lineWidth=3.5;
+        ctx.beginPath();ctx.moveTo(lex+162,ley);ctx.lineTo(lex+182,ley);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='rgba(40,40,40,'+alpha+')';outlinedText('True',lex+186,ley);
+      }
+      /* Call-to-action headline */
+      ctx.font='bold 17px "Google Sans","Noto Sans",sans-serif';
+      ctx.fillStyle='rgba(30,30,30,'+alpha+')'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      outlinedText('Align using multiple partial observations',W/2,BMX.y+BMX.h+48);
+    }
+
+    /* =========================================================
+       RENDER
+       ========================================================= */
+    /* Grid sits inline with the scatter: vertically centred, immediately to its right.
+       PL right edge=353, right-marginal right=353+10+48=411, gap=22 → grid panel left=433.
+       GRID_CX = 433 + GRID_R + 10 = 433 + 125 + 10 = 568  */
+    var GRID_CX=568, GRID_CY=254, GRID_R=125;
+
+    /* ---- Annotation helpers (used in Phase F1) ---- */
+    function _d2c(pl,nx,ny){return{x:pl.x+nx*pl.w, y:pl.y+pl.h-ny*pl.h};}
+    function _drawCalloutArrow(fromX,fromY,toX,toY,color,alpha){
+      ctx.save();
+      ctx.strokeStyle=color; ctx.fillStyle=color; ctx.globalAlpha=alpha;
+      ctx.lineWidth=2.5; ctx.setLineDash([]);
+      var mx=(fromX+toX)/2, my=(fromY+toY)/2;
+      var dx=toX-fromX, dy=toY-fromY, len=Math.sqrt(dx*dx+dy*dy)||1;
+      var px=-dy/len*18, py=dx/len*18;
+      var cpx=mx+px, cpy=my+py;
+      ctx.beginPath(); ctx.moveTo(fromX,fromY);
+      ctx.quadraticCurveTo(cpx,cpy,toX,toY); ctx.stroke();
+      var at=0.92, ax=fromX*(1-at)*(1-at)+2*cpx*at*(1-at)+toX*at*at;
+      var ay=fromY*(1-at)*(1-at)+2*cpy*at*(1-at)+toY*at*at;
+      var angle=Math.atan2(toY-ay,toX-ax);
+      ctx.beginPath();
+      ctx.moveTo(toX,toY);
+      ctx.lineTo(toX-8*Math.cos(angle-0.35),toY-8*Math.sin(angle-0.35));
+      ctx.lineTo(toX-8*Math.cos(angle+0.35),toY-8*Math.sin(angle+0.35));
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    function render(t){
+      var _pl=getPL(t); PL.x=_pl.x; PL.y=_pl.y; PL.w=_pl.w; PL.h=_pl.h;
+      clear();
+      var tx=tgt.map(function(p){return p[0]}),ty=tgt.map(function(p){return p[1]});
+      var bx=base.map(function(p){return p[0]}),by=base.map(function(p){return p[1]});
+      var ux=uniform.map(function(p){return p[0]}),uy=uniform.map(function(p){return p[1]});
+
+      /* ===== A: Two sequential rains + level curves (0 → TA=8.0s) =====
+         0.0–1.8   Blue learned-prior rain
+         2.0–3.5   Blue level curves (learned prior density)
+         4.0–5.8   Grey uniform-prior rain
+         5.8–7.3   Grey "no prior" overlay
+         7.3–8.0   Brief hold — both dot sets visible               */
+      if(t<TA){
+        /* Blue rain: 0.2→1.8 */
+        var rS=0.2,rD=1.5,nBlue=Math.min(N,Math.max(0,Math.floor((t-rS)/rD*N)));
+        /* Blue level curves: 2.0→3.5 (fade-in 0.5 / hold 0.5 / fade-out 0.5) */
+        var blueCrvA=0;
+        if(t>=2.0&&t<3.5){var lc=t-2.0;blueCrvA=lc<0.5?ease(lc/0.5):(lc<1.0?1:ease(Math.max(0,1-(lc-1.0)/0.5)));}
+        /* Grey rain: 4.0→5.8 */
+        var gS=4.0,gD=1.6,nGrey=t>gS?Math.min(N,Math.max(0,Math.floor((t-gS)/gD*N))):0;
+        /* Grey uniform overlay: 5.8→7.3 (fade-in 0.5 / hold 0.5 / fade-out 0.5) */
+        var greyOvrA=0;
+        if(t>=5.8&&t<7.3){var go=t-5.8;greyOvrA=go<0.5?ease(go/0.5):(go<1.0?1:ease(Math.max(0,1-(go-1.0)/0.5)));}
+
+        drawGrid(PL);drawAxesTicks(PL,true);
+
+        /* Grey dots (behind) — fall into place with eased motion */
+        for(var i=0;i<nGrey;i++){
+          var age=t-(gS+i/N*gD);
+          var fp=Math.min(1,age/0.4),ep=ease(fp);
+          var px=PL.x+uniform[i][0]*PL.w;
+          var finalPy=PL.y+PL.h-uniform[i][1]*PL.h;
+          var py=PL.y-8+(finalPy-PL.y+8)*ep;
+          if(px<PL.x||px>PL.x+PL.w)continue;
+          ctx.beginPath();ctx.arc(px,py,3.2*(0.6+0.4*ep),0,6.28);
+          ctx.fillStyle=greyA(0.06+0.19*ep);ctx.fill();
+        }
+        /* Grey uniform overlay */
+        if(greyOvrA>0.01) drawUniformOverlay(PL,greyOvrA);
+
+        /* Blue dots — fall into place with eased motion */
+        if(nBlue>=N){drawDotsIn(base,N,blueA,0.45,3.5,PL);}
+        else{
+          for(var i=0;i<nBlue;i++){
+            var age=t-(rS+i/N*rD);
+            var fp=Math.min(1,age/0.4),ep=ease(fp);
+            var px=PL.x+base[i][0]*PL.w;
+            var finalPy=PL.y+PL.h-base[i][1]*PL.h;
+            var py=PL.y-8+(finalPy-PL.y+8)*ep;
+            if(px<PL.x||px>PL.x+PL.w)continue;
+            ctx.beginPath();ctx.arc(px,py,3.5*(0.6+0.4*ep),0,6.28);
+            ctx.fillStyle=blueA(0.12+0.33*ep);ctx.fill();
+          }
+        }
+        /* Blue level curves (drawn ON TOP of blue dots) */
+        if(blueCrvA>0.01) drawLevelCurves(PL,blueCrvA);
+        /* Uniform label ON TOP of all dots */
+        if(greyOvrA>0.01) drawUniformLabel(PL,greyOvrA);
+
+        /* Title — changes with each sub-phase */
+        if(t<2.0)       drawTitle('Physical Prior \u2014 structurally informed');
+        else if(t<3.8)  drawTitle('Physical Prior \u2014 learned density');
+        else if(t<5.8)  drawTitle('Uniform Prior \u2014 no physical bias');
+        else if(t<7.5)  drawTitle('Uniform Prior \u2014 flat everywhere');
+      }
+
+      /* ===== B: Conformations grid appears inline with scatter (TA → TB=7.2s) ===== */
+      else if(t<TB){
+        var lt=t-TA,gridA=ease(Math.min(1,lt/1.6));
+        drawGrid(PL);drawAxesTicks(PL,true);
+        drawDotsIn(uniCur,N,greyA,0.28,3.0,PL);
+        drawDotsIn(base,N,blueA,0.40,3.0,PL);
+        drawConfGrid(-1,t,gridA,GRID_CX,GRID_CY,GRID_R);
+        if(gridA>0.25) drawSampleArrows(PL,ease(Math.min(1,(gridA-0.25)/0.6)),t);
+      }
+
+      /* ===== C: Level curves appear briefly, then fade (TB → TC=10.0s) ===== */
+      else if(t<TC){
+        var lt=t-TB,dur=TC-TB;
+        var lcA=lt<1.1?ease(lt/1.1):(lt<2.0?1.0:ease(Math.max(0,1-(lt-2.0)/0.8)));
+        var arrA=Math.max(0,ease(1-lt/1.0));
+        drawGrid(PL);drawAxesTicks(PL,true);
+        drawDotsIn(uniCur,N,greyA,0.28,3.0,PL);
+        drawDotsIn(base,N,blueA,0.40,3.0,PL);
+        drawLevelCurves(PL,lcA);
+        drawConfGrid(-1,t,1,GRID_CX,GRID_CY,GRID_R);
+        if(arrA>0.01) drawSampleArrows(PL,arrA,t);
+      }
+
+      /* ===== D: Ghost + projection lines + marginals + large panels (TC → TD=15.5s) ===== */
+      else if(t<TD){
+        var lt=t-TC;
+        var ghostA=ease(Math.min(1,lt/1.4))*0.32;
+        var projProg=ease(Math.min(1,Math.max(0,(lt-0.8)/2.5)));
+        var margAlpha=ease(Math.min(1,Math.max(0,(lt-1.5)/2.8)));
+        var bigMargA=ease(Math.min(1,Math.max(0,(lt-2.2)/1.8)));
+        var m=margOf(PL);
+        drawGrid(PL);drawAxesTicks(PL,true);
+        drawDotsIn(uniCur,N,greyA,0.28,3.0,PL);
+        drawDotsIn(base,N,blueA,0.40,3.0,PL);
+        drawGhost(PL,ghostA);
+        /* Refined spines for marginal panels in phase D */
+        ctx.strokeStyle='#666';ctx.lineWidth=1.8;ctx.lineCap='square';
+        ctx.beginPath();ctx.moveTo(m.mt.x,m.mt.y+m.mt.h);ctx.lineTo(m.mt.x+m.mt.w,m.mt.y+m.mt.h);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(m.mr.x,m.mr.y+m.mr.h);ctx.lineTo(m.mr.x+m.mr.w,m.mr.y+m.mr.h);ctx.stroke();
+        ctx.lineCap='butt';
+        if(projProg>0.01) drawProjections(PL,m,projProg,Math.min(1,ghostA/0.2));
+        tLine(tx,RED,0.85*margAlpha,m.mt);rLine(ty,RED,0.85*margAlpha,m.mr);
+        var blueFade=Math.max(0,(margAlpha-0.5)/0.5);
+        if(blueFade>0.01){
+          /* Grey bars first (behind), then blue bars on top — BOTH visible */
+          tBars(ux,greyA,0.38*blueFade,m.mt);rBars(uy,greyA,0.38*blueFade,m.mr);
+          tBars(bx,blueA,0.65*blueFade,m.mt);rBars(by,blueA,0.65*blueFade,m.mr);
+        }
+        if(margAlpha>0.01)drawMargLabels(m);
+        drawConfGrid(-1,t,1,GRID_CX,GRID_CY,GRID_R);
+        if(bigMargA>0.01) drawBigMarginals(bx,by,tx,ty,bigMargA,blueA,'Physical Prior',ux,uy,'Uniform Prior');
+      }
+
+      /* ===== E: Alignment (TD → TE=23.0s) — both priors align simultaneously ===== */
+      else if(t<TE){
+        var lt=t-TD,ap=ease(Math.min(1,lt/6.0));
+        /* Blue: learned prior → nearest-mode (with gentle per-particle stagger) */
+        for(var i=0;i<N;i++){
+          var stagger=0.92+0.08*Math.sin(i*0.47);
+          var pi=ease(Math.min(1,ap*stagger/(stagger*0.92)));
+          var jx=0,jy=0;
+          if(pi<0.98){var ja=0.005*Math.sin(Math.PI*pi);jx=ja*Math.sin(lt*3.2+i*1.3);jy=ja*Math.cos(lt*2.8+i*1.1);}
+          cur[i][0]=clamp(base[i][0]+(algn[i][0]-base[i][0])*pi+jx);
+          cur[i][1]=clamp(base[i][1]+(algn[i][1]-base[i][1])*pi+jy);
+        }
+        /* Grey: uniform prior → independence coupling (smoother, no jitter) */
+        for(var i=0;i<N;i++){
+          var stagger=0.94+0.06*Math.cos(i*0.31);
+          var pi=ease(Math.min(1,ap*stagger/(stagger*0.94)));
+          uniCur[i][0]=clamp(uniform[i][0]+(uniAlgn[i][0]-uniform[i][0])*pi);
+          uniCur[i][1]=clamp(uniform[i][1]+(uniAlgn[i][1]-uniform[i][1])*pi);
+        }
+        var done=ap>=0.98;
+        var curX=cur.map(function(p){return p[0]}),curY=cur.map(function(p){return p[1]});
+        var uniX=uniCur.map(function(p){return p[0];}),uniY=uniCur.map(function(p){return p[1];});
+        /* drawScatterFull with grey secondary layer — both sets' bars converge to red line */
+        drawScatterFull(PL,cur,tx,ty,done,false,ap,uniCur,ap);
+        drawConfGridMorph(ap,t,1,GRID_CX,GRID_CY,GRID_R);
+        /* Big marginals: BOTH grey and blue bars blend toward target simultaneously */
+        var bmX=curX.map(function(v,i){return v*(1-ap)+tx[i]*ap;});
+        var bmY=curY.map(function(v,i){return v*(1-ap)+ty[i]*ap;});
+        var gbmX=uniX.map(function(v,i){return v*(1-ap)+tx[i]*ap;});
+        var gbmY=uniY.map(function(v,i){return v*(1-ap)+ty[i]*ap;});
+        drawBigMarginals(bmX,bmY,tx,ty,1,blueA,'Physical Prior',gbmX,gbmY,'Uniform Prior');
+        if(done) drawBottom('\u2713 Both models match marginals \u2014 prior shapes the joint',true,GREEN);
+      }
+
+      /* ===== F1: Sequential annotation — FIRST grey failure, THEN blue success (TE → TF) =====
+             Sub-phase 1 (0–2.5s): grey — "No physical prior → spurious modes"
+             Sub-phase 2 (2.5–5.0s): blue — "Physical prior → recovers joint structure"         */
+      else if(t<TF){
+        var lt=t-TE;
+        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1);
+        drawDotsIn(tgt,N,redA,0.28,2.0,PL);
+        drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
+        drawBigMarginals(tx,ty,tx,ty,1,blueA,'Physical Prior',tx,ty,'Uniform Prior');
+
+        /* Data-space → canvas coords */
+        var cA=_d2c(PL,TMA.mx,TMA.my), cB=_d2c(PL,TMB.mx,TMB.my), cC=_d2c(PL,TMC.mx,TMC.my);
+        var cV=_d2c(PL,0.86,0.22);
+        /* Plot centre for text overlay */
+        var pcx=PL.x+PL.w/2, pcy=PL.y+PL.h/2;
+
+        /* ---- Sub-phase 1: Grey annotation (0 → 2.5s) ---- */
+        var gA=0;
+        if(lt<2.5){gA=lt<0.6?ease(lt/0.6):(lt<1.8?1:ease(Math.max(0,1-(lt-1.8)/0.7)));}
+        if(gA>0.01){
+          /* Semi-transparent backdrop so text is legible over dots */
+          ctx.fillStyle='rgba(220,222,228,'+gA*0.92+')';
+          ctx.beginPath();ctx.arc(pcx,pcy,70,0,6.28);ctx.fill();
+          /* Centred grey text */
+          ctx.globalAlpha=gA;
+          ctx.font='bold 16px "Google Sans","Noto Sans",sans-serif';
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillStyle='rgba(70,70,70,0.92)';
+          outlinedText('No physical prior',pcx,pcy-10);
+          outlinedText('\u2192 spurious modes',pcx,pcy+10);
+          /* Arrows from centre outward to spurious regions */
+          _drawCalloutArrow(pcx+30,pcy+20, cV.x,cV.y, greyA(0.7),gA*0.55);
+          /* Also point at a cross-product artefact in upper-centre region (~TMB.x, TMA.y) */
+          var cV2=_d2c(PL,TMB.mx,TMA.my);
+          _drawCalloutArrow(pcx-30,pcy-24, cV2.x,cV2.y, greyA(0.7),gA*0.45);
+          /* Dashed circles on spurious regions */
+          ctx.globalAlpha=gA*0.40;
+          ctx.setLineDash([4,3]); ctx.strokeStyle=greyA(0.7); ctx.lineWidth=2.5;
+          ctx.beginPath(); ctx.arc(cV.x,cV.y,22,0,6.28); ctx.stroke();
+          ctx.beginPath(); ctx.arc(cV2.x,cV2.y,22,0,6.28); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha=1;
+        }
+
+        /* ---- Sub-phase 2: Blue annotation (2.5 → 5.0s) ---- */
+        var bA=0;
+        if(lt>=2.5){var bl=lt-2.5;bA=bl<0.6?ease(bl/0.6):(bl<1.8?1:ease(Math.max(0,1-(bl-1.8)/0.7)));}
+        if(bA>0.01){
+          /* Semi-transparent backdrop */
+          ctx.fillStyle='rgba(220,222,228,'+bA*0.92+')';
+          ctx.beginPath();ctx.arc(pcx,pcy,70,0,6.28);ctx.fill();
+          /* Centred blue text */
+          ctx.globalAlpha=bA;
+          ctx.font='bold 16px "Google Sans","Noto Sans",sans-serif';
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillStyle=BLUE;
+          outlinedText('Physical prior',pcx,pcy-10);
+          outlinedText('\u2192 recovers joint structure',pcx,pcy+10);
+          /* Arrows from centre outward to true mode clusters */
+          _drawCalloutArrow(pcx-20,pcy-24, cA.x,cA.y+10, BLUE,bA*0.55);
+          _drawCalloutArrow(pcx,pcy+28, cB.x,cB.y-10, BLUE,bA*0.55);
+          _drawCalloutArrow(pcx+28,pcy-18, cC.x,cC.y+10, BLUE,bA*0.55);
+          ctx.globalAlpha=1;
+        }
+
+        drawBottom('Both match marginals \u2014 physical prior induces meaningful relations from partial information',true,'#333');
+      }
+
+      /* ===== F2: Final labelled view (TF → TOTAL) ===== */
+      else{
+        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1);
+        drawDotsIn(tgt,N,redA,0.28,2.5,PL);
+
+        /* In-scatter legend — bottom-left corner */
+        var llx=PL.x+10, lly=PL.y+PL.h-13;
+        ctx.font='bold 14px "Google Sans","Noto Sans",sans-serif';
+        ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.globalAlpha=1;
+        ctx.beginPath();ctx.arc(llx+4,lly-5,5,0,6.28);ctx.fillStyle=redA(0.75);ctx.fill();
+        ctx.fillStyle='rgba(40,40,40,1)';outlinedText('True',llx+14,lly);
+        var nx1=llx+14+ctx.measureText('True').width+18;
+        ctx.beginPath();ctx.arc(nx1+4,lly-5,5,0,6.28);ctx.fillStyle=BLUE;ctx.fill();
+        ctx.fillStyle='rgba(40,40,40,1)';outlinedText('ADAPO',nx1+14,lly);
+        var nx2=nx1+14+ctx.measureText('ADAPO').width+18;
+        ctx.beginPath();ctx.arc(nx2+4,lly-5,5,0,6.28);ctx.fillStyle=greyA(0.7);ctx.fill();
+        ctx.fillStyle='rgba(40,40,40,1)';outlinedText('Without Physical Prior',nx2+14,lly);
+
+        drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
+        drawBigMarginals(tx,ty,tx,ty,1,blueA,'ADAPO',tx,ty,'Without Physical Prior');
+        drawBottom('\u2713 Same marginals \u2014 prior determines 2D recovery quality',true,GREEN);
+      }
+    }
+
+    /* ==== Animation loop ==== */
+    var LOOP_PAUSE=3.0;
+    var aid=null,t0=null,playing=false;
+    function loop(ts){if(!t0)t0=ts;var el=(ts-t0)/1000;if(el<TOTAL+LOOP_PAUSE){render(Math.min(el,TOTAL));aid=requestAnimationFrame(loop);}else{playing=false;play();}}
+    function play(){if(playing)return;playing=true;t0=null;initData();cur=base.map(function(p){return[p[0],p[1]]});aid=requestAnimationFrame(loop);}
+    function stop(){playing=false;if(aid){cancelAnimationFrame(aid);aid=null;}}
+    initData();render(0);
+    if('IntersectionObserver' in window){var obs=new IntersectionObserver(function(e){if(e[0].isIntersecting&&!playing)play();},{threshold:0.3});obs.observe(canvas);}else setTimeout(play,500);
+
+  })();
+  </script>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="highlight-box">
+        <h2 class="title section-heading" style="margin-bottom: 0.6rem;">What Can ADAPO Do?</h2>
+        <div class="content has-text-justified">
+          <p>
+            Experimental measurements such as cryo-EM images are inherently noisy and capture only a partial view of the full molecular state. Below, cryo-EM micrographs of Trp-Cage (PDB ID: 2JOF) illustrate the challenge: each image is a noisy 2-D projection of the underlying 3-D atomic coordinates.
+          </p>
+
+          <figure class="paper-figure wide">
+            <img id="cryo_images" src="./images/cryo_images.png" alt="Noisy cryo-EM images of Trp-Cage">
+            <figcaption>Cryo-EM micrographs of Trp-Cage. Each image is a noisy 2-D projection of the 3-D atomic structure.</figcaption>
+          </figure>
+
+          <p>
+            ADAPO takes these noisy, high-dimensional images and uses them to improve a generative model of the underlying atom positions. The base model, trained on classical MD simulations, oversamples the unfolded state. After alignment, ADAPO concentrates the distribution around the folded state reported experimentally in the PDB &mdash; having only seen the noisy cryo-EM images.
+          </p>
+
+          <figure class="paper-figure narrow">
+            <img id="trp_rg_cryo" src="./images/trp_rg_cryo.png" alt="Radius-of-gyration improvement after ADAPO alignment">
+            <figcaption>Distribution of R<sub>g</sub> before and after alignment. ADAPO shifts the model toward the experimentally observed folded state.</figcaption>
+          </figure>
+
+          <p>
+            The generated structures correspondingly shift toward the folded conformations observed in the PDB.
+          </p>
+
+          <figure class="paper-figure narrow">
+            <img id="protein_viz" src="./images/protein_viz.png" alt="Aligned protein conformations">
+            <figcaption>Representative generated conformations before (left) and after (right) ADAPO alignment.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="highlight-box">
+        <h2 class="title section-heading" style="margin-bottom: 0.6rem;">How Did We Do It?</h2>
+
+        <figure class="paper-figure narrow">
+          <img id="constraint" src="./images/constraint.gif" alt="Constrained optimization visualized">
+          <figcaption>The ADAPO optimization landscape: minimizing divergence from the simulation prior subject to matching experimental observable distributions.</figcaption>
+        </figure>
+
+        <div class="content has-text-justified">
+
+          <h3 class="title section-heading">Observable Matching Problem Formalized</h3>
+
+          <p>
+            We begin with a base distribution $\mu_{\text{base}}$, obtained from simulated data (e.g., classical molecular dynamics). Our goal is to construct a distribution $\mu_\theta$ that remains close to $\mu_{\text{base}}$ while matching experimentally observed statistics.
+          </p>
+          <p>
+            Let $\nu(x)$ denote the unknown full-state distribution of the system, and let $o^{(i)}$ be the $i$-th experimental observable.
+            Crucially, we do not observe or sample from the full distribution $\nu(x)$. Instead, we only have access to samples from the induced experimental distributions $o^{(i)}_\# \nu$: the pushforwards of $\nu$ through the observables $o^{(i)}$. These correspond to the distributions of measured quantities obtained experimentally, without access to the underlying full system states.
+          </p>
+
+          <p>
+            We formulate this task as a constrained optimization problem (visualized above):
+          </p>
+
+          $$
+          \begin{aligned}
+          \arg \min_{\mu_\theta} \quad & D_{\mathrm{KL}}(\mu_\theta \,\|\, \mu_{\text{base}}) \\
+          \text{s.t.} \quad & \mu_\theta \in \mathcal{M}_o(\mathcal{X}),
+          \end{aligned}
+          $$
+
+          <p>
+            where the observable constraint set is
+            $$
+            \mathcal{M}_o(\mathcal{X}) = \left\{ \mu \;:\; o^{(i)}_\# \mu = o^{(i)}_\# \nu \;\; \forall i \in I \right\}.
+            $$
+            That is, $\mu_\theta$ must reproduce the experimental distributions for all observed quantities.
+          </p>
+
+          <h3 class="title section-heading">Our Solution</h3>
+          <p>
+            We solve this constrained problem by reformulating it as the following min&ndash;max optimization:
+          </p>
+
+          $$
+          \begin{aligned}
+          \max_{\mu_\theta} \; \min_{(f^{(i)}) \in \mathrm{Lip}_1^{|I|}} \;
+          \mathcal{L}\bigl(\mu_\theta, (f^{(i)}), \beta \bigr),
+          \end{aligned}
+          $$
+
+          $$
+          \begin{aligned}
+          \mathcal{L}\bigl(\mu_\theta, (f^{(i)}), \beta \bigr)
+          = {} & -D_{\mathrm{KL}}\bigl(\mu_\theta \,\|\, \mu_{\text{base}}\bigr) \\
+          & + \beta \sum_{i \in I}
+          \left(
+          \mathbb{E}_{(o^{(i)})_\# \mu_\theta}[f^{(i)}]
+          -
+          \mathbb{E}_{(o^{(i)})_\# \nu}[f^{(i)}]
+          \right).
+          \end{aligned}
+          $$
+
+          <p>
+            Analogous to GAN training, we alternate between updating the critic functions $f^{(i)}$ to distinguish generated from experimental observables, and updating $\mu_\theta$ to satisfy these learned constraints while remaining close to the base distribution. We prove in the <a href="" target="_blank">full paper</a> that this procedure converges to the target experimental observable distributions.
+          </p>
+
+          <div class="takeaway">
+            ADAPO combines prior physical knowledge while circumventing the approximation errors of simulations by aligning directly to experimental data.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="highlight-box">
+        <h2 class="title section-heading" style="margin-bottom: 0.6rem;">Outlook</h2>
+        <div class="content has-text-justified">
+          <p>
+            Obtaining large amounts of fully observed experimental data is expensive and simulations can incur modeling errors. ADAPO provides a general framework that leverages prior knowledge through simulation data while aligning to experimental data to learn accurate models of the physical world. For example, ADAPO could be scaled up to learn a generative model of the underlying atom positions of a protein from a large dataset of noisy cryo-EM images. We hope that frameworks like ADAPO that use experimental data also motivate the development of larger experimental datasets.
+          </p>
+          <p>
+            For more details, see <a href="" target="_blank">our paper</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop">
+    <div class="highlight-box">
+      <h2 class="title section-heading" style="margin-bottom: 0.6rem;">BibTeX</h2>
+      <pre><code></code></pre>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content" style="text-align: center;">
+          <p>
+            Template adapted from <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>
+            (<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>).
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyBibtex() {
+  const bibtex = ``;
+  
+  navigator.clipboard.writeText(bibtex).then(function() {
+    // Change button text temporarily to show success
+    const btn = document.getElementById('bibtex-btn');
+    const originalText = btn.querySelector('span:last-child').textContent;
+    btn.querySelector('span:last-child').textContent = 'Copied!';
+    btn.style.backgroundColor = '#5a8a5e';
+    
+    // Reset after 2 seconds
+    setTimeout(function() {
+      btn.querySelector('span:last-child').textContent = originalText;
+      btn.style.backgroundColor = '';
+    }, 2000);
+  }).catch(function(err) {
+    console.error('Failed to copy BibTeX: ', err);
+    alert('Failed to copy BibTeX to clipboard');
+  });
+}
+</script>
+
+</body>
+</html>
+          
