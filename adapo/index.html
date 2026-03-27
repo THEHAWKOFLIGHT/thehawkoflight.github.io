@@ -181,6 +181,8 @@
     function blueA(a) { return 'rgba(108,142,191,' + a + ')'; }
     function redA(a)  { return 'rgba(215,155,0,' + a + ')'; }
     function greyA(a) { return 'rgba(140,140,140,' + a + ')'; }
+    function greenA(a){ return 'rgba(130,179,102,' + a + ')'; }
+    function blendBG(t){var r=Math.round(108+(130-108)*t),g=Math.round(142+(179-142)*t),b=Math.round(191+(102-191)*t);return function(a){return 'rgba('+r+','+g+','+b+','+a+')';};}
 
     /* Timing: A=rain+curves(both priors), B=grid, C=skip(TC=TB), D=ghost+marginals, E=alignment, F=annotation+final */
     var TA=8.0, TB=10.5, TC=10.5, TD=16.0, TE=23.5, TF=28.5, TOTAL=34.0;
@@ -348,9 +350,10 @@
       ctx.save();ctx.translate(m.mr.x+m.mr.w+14,m.mr.y+m.mr.h/2);ctx.rotate(-Math.PI/2);outlinedText('x\u2082',0,0);ctx.restore();
     }
 
-    function drawScatterFull(pl,pts,tx,ty,isAligned,showW1,alignBlend,secPts,secBlend){
-      /* alignBlend (0→1): morphs blue bars toward target. secPts/secBlend: optional
-         grey secondary layer drawn BEHIND blue (smaller dots, subdued bars). */
+    function drawScatterFull(pl,pts,tx,ty,isAligned,showW1,alignBlend,secPts,secBlend,cfn){
+      cfn=cfn||blueA;
+      /* alignBlend (0→1): morphs bars toward target. secPts/secBlend: optional
+         grey secondary layer drawn BEHIND primary (smaller dots, subdued bars). */
       var blend=(alignBlend!==undefined)?alignBlend:(isAligned?1:0);
       var m=margOf(pl);drawGrid(pl);drawAxesTicks(pl,true);
       /* Refined spines for marginal panels */
@@ -358,7 +361,7 @@
       ctx.beginPath();ctx.moveTo(m.mt.x,m.mt.y+m.mt.h);ctx.lineTo(m.mt.x+m.mt.w,m.mt.y+m.mt.h);ctx.stroke();
       ctx.beginPath();ctx.moveTo(m.mr.x,m.mr.y+m.mr.h);ctx.lineTo(m.mr.x+m.mr.w,m.mr.y+m.mr.h);ctx.stroke();
       ctx.lineCap='butt';
-      /* ── Grey secondary layer (uniform prior) drawn first, behind blue ── */
+      /* ── Grey secondary layer (uniform prior) drawn first, behind primary ── */
       if(secPts){
         var sb=(secBlend!==undefined)?secBlend:0;
         var scx=secPts.map(function(p){return p[0];}),scy=secPts.map(function(p){return p[1];});
@@ -367,12 +370,12 @@
         tBars(sBarsX,greyA,0.48,m.mt); rBars(sBarsY,greyA,0.48,m.mr);
         drawDotsIn(secPts,N,greyA,0.30,3.0,pl);
       }
-      /* ── Primary blue layer ── */
-      drawDotsIn(pts,N,blueA,0.45,3.0,pl);var cx=pts.map(function(p){return p[0]}),cy=pts.map(function(p){return p[1]});
+      /* ── Primary layer ── */
+      drawDotsIn(pts,N,cfn,0.45,3.0,pl);var cx=pts.map(function(p){return p[0]}),cy=pts.map(function(p){return p[1]});
       /* Interpolate bar values between current and target — no snap, fully smooth */
       var barsX=cx.map(function(v,i){return v*(1-blend)+tx[i]*blend;});
       var barsY=cy.map(function(v,i){return v*(1-blend)+ty[i]*blend;});
-      tBars(barsX,blueA,0.7,m.mt);rBars(barsY,blueA,0.7,m.mr);tLine(tx,RED,0.85,m.mt);rLine(ty,RED,0.85,m.mr);drawMargLabels(m);
+      tBars(barsX,cfn,0.7,m.mt);rBars(barsY,cfn,0.7,m.mr);tLine(tx,RED,0.85,m.mt);rLine(ty,RED,0.85,m.mr);drawMargLabels(m);
       if(showW1){var w1x=w1d(cx,tx),w1y=w1d(cy,ty),lx=m.mr.x+m.mr.w+16;ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='bold 13px "Courier New",monospace';ctx.fillStyle=isAligned?GREEN:'#B85450';
         outlinedText('W\u2081(x\u2081) = '+w1x.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+12);
         outlinedText('W\u2081(x\u2082) = '+w1y.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+30);
@@ -873,14 +876,15 @@
         var curX=cur.map(function(p){return p[0]}),curY=cur.map(function(p){return p[1]});
         var uniX=uniCur.map(function(p){return p[0];}),uniY=uniCur.map(function(p){return p[1];});
         /* drawScatterFull with grey secondary layer — both sets' bars converge to red line */
-        drawScatterFull(PL,cur,tx,ty,done,false,ap,uniCur,ap);
+        var eCfn=blendBG(ap);
+        drawScatterFull(PL,cur,tx,ty,done,false,ap,uniCur,ap,eCfn);
         drawConfGridMorph(ap,t,1,GRID_CX,GRID_CY,GRID_R);
         /* Big marginals: BOTH grey and blue bars blend toward target simultaneously */
         var bmX=curX.map(function(v,i){return v*(1-ap)+tx[i]*ap;});
         var bmY=curY.map(function(v,i){return v*(1-ap)+ty[i]*ap;});
         var gbmX=uniX.map(function(v,i){return v*(1-ap)+tx[i]*ap;});
         var gbmY=uniY.map(function(v,i){return v*(1-ap)+ty[i]*ap;});
-        drawBigMarginals(bmX,bmY,tx,ty,1,blueA,'Physical Prior',gbmX,gbmY,'Uniform Prior');
+        drawBigMarginals(bmX,bmY,tx,ty,1,eCfn,'ADAPO',gbmX,gbmY,'Uniform Prior');
         if(done) drawBottom('\u2713 Both models match marginals \u2014 prior shapes the joint',true,GREEN);
       }
 
@@ -889,10 +893,10 @@
              Sub-phase 2 (2.5–5.0s): blue — "Physical prior → recovers joint structure"         */
       else if(t<TF){
         var lt=t-TE;
-        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1);
+        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1,greenA);
         drawDotsIn(tgt,N,redA,0.28,2.0,PL);
         drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
-        drawBigMarginals(tx,ty,tx,ty,1,blueA,'Physical Prior',tx,ty,'Uniform Prior');
+        drawBigMarginals(tx,ty,tx,ty,1,greenA,'ADAPO',tx,ty,'Without Physical Prior');
 
         /* Data-space → canvas coords */
         var cA=_d2c(PL,TMA.mx,TMA.my), cB=_d2c(PL,TMB.mx,TMB.my), cC=_d2c(PL,TMC.mx,TMC.my);
@@ -935,17 +939,17 @@
           /* Semi-transparent backdrop */
           ctx.fillStyle='rgba(220,222,228,'+bA*0.92+')';
           ctx.beginPath();ctx.arc(pcx,pcy,70,0,6.28);ctx.fill();
-          /* Centred blue text */
+          /* Centred green text */
           ctx.globalAlpha=bA;
           ctx.font='bold 16px "Google Sans","Noto Sans",sans-serif';
           ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillStyle=BLUE;
+          ctx.fillStyle=GREEN;
           outlinedText('Physical prior',pcx,pcy-10);
           outlinedText('\u2192 recovers joint structure',pcx,pcy+10);
           /* Arrows from centre outward to true mode clusters */
-          _drawCalloutArrow(pcx-20,pcy-24, cA.x,cA.y+10, BLUE,bA*0.55);
-          _drawCalloutArrow(pcx,pcy+28, cB.x,cB.y-10, BLUE,bA*0.55);
-          _drawCalloutArrow(pcx+28,pcy-18, cC.x,cC.y+10, BLUE,bA*0.55);
+          _drawCalloutArrow(pcx-20,pcy-24, cA.x,cA.y+10, GREEN,bA*0.55);
+          _drawCalloutArrow(pcx,pcy+28, cB.x,cB.y-10, GREEN,bA*0.55);
+          _drawCalloutArrow(pcx+28,pcy-18, cC.x,cC.y+10, GREEN,bA*0.55);
           ctx.globalAlpha=1;
         }
 
@@ -954,7 +958,7 @@
 
       /* ===== F2: Final labelled view (TF → TOTAL) ===== */
       else{
-        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1);
+        drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1,greenA);
         drawDotsIn(tgt,N,redA,0.28,2.5,PL);
 
         /* In-scatter legend — bottom-left corner */
@@ -964,14 +968,14 @@
         ctx.beginPath();ctx.arc(llx+4,lly-5,5,0,6.28);ctx.fillStyle=redA(0.75);ctx.fill();
         ctx.fillStyle='rgba(40,40,40,1)';outlinedText('True',llx+14,lly);
         var nx1=llx+14+ctx.measureText('True').width+18;
-        ctx.beginPath();ctx.arc(nx1+4,lly-5,5,0,6.28);ctx.fillStyle=BLUE;ctx.fill();
+        ctx.beginPath();ctx.arc(nx1+4,lly-5,5,0,6.28);ctx.fillStyle=GREEN;ctx.fill();
         ctx.fillStyle='rgba(40,40,40,1)';outlinedText('ADAPO',nx1+14,lly);
         var nx2=nx1+14+ctx.measureText('ADAPO').width+18;
         ctx.beginPath();ctx.arc(nx2+4,lly-5,5,0,6.28);ctx.fillStyle=greyA(0.7);ctx.fill();
         ctx.fillStyle='rgba(40,40,40,1)';outlinedText('Without Physical Prior',nx2+14,lly);
 
         drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
-        drawBigMarginals(tx,ty,tx,ty,1,blueA,'ADAPO',tx,ty,'Without Physical Prior');
+        drawBigMarginals(tx,ty,tx,ty,1,greenA,'ADAPO',tx,ty,'Without Physical Prior');
         drawBottom('\u2713 Same marginals \u2014 prior determines 2D recovery quality',true,GREEN);
       }
     }
