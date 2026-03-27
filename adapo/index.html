@@ -377,7 +377,7 @@
       var barsX=cx.map(function(v,i){return v*(1-blend)+tx[i]*blend;});
       var barsY=cy.map(function(v,i){return v*(1-blend)+ty[i]*blend;});
       tBars(barsX,cfn,0.7,m.mt);rBars(barsY,cfn,0.7,m.mr);tLine(tx,RED,0.85,m.mt);rLine(ty,RED,0.85,m.mr);drawMargLabels(m);
-      if(showW1){var w1x=w1d(cx,tx),w1y=w1d(cy,ty),lx=m.mr.x+m.mr.w+16;ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='bold 13px "Courier New",monospace';ctx.fillStyle=isAligned?GREEN:'#B85450';
+      if(showW1){var w1x=w1d(cx,tx),w1y=w1d(cy,ty),lx=m.mr.x+m.mr.w+16;ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='bold 13px "Courier New",monospace';ctx.fillStyle=isAligned?PURPLE:'#B85450';
         outlinedText('W\u2081(x\u2081) = '+w1x.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+12);
         outlinedText('W\u2081(x\u2082) = '+w1y.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+30);
         ctx.font='bold 14px "Google Sans","Noto Sans",sans-serif';ctx.beginPath();ctx.arc(lx,pl.y+55,5,0,6.28);ctx.fillStyle=BLUE;ctx.fill();
@@ -886,7 +886,7 @@
         var gbmX=uniX.map(function(v,i){return v*(1-ap)+tx[i]*ap;});
         var gbmY=uniY.map(function(v,i){return v*(1-ap)+ty[i]*ap;});
         drawBigMarginals(bmX,bmY,tx,ty,1,eCfn,'ADAPO',gbmX,gbmY,'Uniform Prior');
-        if(done) drawBottom('\u2713 Both models match marginals \u2014 prior shapes the joint',true,GREEN);
+        if(done) drawBottom('\u2713 Both models match marginals \u2014 prior shapes the joint',true,PURPLE);
       }
 
       /* ===== F1: Sequential annotation — FIRST grey failure, THEN blue success (TE → TF) =====
@@ -977,7 +977,7 @@
 
         drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
         drawBigMarginals(tx,ty,tx,ty,1,purpleA,'ADAPO',tx,ty,'Without Physical Prior');
-        drawBottom('\u2713 Same marginals \u2014 prior determines 2D recovery quality',true,GREEN);
+        drawBottom('\u2713 Same marginals \u2014 prior determines 2D recovery quality',true,PURPLE);
       }
     }
 
