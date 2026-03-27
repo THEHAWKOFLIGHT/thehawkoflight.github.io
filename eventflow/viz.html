@@ -62,20 +62,37 @@
   // Flow plot geometry
   var FP = { x: 160, y: 280, w: 460, h: 280 };
 
-  // Random initial positions (at s=0, random in event-time axis)
-  var initY = [];
-  for(var i = 0; i < N_PRED; i++) initY.push(FP.y + 30 + Math.random() * (FP.h - 60));
   // Target positions (at s=1, mapped to predicted event times)
+  // targY decreases as i increases (higher predTime = higher on screen)
   var targY = predTimes.map(function(t){ return FP.y + FP.h - t * (FP.h - 40) - 20; });
 
-  // Generate flow paths (cubic bezier-ish with some curvature)
+  // Random initial positions — sorted to match targY order so paths don't cross
+  var initYraw = [];
+  for(var i = 0; i < N_PRED; i++) initYraw.push(FP.y + 30 + Math.random() * (FP.h - 60));
+  initYraw.sort(function(a, b){ return b - a; }); // descending (matching targY order)
+  // Add some jitter while preserving order
+  var initY = initYraw;
+
+  // Generate non-crossing flow paths (monotone interpolation)
   function flowPath(i, s){
-    // s in [0,1], returns y position
     var y0 = initY[i], y1 = targY[i];
-    // Add some curvature
-    var mid = (y0 + y1) / 2 + (i % 2 === 0 ? -40 : 40);
-    // Quadratic bezier: (1-s)^2*y0 + 2*(1-s)*s*mid + s^2*y1
-    return (1-s)*(1-s)*y0 + 2*(1-s)*s*mid + s*s*y1;
+    // Smooth cubic ease between start and end — no cross-over curvature
+    var ss = s * s * (3 - 2 * s); // smoothstep
+    return y0 + (y1 - y0) * ss;
+  }
+
+  // Text with halo for readability
+  function haloText(text, x, y, fill, haloPx){
+    var hp = haloPx || 3;
+    ctx.save();
+    ctx.strokeStyle = BG;
+    ctx.lineWidth = hp * 2;
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = fill;
+    ctx.fillText(text, x, y);
+    ctx.restore();
   }
 
   // Easing
@@ -140,9 +157,8 @@
       var la = clamp01((ap - 0.8) / 0.2);
       ctx.globalAlpha = la;
       ctx.font = 'italic 14px "Noto Sans", sans-serif';
-      ctx.fillStyle = '#888';
       ctx.textAlign = 'center';
-      ctx.fillText('time', TL.x + TL.w / 2, TL.y + 30);
+      haloText('time', TL.x + TL.w / 2, TL.y + 30, '#888');
       ctx.globalAlpha = 1;
     }
 
@@ -183,9 +199,8 @@
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 16px "Google Sans", "Noto Sans", sans-serif';
-      ctx.fillStyle = BLUE;
       ctx.textAlign = 'center';
-      ctx.fillText('History', TL.x + TL.w * TL.split / 2, TL.y + 50);
+      haloText('History', TL.x + TL.w * TL.split / 2, TL.y + 50, BLUE);
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -220,9 +235,8 @@
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 16px "Google Sans", "Noto Sans", sans-serif';
-      ctx.fillStyle = GREEN;
       ctx.textAlign = 'center';
-      ctx.fillText('Prediction Horizon', (TL_SPLIT + TL_END) / 2, TL.y + 50);
+      haloText('Prediction Horizon', (TL_SPLIT + TL_END) / 2, TL.y + 50, GREEN);
     }
 
     // "?" marks for unknown events
@@ -230,9 +244,8 @@
     if(qAp > 0 && t < P.F_start){
       ctx.globalAlpha = 0.3 * ease(qAp);
       ctx.font = '24px "Noto Sans", sans-serif';
-      ctx.fillStyle = '#999';
       ctx.textAlign = 'center';
-      ctx.fillText('? ? ?', (TL_SPLIT + TL_END) / 2, TL.y - 15);
+      haloText('? ? ?', (TL_SPLIT + TL_END) / 2, TL.y - 15, '#999');
     }
 
     ctx.globalAlpha = 1;
@@ -276,9 +289,8 @@
     ctx.stroke();
 
     ctx.font = '600 15px "Google Sans", "Noto Sans", sans-serif';
-    ctx.fillStyle = '#444';
     ctx.textAlign = 'center';
-    ctx.fillText('Predict n = ' + N_PRED, bx + 70, by + 22);
+    haloText('Predict n = ' + N_PRED, bx + 70, by + 22, '#444');
 
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -332,28 +344,27 @@
 
     // Labels
     ctx.font = 'italic 13px "Noto Sans", sans-serif';
-    ctx.fillStyle = '#888';
     ctx.textAlign = 'center';
-    ctx.fillText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 25);
+    haloText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 25, '#888');
 
     ctx.save();
-    ctx.translate(FP.x - 30, FP.y + FP.h / 2);
+    ctx.translate(FP.x - 40, FP.y + FP.h / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText('event time', 0, 0);
+    ctx.font = 'italic 13px "Noto Sans", sans-serif';
+    ctx.textAlign = 'center';
+    haloText('event time', 0, 0, '#888');
     ctx.restore();
 
     // s=0 and s=1 marks
     ctx.font = '12px "Noto Sans", sans-serif';
-    ctx.fillStyle = '#aaa';
     ctx.textAlign = 'center';
-    ctx.fillText('0', FP.x, FP.y + FP.h + 15);
-    ctx.fillText('1', FP.x + FP.w, FP.y + FP.h + 15);
+    haloText('0', FP.x, FP.y + FP.h + 15, '#aaa');
+    haloText('1', FP.x + FP.w, FP.y + FP.h + 15, '#aaa');
 
     // Title
     ctx.font = '600 15px "Google Sans", "Noto Sans", sans-serif';
-    ctx.fillStyle = '#555';
     ctx.textAlign = 'center';
-    ctx.fillText('Flow Matching', FP.x + FP.w / 2, FP.y - 20);
+    haloText('Flow Matching', FP.x + FP.w / 2, FP.y - 20, '#555');
 
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -377,14 +388,13 @@
       ctx.fill();
     }
 
-    // Label
+    // Label — positioned above the dots, inside the plot area
     var labAp = clamp01((t - P.D_start - 0.3) / 0.4);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
-      ctx.font = '12px "Noto Sans", sans-serif';
-      ctx.fillStyle = ORANGE;
-      ctx.textAlign = 'right';
-      ctx.fillText('random init', FP.x - 8, FP.y + FP.h / 2);
+      ctx.font = '600 12px "Google Sans", "Noto Sans", sans-serif';
+      ctx.textAlign = 'left';
+      haloText('random init (s=0)', FP.x + 10, FP.y + 15, ORANGE);
     }
 
     ctx.globalAlpha = 1;
@@ -499,9 +509,8 @@
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 14px "Google Sans", "Noto Sans", sans-serif';
-      ctx.fillStyle = GREEN;
       ctx.textAlign = 'center';
-      ctx.fillText('Predicted Events', (TL_SPLIT + TL_END) / 2, TL.y - 55);
+      haloText('Predicted Events', (TL_SPLIT + TL_END) / 2, TL.y - 55, GREEN);
     }
 
     ctx.globalAlpha = 1;
@@ -523,8 +532,9 @@
     ctx.arc(lx, ly, 4, 0, Math.PI * 2);
     ctx.fillStyle = BLUE;
     ctx.fill();
-    ctx.fillStyle = '#666';
-    ctx.fillText('History', lx + 10, ly + 4);
+    ctx.font = '12px "Noto Sans", sans-serif';
+    ctx.textAlign = 'left';
+    haloText('History', lx + 10, ly + 4, '#666');
 
     // Predicted (only after F)
     if(t > P.F_start + 0.5){
@@ -535,8 +545,9 @@
       ctx.arc(lx, ly, 4, 0, Math.PI * 2);
       ctx.fillStyle = GREEN;
       ctx.fill();
-      ctx.fillStyle = '#666';
-      ctx.fillText('Predicted', lx + 10, ly + 4);
+      ctx.font = '12px "Noto Sans", sans-serif';
+      ctx.textAlign = 'left';
+      haloText('Predicted', lx + 10, ly + 4, '#666');
     }
 
     ctx.globalAlpha = 1;
@@ -548,13 +559,11 @@
     ctx.save();
     ctx.globalAlpha = ease(ap);
     ctx.font = '700 20px "Google Sans", "Noto Sans", sans-serif';
-    ctx.fillStyle = '#1a1a1a';
     ctx.textAlign = 'center';
-    ctx.fillText('EventFlow: Forecasting with Flow Matching', W / 2, 40);
+    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 40, '#1a1a1a');
 
     ctx.font = '13px "Noto Sans", sans-serif';
-    ctx.fillStyle = '#999';
-    ctx.fillText('Continuous-time event prediction', W / 2, 60);
+    haloText('Continuous-time event prediction', W / 2, 60, '#999');
     ctx.globalAlpha = 1;
     ctx.restore();
   }
