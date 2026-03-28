@@ -8,8 +8,7 @@
   <script>
   (function(){
     var s=localStorage.getItem('theme');
-    var d=window.matchMedia('(prefers-color-scheme:dark)').matches;
-    document.documentElement.setAttribute('data-theme',s||(d?'dark':'light'));
+    document.documentElement.setAttribute('data-theme',s||'light');
   })();
   </script>
 
@@ -33,6 +32,7 @@
       --border-section: #e5e0db;
       --border-bio: #F5C6C6;
       --shadow: rgba(60,40,40,0.06);
+      --shadow-hover: rgba(60,40,40,0.13);
       --viz-bg-start: #fdfcfb;
       --viz-bg-end: #f5f3f0;
       --award-bg-start: #FDEAEA;
@@ -60,6 +60,7 @@
       --border-section: #2a2c34;
       --border-bio: #5a3030;
       --shadow: rgba(0,0,0,0.3);
+      --shadow-hover: rgba(0,0,0,0.45);
       --viz-bg-start: #1c1d22;
       --viz-bg-end: #181920;
       --award-bg-start: #2e2025;
@@ -114,17 +115,30 @@
       font-size: 0.95rem;
       display: flex;
       flex-direction: column;
-      transition: background-color 0.3s, border-color 0.3s;
+      transition: background-color 0.3s, border-color 0.3s, transform 0.35s ease, box-shadow 0.35s ease;
     }
     .highlight-box p { color: var(--text-card); margin-bottom: 0.35rem; }
     .highlight-box p:last-child { margin-bottom: 0; }
     .highlight-box .viz-frame { margin-top: auto; }
 
-    /* Subtle conic holofoil on award-winning panels */
+    /* Hover lift for non-award cards */
+    .highlight-box:not(:has(.award-tag)):hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 28px var(--shadow-hover);
+    }
+
+    /* ---- Holofoil on award-winning panels ---- */
     .highlight-box:has(.award-tag) {
       position: relative;
       overflow: hidden;
+      transform: perspective(800px) rotateX(var(--card-rx, 0deg)) rotateY(var(--card-ry, 0deg));
+      transition: background-color 0.3s, border-color 0.3s, transform 0.12s ease-out, box-shadow 0.3s ease;
+      will-change: transform;
     }
+    .highlight-box:has(.award-tag):hover {
+      box-shadow: 0 10px 28px var(--shadow-hover);
+    }
+    /* Always-on conic iridescence */
     .highlight-box:has(.award-tag)::before {
       content: '';
       position: absolute;
@@ -148,6 +162,65 @@
     }
     [data-theme="dark"] .highlight-box:has(.award-tag)::before {
       mix-blend-mode: screen;
+    }
+    /* Mouse-driven rainbow + crosshatch sparkle + glare */
+    .highlight-box:has(.award-tag)::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      background:
+        /* Glare spot */
+        radial-gradient(
+          circle at var(--card-px, 50%) var(--card-py, 50%),
+          rgba(255,255,255,0.9) 0%,
+          rgba(255,255,255,0) 35%
+        ),
+        /* Crosshatch line set A — 30deg */
+        repeating-linear-gradient(
+          30deg,
+          transparent 0,
+          transparent 2.5px,
+          rgba(255,255,255,0.45) 2.5px,
+          rgba(255,255,255,0.6) 3px,
+          rgba(255,255,255,0.45) 3.5px,
+          transparent 3.5px,
+          transparent 6px
+        ),
+        /* Crosshatch line set B — -30deg */
+        repeating-linear-gradient(
+          -30deg,
+          transparent 0,
+          transparent 2.5px,
+          rgba(255,255,255,0.45) 2.5px,
+          rgba(255,255,255,0.6) 3px,
+          rgba(255,255,255,0.45) 3.5px,
+          transparent 3.5px,
+          transparent 6px
+        ),
+        /* Rainbow spectrum */
+        repeating-linear-gradient(
+          133deg,
+          #ff7878 0%, #ffc864 14%, #b4ff78 28%,
+          #64ffc8 42%, #64c8ff 56%, #9678ff 70%,
+          #ff78c8 84%, #ff7878 100%
+        );
+      background-size: 100% 100%, 6px 6px, 6px 6px, 250% 250%;
+      background-position:
+        center,
+        calc(var(--card-dx, 0px) * 0.4) calc(var(--card-dy, 0px) * 0.4),
+        calc(var(--card-dx, 0px) * -0.4) calc(var(--card-dy, 0px) * -0.4),
+        var(--card-px, 50%) var(--card-py, 50%);
+      background-blend-mode: overlay, color-dodge, color-dodge, normal;
+      mix-blend-mode: overlay;
+      opacity: var(--card-o, 0);
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 0.5s ease;
+    }
+    [data-theme="dark"] .highlight-box:has(.award-tag)::after {
+      mix-blend-mode: screen;
+      opacity: calc(var(--card-o, 0) * 0.55);
     }
     .highlight-box:has(.award-tag) > * {
       position: relative;
@@ -533,13 +606,40 @@ var _themeInterval=setInterval(function(){
 },2000);
 setTimeout(function(){ clearInterval(_themeInterval); },15000);
 
-/* System preference listener */
-window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(e){
-  if(!localStorage.getItem('theme')){
-    document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');
-    sendThemeToIframes();
+/* ---- Holofoil mouse tracking for award cards ---- */
+(function(){
+  var cards=document.querySelectorAll('.highlight-box');
+  for(var i=0;i<cards.length;i++){
+    (function(card){
+      if(!card.querySelector('.award-tag')) return;
+      card.addEventListener('mousemove',function(e){
+        var rect=card.getBoundingClientRect();
+        var cx=rect.width/2, cy=rect.height/2;
+        var mx=e.clientX-rect.left, my=e.clientY-rect.top;
+        var dx=mx-cx, dy=my-cy;
+        var pctX=(mx/rect.width*100).toFixed(1)+'%';
+        var pctY=(my/rect.height*100).toFixed(1)+'%';
+        var rx=(dy/cy*-3.5).toFixed(2)+'deg';
+        var ry=(dx/cx*3.5).toFixed(2)+'deg';
+        var maxD=Math.hypot(cx,cy);
+        var o=Math.min(0.8, 0.5+Math.hypot(dx,dy)/maxD*0.35);
+        card.style.setProperty('--card-px',pctX);
+        card.style.setProperty('--card-py',pctY);
+        card.style.setProperty('--card-dx',dx.toFixed(0)+'px');
+        card.style.setProperty('--card-dy',dy.toFixed(0)+'px');
+        card.style.setProperty('--card-rx',rx);
+        card.style.setProperty('--card-ry',ry);
+        card.style.setProperty('--card-o',o.toFixed(2));
+      });
+      card.addEventListener('mouseleave',function(){
+        card.style.setProperty('--card-o','0');
+        card.style.setProperty('--card-rx','0deg');
+        card.style.setProperty('--card-ry','0deg');
+      });
+    })(cards[i]);
   }
-});
+})();
+
 </script>
 
 </body>
