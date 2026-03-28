@@ -190,13 +190,13 @@
 
   // Phase timing
   var P={
-    A:0, A_end:1.8,       // Satellite input + "under-constrained" label
-    B:1.5, B_end:4.0,     // MSE vs Sharp loss comparison
-    C:3.5, C_end:7.5,     // Generative ensemble
-    D:7.0, D_end:10.0,    // Ensemble mean + uncertainty
-    FADE_START:11.0,
-    FADE_END:12.5,
-    TOTAL:13.0
+    A:0, A_end:1.5,       // Satellite input
+    B:1.2, B_end:3.2,     // MSE vs Sharp loss comparison
+    C:3.0, C_end:5.8,     // Generative ensemble
+    D:5.5, D_end:7.8,     // Ensemble mean + uncertainty
+    FADE_START:8.8,
+    FADE_END:10.2,
+    TOTAL:11.0
   };
 
   var startTime=null;
@@ -217,29 +217,24 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha=a;
 
-    var imgSz=110;
-    var ix=30, iy=80;
+    var panelX=25, panelY=55, panelW=365, panelH=200;
+    var imgSz=140;
+    var ix=panelX+(panelW-imgSz)/2, iy=panelY+42;
 
-    // Panel
+    // Panel (same width as loss comparison below)
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(ix-10,iy-28,imgSz+20,imgSz+48,8); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(panelX,panelY,panelW,panelH,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Satellite Obs.', ix+imgSz/2, iy-6, ORANGE);
+    haloText('Satellite Observation', panelX+panelW/2, panelY+24, ORANGE);
 
     // Satellite grid
-    drawGrid(ix, iy+6, imgSz, satellite, satColor);
+    drawGrid(ix, iy, imgSz, satellite, satColor);
 
-    // "Under-constrained" label with question marks
-    var ua=ease(clamp01((a-0.5)/0.5));
-    if(ua>0){
-      ctx.globalAlpha=a*ua;
-      ctx.font='italic 18px "Noto Sans",sans-serif';
-      haloText('Under-constrained', ix+imgSz+40, iy+imgSz/2-8, '#c0392b');
-      ctx.font='16px "Noto Sans",sans-serif';
-      haloText('One input \u2192 many solutions', ix+imgSz+40, iy+imgSz/2+16, '#999');
-    }
+    // Subtitle
+    ctx.font='15px "Noto Sans",sans-serif';
+    haloText('Under-constrained inverse problem', panelX+panelW/2, panelY+panelH-10, '#aaa');
 
     ctx.globalAlpha=1; ctx.restore();
   }
@@ -250,7 +245,7 @@
     var a=ease(clamp01((t-P.B)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var bx=30, by=230, bw=370, bh=230;
+    var bx=25, by=275, bw=365, bh=235;
 
     // Panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
@@ -262,13 +257,10 @@
 
     // MSE output (smooth/blurry)
     var gridSz=90;
-    var msX=bx+25, msY=by+44;
+    var msX=bx+30, msY=by+44;
     var msA=ease(clamp01((a-0.2)/0.5));
     if(msA>0){
       ctx.globalAlpha=a*msA;
-
-      // Arrow from input
-      drawArrow(148, 196, msX+gridSz/2, msY-4, '#bbb');
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
@@ -291,13 +283,10 @@
     }
 
     // Sharp/alternative output
-    var shX=bx+bw-25-gridSz, shY=by+44;
+    var shX=bx+bw-30-gridSz, shY=by+44;
     var shA=ease(clamp01((a-0.5)/0.5));
     if(shA>0){
       ctx.globalAlpha=a*shA;
-
-      // Arrow from input
-      drawArrow(148, 196, shX+gridSz/2, shY-4, '#bbb');
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
@@ -334,7 +323,7 @@
     var a=ease(clamp01((t-P.C)/0.6));
     ctx.save(); ctx.globalAlpha=a;
 
-    var ex=410, ey=60, ew=360, eh=290;
+    var ex=415, ey=55, ew=350, eh=300;
 
     // Panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
@@ -344,15 +333,12 @@
     ctx.textAlign='center';
     haloText('Conditional Generative Model', ex+ew/2, ey+26, PURPLE);
 
-    // Arrow from input
-    drawArrow(148, 145, ex-4, ey+eh/2, '#bbb');
-
     // 2x3 grid of ensemble members
-    var memSz=65;
-    var memGap=12;
+    var memSz=70;
+    var memGapX=10, memGapY=30;
     var cols=3, rows=2;
-    var gridW=cols*(memSz+memGap)-memGap;
-    var gridH=rows*(memSz+memGap)-memGap;
+    var gridW=cols*(memSz+memGapX)-memGapX;
+    var gridH=rows*(memSz+memGapY)-memGapY;
     var startX=ex+(ew-gridW)/2;
     var startY=ey+48;
 
@@ -363,8 +349,8 @@
       if(ea<=0) continue;
       ctx.globalAlpha=a*ea;
 
-      var mx=startX+col*(memSz+memGap);
-      var my=startY+row*(memSz+memGap);
+      var mx=startX+col*(memSz+memGapX);
+      var my=startY+row*(memSz+memGapY);
 
       drawGrid(mx, my, memSz, ensMembers[e], precipColor);
 
@@ -381,7 +367,7 @@
     var a=ease(clamp01((t-P.D)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var rx=410, ry=370, rw=360, rh=170;
+    var rx=415, ry=380, rw=350, rh=185;
 
     // Panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
@@ -391,24 +377,21 @@
     ctx.textAlign='center';
     haloText('Ensemble Statistics', rx+rw/2, ry+24, '#444');
 
-    // Arrow from ensemble panel
-    drawArrow(rx+rw/2, 350, rx+rw/2, ry-2, '#bbb');
-
     var gridSz=85;
 
     // Ensemble mean
-    var mX=rx+rw/2-gridSz-20, mY=ry+40;
+    var mX=rx+rw/2-gridSz-20, mY=ry+50;
     var ma=ease(clamp01((a-0.1)/0.6));
     if(ma>0){
       ctx.globalAlpha=a*ma;
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('Ensemble Mean', mX+gridSz/2, mY, GREEN);
+      haloText('Mean', mX+gridSz/2, mY, GREEN);
       drawGrid(mX, mY+10, gridSz, ensMean, precipColor);
     }
 
     // Uncertainty
-    var uX=rx+rw/2+20, uY=ry+40;
+    var uX=rx+rw/2+20, uY=ry+50;
     var ua=ease(clamp01((a-0.3)/0.6));
     if(ua>0){
       ctx.globalAlpha=a*ua;
@@ -432,7 +415,6 @@
     var globalFade=Math.min(fadeIn, fadeOut);
     ctx.globalAlpha=ease(globalFade);
 
-    drawTitle(t);
     drawInput(t);
     drawLossComparison(t);
     drawEnsemble(t);

@@ -205,11 +205,11 @@
   var modelX=155, modelY=flowY-modelH/2;
 
   // Diffusion panel
-  var diffX=380, diffW=230;
-  var mainDenSz=130;
+  var diffX=355, diffW=215;
+  var mainDenSz=120;
 
   // Ensemble panel
-  var ensX=625, ensW=148;
+  var ensX=585, ensW=185;
   var memSz=60, memGap=8;
 
   function drawTitle(t){
@@ -409,7 +409,7 @@
 
       // Ens. Mean label (18px)
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
-      haloText('Ens. Mean', memStartX+memSz/2, bottomY-6, GREEN);
+      haloText('Mean', memStartX+memSz/3, bottomY-6, GREEN);
       drawGrid(memStartX, bottomY, memSz, precipPattern, precipColor, ea2);
 
       // Uncertainty label (18px)
@@ -457,7 +457,6 @@
     var globalFade=Math.min(fadeIn, fadeOut);
     ctx.globalAlpha=ease(globalFade);
 
-    drawTitle(t);
     drawInputs(t);
     drawModelBlock(t);
     drawDiffusion(t);

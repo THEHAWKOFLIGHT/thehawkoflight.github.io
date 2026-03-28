@@ -160,16 +160,26 @@
     {name:'Random Forest', f1:0.859, color:ORANGE, time:'42.28s'}
   ];
 
+  // ---- Shrink animation: spectrum starts big, shrinks to corner ----
+  var SPEC_BIG={sx:150, sy:100, sw:480, sh:350};
+  var SPEC_SMALL={sx:25, sy:85, sw:395, sh:205};
+  var SHRINK_T0=2.5, SHRINK_T1=3.5;
+  function getShrink(t){
+    if(t<=SHRINK_T0) return 0;
+    if(t>=SHRINK_T1) return 1;
+    return ease((t-SHRINK_T0)/(SHRINK_T1-SHRINK_T0));
+  }
+
   // ---- Phase timing ----
   var P={
-    A:0, A_end:2.0,
-    B:1.8, B_end:3.5,
-    C:3.2, C_end:5.5,
-    D:5.2, D_end:8.5,
-    E:8.0, E_end:10.5,
-    FADE_START:11.5,
-    FADE_END:13.0,
-    TOTAL:13.5
+    A:0, A_end:2.5,
+    B:3.6, B_end:5.3,
+    C:5.0, C_end:7.0,
+    D:6.8, D_end:9.8,
+    E:9.3, E_end:11.5,
+    FADE_START:12.5,
+    FADE_END:14.0,
+    TOTAL:14.5
   };
 
   var startTime=null;
@@ -181,17 +191,21 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=30, sy=90, sw=380, sh=190;
+    var p=getShrink(t);
+    var sx=lerp(SPEC_BIG.sx,SPEC_SMALL.sx,p);
+    var sy=lerp(SPEC_BIG.sy,SPEC_SMALL.sy,p);
+    var sw=lerp(SPEC_BIG.sw,SPEC_SMALL.sw,p);
+    var sh=lerp(SPEC_BIG.sh,SPEC_SMALL.sh,p);
 
     // Background panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(sx-12,sy-20,sw+24,sh+50,8);
+    ctx.beginPath(); ctx.roundRect(sx-12,sy-25,sw+24,sh+55,8);
     ctx.fill(); ctx.stroke();
 
-    // Title
+    // Title — positioned above the panel to avoid collision with tall peak labels
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-4, '#555');
+    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-24, '#555');
 
     // Axes
     ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
@@ -258,7 +272,7 @@
     var a=ease(clamp01((t-P.B)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=30, sy=90, sw=380, sh=190;
+    var sx=25, sy=85, sw=395, sh=205;
 
     // "BARNI Peak Finder" label
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
@@ -306,12 +320,12 @@
     var a=ease(clamp01((t-P.C)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=30, sy=90, sw=380, sh=190;
+    var sx=25, sy=85, sw=395, sh=205;
 
     // Arrow from spectrum to feature vector
     var arrowStartX=sx+sw+12;
     var arrowStartY=sy+sh/2;
-    var fvX=440, fvY=95, fvW=32, fvH=180;
+    var fvX=450, fvY=90, fvW=32, fvH=200;
 
     drawArrow(arrowStartX, arrowStartY, fvX-2, arrowStartY, '#bbb');
 
@@ -335,7 +349,7 @@
     haloText('Features', fvX+fvW/2, fvY-8, '#888');
 
     // Three classifier blocks
-    var clsX=520, clsW=130, clsH=55, clsGap=14;
+    var clsX=525, clsW=135, clsH=58, clsGap=14;
     var totalH=classifiers.length*(clsH+clsGap)-clsGap;
     var clsStartY=fvY+(fvH-totalH)/2;
 
@@ -381,7 +395,7 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Results panel - shifted up since pipeline is removed
-    var rx=30, ry=350, rw=550, rh=180;
+    var rx=25, ry=365, rw=555, rh=185;
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
@@ -390,7 +404,7 @@
     haloText('F1 Score Comparison', rx+rw/2, ry+28, '#444');
 
     // Bar chart
-    var barX=rx+160, barMaxW=320, barH=40, barGap=14;
+    var barX=rx+160, barMaxW=320, barH=34, barGap=10;
     var barStartY=ry+50;
     var maxF1=1.0;
 
@@ -437,7 +451,7 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Winner panel
-    var wx=590, wy=350, ww=180, wh=200;
+    var wx=595, wy=365, ww=180, wh=200;
     ctx.fillStyle='#f4f9f4'; ctx.strokeStyle=GREEN; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,8); ctx.fill(); ctx.stroke();
 
@@ -489,7 +503,6 @@
     var globalFade=Math.min(fadeIn, fadeOut);
     ctx.globalAlpha=ease(globalFade);
 
-    drawTitle(t);
     drawSpectrum(t);
     drawFeatureExtraction(t);
     drawClassifiers(t);

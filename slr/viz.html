@@ -37,7 +37,6 @@
   function clamp01(t){ return t<0?0:t>1?1:t; }
   function lerp(a,b,t){ return a+(b-a)*t; }
 
-  // Halo text with default stroke width 5px (#29)
   function haloText(text,x,y,fill,hp){
     hp=hp||5; ctx.save();
     ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
@@ -47,19 +46,17 @@
     ctx.restore();
   }
 
-  // Arrows with 50% larger heads and line widths (#28)
   function drawArrow(x1,y1,x2,y2,col,lw){
     ctx.strokeStyle=col; ctx.lineWidth=(lw||1.5)*1.5;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     var ang=Math.atan2(y2-y1,x2-x1);
-    var headLen=10.5; // was 7, scaled 50%
+    var headLen=10.5;
     ctx.beginPath(); ctx.moveTo(x2,y2);
     ctx.lineTo(x2-headLen*Math.cos(ang-0.35),y2-headLen*Math.sin(ang-0.35));
     ctx.lineTo(x2-headLen*Math.cos(ang+0.35),y2-headLen*Math.sin(ang+0.35));
     ctx.closePath(); ctx.fillStyle=col; ctx.fill();
   }
 
-  // Gaussian PDF
   function gauss(x,mu,sig){ var d=(x-mu)/sig; return Math.exp(-0.5*d*d); }
 
   // Fake "text lines" for document visuals
@@ -74,68 +71,67 @@
   for(var i=0;i<12;i++){
     embQ.push((Math.random()-0.5)*2);
     embK.push((Math.random()-0.5)*2);
-    // Make them somewhat similar (same-author scenario)
     embK[i]=embQ[i]*0.7+(Math.random()-0.5)*0.8;
   }
 
-  // Score value (cosine-distance-like, low = similar)
   var scoreVal=0.23;
-  // Same-author distribution: centered at 0.2, narrow
   var saMu=0.18, saSig=0.10;
-  // Different-author distribution: centered at 0.55, wider
   var daMu=0.55, daSig=0.14;
-
-  // LR at score
   var pSa=gauss(scoreVal,saMu,saSig);
   var pDa=gauss(scoreVal,daMu,daSig);
   var LR=(pSa/pDa).toFixed(1);
 
-  // Phase timing - identical to original
+  // ---- Dynamic Layout: Present Big Then Shrink ----
+
+  // Shrink 1: Documents (big centered -> small left column)
+  var QDOC_BIG  = {x:250, y:100, w:280, h:150};
+  var QDOC_SMALL= {x:30,  y:75,  w:150, h:95};
+  var KDOC_BIG  = {x:250, y:310, w:280, h:150};
+  var KDOC_SMALL= {x:30,  y:200, w:150, h:95};
+  var SHRINK1_T0=2.5, SHRINK1_T1=3.5;
+
+  function getShrink1(t){
+    if(t<=SHRINK1_T0) return 0;
+    if(t>=SHRINK1_T1) return 1;
+    return ease((t-SHRINK1_T0)/(SHRINK1_T1-SHRINK1_T0));
+  }
+  function lerpRect(big,small,p){
+    return {x:lerp(big.x,small.x,p), y:lerp(big.y,small.y,p),
+            w:lerp(big.w,small.w,p), h:lerp(big.h,small.h,p)};
+  }
+
+  // Distribution plot (fixed position, no shrink)
+  var plotX=30, plotY=355, plotW=540, plotH=220;
+
+  // Fixed layout (appear after shrink 1)
+  var modelW=140, modelH=130;
+  var modelX=260, modelY=108;
+  var vecW=30, vecH=70;
+  var vecX=450;
+  var scoreW=130, scoreH=70;
+  var scoreBX=540, scoreBY=138;
+
+  // LR result panel
+  var lrW=170, lrH=210;
+  var lrX=595, lrY=355;
+
+  // Phase timing (first shrink only)
   var P={
-    A:0, A_end:2.0,       // Two text documents appear
-    B:1.8, B_end:4.0,     // Embedding model + vectors
-    C:3.8, C_end:5.5,     // Distance -> score
-    D:5.2, D_end:9.0,     // Score distributions + LR
-    E:8.5, E_end:10.5,    // Interpretation
-    FADE_START:11.0,
-    FADE_END:12.5,
-    TOTAL:13.0
+    A:0, A_end:2.5,           // Two text documents appear (BIG)
+    // SHRINK1: 2.5-3.5
+    B:3.6, B_end:5.5,         // Embedding model + vectors
+    C:5.2, C_end:6.8,         // Distance -> score
+    D:6.5, D_end:9.2,         // Score distributions + LR
+    E:8.8, E_end:10.8,        // LR result interpretation
+    FADE_START:11.5,
+    FADE_END:12.8,
+    TOTAL:13.5
   };
 
   var startTime=null;
   function getT(){ return ((performance.now()/1000)-startTime)%P.TOTAL; }
 
-  // ========== LAYOUT CONSTANTS ==========
-  // Top portion: documents, embedding model, vectors, score
-  // Bottom portion: distribution plot, LR panel
-
-  // Documents (#6): 150x115
-  var docW=150, docH=115;
-  var qDocX=30, qDocY=75;
-  var kDocX=30, kDocY=215;
-
-  // Embedding model box (#7): 140x130
-  var modelW=140, modelH=130;
-  var modelX=260, modelY=100;
-
-  // Embedding vectors (#10): 30px wide, 90px tall
-  var vecW=30, vecH=90;
-  var vecX=450;
-
-  // Score box (#12): 130x70
-  var scoreW=130, scoreH=70;
-  var scoreBX=540, scoreBY=125;
-
-  // Distribution plot - enlarged (#16), bottom portion
-  var plotX=30, plotY=355, plotW=540, plotH=220;
-
-  // LR result panel (#22): 170x210
-  var lrW=170, lrH=210;
-  var lrX=595, lrY=355;
-
-  // ========== DRAW FUNCTIONS ==========
-
-  // Title: 28px bold, no subtitle (#1)
+  // Title
   function drawTitle(t){
     var a=ease(clamp01(t/0.6));
     ctx.save(); ctx.globalAlpha=a;
@@ -145,54 +141,55 @@
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Draw a mini "document" with fake text lines
-  // #4: thicker lines (8px height), wider gaps, labels 18px
+  // Draw a mini "document" with fake text lines (scalable)
   function drawDoc(x,y,w,h,lines,label,labelCol,a){
     ctx.save(); ctx.globalAlpha=a;
+    var sc=w/150; // scale relative to SMALL doc width
 
     // Page
-    ctx.fillStyle='#fff'; ctx.strokeStyle='#d0d4dc'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.strokeStyle='#d0d4dc'; ctx.lineWidth=Math.max(1,1.5*Math.min(sc,2));
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,Math.min(6*sc,12)); ctx.fill(); ctx.stroke();
 
-    // Fake text lines: 8px height (#3), wider gaps
-    var lx=x+12, ly=y+16, lw=w-24;
+    // Fake text lines — scale spacing to fit within height
+    var topPad=Math.min(16*sc, h*0.14);
+    var lx=x+Math.min(12*sc, w*0.08), lw=w-2*Math.min(12*sc, w*0.08);
+    var availH=h-topPad*2;
+    var lineH=Math.min(16*sc, availH/lines.length);
+    var lineThick=Math.max(4, lineH*0.5);
+    var ly=y+topPad;
+
     for(var i=0;i<lines.length;i++){
       var lineW=lines[i]*lw;
       ctx.fillStyle='#d8dbe3';
-      ctx.beginPath(); ctx.roundRect(lx, ly+i*16, lineW, 8, 3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(lx, ly+i*lineH, lineW, lineThick, Math.min(3*sc,lineThick/2)); ctx.fill();
     }
 
-    // Label below: 18px (#4)
-    ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
+    // Label below (capped scale for label)
+    var labelSc=Math.min(sc, 1.5);
+    ctx.font='600 '+Math.max(18,Math.round(18*labelSc))+'px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText(label, x+w/2, y+h+22, labelCol);
+    haloText(label, x+w/2, y+h+Math.min(22, 18*labelSc), labelCol);
 
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Phase A: two documents
+  // Phase A: two documents (dynamic position)
   function drawDocuments(t){
     var a=ease(clamp01((t-P.A)/0.8));
     if(a<=0) return;
 
+    var p1=getShrink1(t);
+    var qr=lerpRect(QDOC_BIG, QDOC_SMALL, p1);
+    var kr=lerpRect(KDOC_BIG, KDOC_SMALL, p1);
+
     var qa=ease(clamp01(a/0.6));
-    drawDoc(qDocX, qDocY, docW, docH, textLinesQ, 'Questioned Text', ORANGE, qa);
+    drawDoc(qr.x, qr.y, qr.w, qr.h, textLinesQ, 'Questioned Text', ORANGE, qa);
 
     var ka2=ease(clamp01((a-0.3)/0.6));
-    drawDoc(kDocX, kDocY, docW, docH, textLinesK, 'Known Text', BLUE, ka2);
-
-    // "Same author?" label: 18px (#5)
-    if(a>0.6){
-      var la=ease(clamp01((a-0.6)/0.4));
-      ctx.save(); ctx.globalAlpha=la;
-      ctx.font='italic 18px "Noto Sans",sans-serif';
-      ctx.textAlign='center';
-      haloText('Same author?', qDocX+docW/2, kDocY+docH+50, '#aaa');
-      ctx.restore();
-    }
+    drawDoc(kr.x, kr.y, kr.w, kr.h, textLinesK, 'Known Text', BLUE, ka2);
   }
 
-  // Phase B: embedding model + vectors
+  // Phase B: embedding model + vectors (fixed positions, appear after shrink 1)
   function drawEmbedding(t){
     if(t<P.B) return;
     var a=ease(clamp01((t-P.B)/0.8));
@@ -201,8 +198,9 @@
     // Arrows from docs to model
     var aa=ease(clamp01(a/0.4));
     ctx.globalAlpha=aa;
-    drawArrow(qDocX+docW+5, qDocY+docH/2, modelX-6, modelY+35, '#ccc');
-    drawArrow(kDocX+docW+5, kDocY+docH/2, modelX-6, modelY+modelH-35, '#ccc');
+    var qDocR=QDOC_SMALL, kDocR=KDOC_SMALL;
+    drawArrow(qDocR.x+qDocR.w+5, qDocR.y+qDocR.h/2, modelX-6, modelY+35, '#ccc');
+    drawArrow(kDocR.x+kDocR.w+5, kDocR.y+kDocR.h/2, modelX-6, modelY+modelH-35, '#ccc');
 
     // Model box
     var ma=ease(clamp01((a-0.1)/0.5));
@@ -210,13 +208,11 @@
     ctx.fillStyle='#f0ecf5'; ctx.strokeStyle=PURPLE; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(modelX,modelY,modelW,modelH,10); ctx.fill(); ctx.stroke();
 
-    // "Stylometric Embedding" text: 20px bold (#8)
     ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
     haloText('Stylometric', modelX+modelW/2, modelY+40, PURPLE);
     haloText('Embedding', modelX+modelW/2, modelY+62, PURPLE);
 
-    // Single "Style Features" at 16px (#9) replacing 3 small lines
     ctx.font='16px "Noto Sans",sans-serif';
     haloText('Style Features', modelX+modelW/2, modelY+90, '#aaa');
 
@@ -224,13 +220,11 @@
     var va=ease(clamp01((a-0.4)/0.5));
     if(va>0){
       ctx.globalAlpha=va;
-
-      // Arrows from model to vectors
       drawArrow(modelX+modelW+6, modelY+35, vecX-6, modelY+10, '#ccc');
       drawArrow(modelX+modelW+6, modelY+modelH-35, vecX-6, modelY+modelH-10, '#ccc');
 
-      // Questioned embedding vector (#10, #11)
-      var vy1=modelY-10;
+      // Questioned embedding vector
+      var vy1=modelY-30;
       ctx.fillStyle='#fff5eb'; ctx.strokeStyle=ORANGE; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.roundRect(vecX,vy1,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
@@ -239,12 +233,11 @@
         ctx.fillStyle=c;
         ctx.fillRect(vecX+3, vy1+3+i*(vecH-6)/12, vecW-6, (vecH-6)/12-1);
       }
-      // e_Q label: 16px (#11)
       ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
       haloText('e_Q', vecX+vecW/2, vy1-8, ORANGE);
 
       // Known embedding vector
-      var vy2=modelY+modelH-vecH+10;
+      var vy2=modelY+modelH-vecH+30;
       ctx.fillStyle='#eef3fb'; ctx.strokeStyle=BLUE; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.roundRect(vecX,vy2,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
@@ -253,7 +246,6 @@
         ctx.fillStyle=c;
         ctx.fillRect(vecX+3, vy2+3+i*(vecH-6)/12, vecW-6, (vecH-6)/12-1);
       }
-      // e_K label: 16px (#11)
       ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
       haloText('e_K', vecX+vecW/2, vy2-8, BLUE);
     }
@@ -261,30 +253,25 @@
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Phase C: distance -> score
+  // Phase C: distance -> score (fixed positions)
   function drawScore(t){
     if(t<P.C) return;
     var a=ease(clamp01((t-P.C)/0.7));
     ctx.save(); ctx.globalAlpha=a;
 
-    // Arrows from vectors to score box
     drawArrow(vecX+vecW+5, modelY+25, scoreBX-6, scoreBY+20, '#ccc');
     drawArrow(vecX+vecW+5, modelY+modelH-25, scoreBX-6, scoreBY+scoreH-20, '#ccc');
 
-    // Score box (#12): 130x70
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(scoreBX,scoreBY,scoreW,scoreH,8); ctx.fill(); ctx.stroke();
 
-    // "Distance Score" label: 18px (#13)
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
     haloText('Distance Score', scoreBX+scoreW/2, scoreBY+22, '#555');
 
-    // "d(e_Q, e_K)": 16px (#14)
     ctx.font='16px "Noto Sans",sans-serif';
     haloText('d(e_Q, e_K)', scoreBX+scoreW/2, scoreBY+40, '#aaa');
 
-    // Score value: 24px bold (#15)
     var va=ease(clamp01((a-0.3)/0.5));
     if(va>0){
       ctx.globalAlpha=a*va;
@@ -295,17 +282,17 @@
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Phase D: score distributions + LR (#16-#21)
+  // Phase D: score distributions (fixed position)
   function drawDistributions(t){
     if(t<P.D) return;
     var a=ease(clamp01((t-P.D)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    // Distribution plot area - enlarged (#16)
+    // Distribution plot area
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(plotX-10,plotY-30,plotW+20,plotH+60,10); ctx.fill(); ctx.stroke();
 
-    // "Score-based Likelihood Ratio" label: 22px (#17)
+    // "Score-based Likelihood Ratio" label
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
     haloText('Score-based Likelihood Ratio', plotX+plotW/2, plotY-6, '#444');
@@ -314,7 +301,7 @@
     ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(plotX,plotY); ctx.lineTo(plotX,plotY+plotH); ctx.lineTo(plotX+plotW,plotY+plotH); ctx.stroke();
 
-    // Axis labels: 16px (#18)
+    // Axis labels
     ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
     haloText('Score s', plotX+plotW/2, plotY+plotH+22, '#aaa');
     ctx.save(); ctx.translate(plotX-20, plotY+plotH/2); ctx.rotate(-Math.PI/2);
@@ -322,9 +309,7 @@
     haloText('Density', 0, 0, '#aaa');
     ctx.restore();
 
-    // REMOVED x-axis tick labels (#19)
-
-    // Draw same-author distribution (green)
+    // Same-author distribution (green)
     var saA=ease(clamp01((a-0.1)/0.5));
     if(saA>0){
       ctx.globalAlpha=a*saA;
@@ -349,13 +334,12 @@
       }
       ctx.strokeStyle=GREEN; ctx.lineWidth=2.5; ctx.stroke();
 
-      // Distribution curve label: 18px (#20)
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='left';
       haloText('H\u2081: Same author', plotX+saMu*plotW-25, plotY+22, GREEN);
     }
 
-    // Draw different-author distribution (red/orange)
+    // Different-author distribution (red)
     var daA=ease(clamp01((a-0.3)/0.5));
     if(daA>0){
       ctx.globalAlpha=a*daA;
@@ -380,7 +364,6 @@
       }
       ctx.strokeStyle=RED; ctx.lineWidth=2.5; ctx.stroke();
 
-      // Distribution curve label: 18px (#20)
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='left';
       haloText('H\u2082: Different authors', plotX+daMu*plotW-30, plotY+44, RED);
@@ -399,15 +382,13 @@
 
       ctx.font='700 14px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('s = '+scoreVal.toFixed(2), scoreX, plotY-6, PURPLE);
+      haloText('s = '+scoreVal.toFixed(2), scoreX, plotY+14, PURPLE);
 
-      // Show the two density values
       var pSaVal=gauss(scoreVal,saMu,saSig);
       var pDaVal=gauss(scoreVal,daMu,daSig);
       var saY=plotY+plotH-pSaVal*plotH*0.85;
       var daY=plotY+plotH-pDaVal*plotH*0.85;
 
-      // Dots on curves: radius 7 (#21)
       ctx.beginPath(); ctx.arc(scoreX, saY, 7, 0, Math.PI*2);
       ctx.fillStyle=GREEN; ctx.fill();
       ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
@@ -417,7 +398,7 @@
       ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
     }
 
-    // Arrow from distribution to LR panel
+    // Arrow to LR panel
     var lrA=ease(clamp01((a-0.7)/0.3));
     if(lrA>0){
       ctx.globalAlpha=a*lrA;
@@ -427,32 +408,27 @@
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Phase D/E: LR result panel (#22-#27)
+  // Phase E: LR result panel
   function drawLRResult(t){
-    if(t<P.D+1.5) return;
-    var a=ease(clamp01((t-P.D-1.5)/0.8));
+    if(t<P.E) return;
+    var a=ease(clamp01((t-P.E)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    // LR panel: 170x210 (#22)
     ctx.fillStyle='#f4f9f4'; ctx.strokeStyle=GREEN; ctx.lineWidth=2;
     ctx.beginPath(); ctx.roundRect(lrX,lrY,lrW,lrH,10); ctx.fill(); ctx.stroke();
 
-    // "Likelihood Ratio" label: 20px (#23)
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
     haloText('Likelihood Ratio', lrX+lrW/2, lrY+28, '#444');
 
-    // Formula: 16px (#24)
     ctx.font='16px "Noto Sans",sans-serif';
     haloText('P(s | H\u2081)', lrX+lrW/2, lrY+58, GREEN);
 
-    // Fraction line
     ctx.strokeStyle='#888'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(lrX+30, lrY+66); ctx.lineTo(lrX+lrW-30, lrY+66); ctx.stroke();
 
     haloText('P(s | H\u2082)', lrX+lrW/2, lrY+84, RED);
 
-    // LR value: 36px bold (#25)
     var va=ease(clamp01((a-0.3)/0.5));
     if(va>0){
       ctx.globalAlpha=a*va;
@@ -462,17 +438,12 @@
       ctx.font='14px "Noto Sans",sans-serif';
       haloText('Evidence supports', lrX+lrW/2, lrY+158, '#888');
 
-      // "same authorship" label: 18px (#26)
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       haloText('same authorship', lrX+lrW/2, lrY+180, GREEN);
-
-      // REMOVED interpretation scale (#27)
     }
 
     ctx.globalAlpha=1; ctx.restore();
   }
-
-  // REMOVED drawPipeline entirely (#2)
 
   function frame(){
     if(startTime===null) startTime=performance.now()/1000;
@@ -484,7 +455,6 @@
     var globalFade=Math.min(fadeIn, fadeOut);
     ctx.globalAlpha=ease(globalFade);
 
-    drawTitle(t);
     drawDocuments(t);
     drawEmbedding(t);
     drawScore(t);

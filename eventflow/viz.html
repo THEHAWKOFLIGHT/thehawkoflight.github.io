@@ -41,49 +41,59 @@
   var BLUE = '#6C8EBF', ORANGE = '#D79B00', GREEN = '#82B366', PURPLE = '#9673A6';
   var BG = '#fdfdfe';
 
-  // Timeline geometry
-  var TL = { x: 80, y: 110, w: 620, split: 0.55 }; // split = fraction that is history
-  var TL_END = TL.x + TL.w;
-  var TL_SPLIT = TL.x + TL.w * TL.split;
-  var DOT_R = 8; // was 5
+  // ---- Dynamic Timeline Layout: starts big & centred, shrinks to top strip ----
+  var TL_BIG   = { x: 40, y: 280, w: 700, split: 0.55 };
+  var TL_SMALL = { x: 80, y: 110, w: 620, split: 0.55 };
+  var SHRINK_T0 = 4.0, SHRINK_T1 = 5.2;
+
+  function getTL(t) {
+    if (t <= SHRINK_T0) return TL_BIG;
+    if (t >= SHRINK_T1) return TL_SMALL;
+    var p = ease((t - SHRINK_T0) / (SHRINK_T1 - SHRINK_T0));
+    return {
+      x: lerp(TL_BIG.x, TL_SMALL.x, p),
+      y: lerp(TL_BIG.y, TL_SMALL.y, p),
+      w: lerp(TL_BIG.w, TL_SMALL.w, p),
+      split: TL_BIG.split
+    };
+  }
+
+  // Current frame's dynamic timeline state
+  var curTL, curTLEnd, curTLSplit, curScale;
+  var DOT_R_BASE = 8;
 
   // History events (times as fraction of history region 0-1)
   var histTimes = [0.05, 0.15, 0.22, 0.38, 0.45, 0.52, 0.68, 0.75, 0.88, 0.95];
-  var histX = histTimes.map(function(t){ return TL.x + t * TL.w * TL.split; });
-  // Y jitter for event marks on timeline
+  // Y jitter for event marks on timeline (fixed random offsets)
   var histMarkY = histTimes.map(function(){ return -12 - Math.random() * 25; });
 
   // Predicted events (times as fraction of prediction region 0-1)
   var predTimes = [0.15, 0.35, 0.55, 0.72, 0.9];
-  var predX = predTimes.map(function(t){ return TL_SPLIT + t * (TL_END - TL_SPLIT); });
   var predMarkY = predTimes.map(function(){ return -12 - Math.random() * 25; });
   var N_PRED = predTimes.length;
 
-  // Flow plot geometry
-  var FP = { x: 160, y: 280, w: 460, h: 280 };
+  // Flow plot geometry (fixed position - appears after shrink)
+  var FP = { x: 160, y: 305, w: 460, h: 275 };
 
   // Target positions (at s=1, mapped to predicted event times)
-  // targY decreases as i increases (higher predTime = higher on screen)
   var targY = predTimes.map(function(t){ return FP.y + FP.h - t * (FP.h - 40) - 20; });
 
   // Random initial positions — sorted to match targY order so paths don't cross
   var initYraw = [];
   for(var i = 0; i < N_PRED; i++) initYraw.push(FP.y + 30 + Math.random() * (FP.h - 60));
-  initYraw.sort(function(a, b){ return b - a; }); // descending (matching targY order)
-  // Add some jitter while preserving order
+  initYraw.sort(function(a, b){ return b - a; });
   var initY = initYraw;
 
   // Generate non-crossing flow paths (monotone interpolation)
   function flowPath(i, s){
     var y0 = initY[i], y1 = targY[i];
-    // Smooth cubic ease between start and end — no cross-over curvature
     var ss = s * s * (3 - 2 * s); // smoothstep
     return y0 + (y1 - y0) * ss;
   }
 
   // Text with halo for readability
   function haloText(text, x, y, fill, haloPx){
-    var hp = haloPx || 5; // was 3
+    var hp = haloPx || 5;
     ctx.save();
     ctx.strokeStyle = BG;
     ctx.lineWidth = hp * 2;
@@ -115,13 +125,14 @@
 
   // Phase timing (seconds)
   var P = {
-    A_start: 0,    A_end: 2.5,    // Timeline + history events appear
-    B_start: 2.5,  B_end: 4.2,    // Prediction horizon highlights
-    C_start: 4.2,  C_end: 6.0,    // Count prediction + flow plot axes
-    D_start: 6.0,  D_end: 7.5,    // Random dots appear at s=0
-    E_start: 7.5,  E_end: 11.5,   // Flow: dots travel s=0 to s=1
-    F_start: 11.5, F_end: 14.0,   // Final dots appear on timeline
-    TOTAL: 17.0                     // 3s pause then loop
+    A_start: 0,    A_end: 2.5,    // Timeline + history events appear (BIG)
+    B_start: 2.5,  B_end: 4.0,    // Prediction horizon highlights (BIG)
+    // SHRINK: 4.0 -> 5.2
+    C_start: 5.5,  C_end: 7.3,    // Count prediction + flow plot axes
+    D_start: 7.3,  D_end: 8.8,    // Random dots appear at s=0
+    E_start: 8.8,  E_end: 12.8,   // Flow: dots travel s=0 to s=1
+    F_start: 12.8, F_end: 15.3,   // Final dots appear on timeline
+    TOTAL: 18.0                     // ~2.7s pause then loop
   };
 
   var startTime = null;
@@ -133,32 +144,33 @@
 
     ctx.save();
     // Main line
-    var endX = TL.x + TL.w * ease(ap);
+    var endX = curTL.x + curTL.w * ease(ap);
     ctx.strokeStyle = '#888';
-    ctx.lineWidth = 3; // was 2
+    ctx.lineWidth = Math.max(2, 3 * curScale);
     ctx.beginPath();
-    ctx.moveTo(TL.x, TL.y);
-    ctx.lineTo(endX, TL.y);
+    ctx.moveTo(curTL.x, curTL.y);
+    ctx.lineTo(endX, curTL.y);
     ctx.stroke();
 
-    // Arrow at end (scaled up 50%)
+    // Arrow at end
     if(ap > 0.95){
+      var s = curScale;
       ctx.beginPath();
-      ctx.moveTo(TL_END + 12, TL.y);
-      ctx.lineTo(TL_END - 3, TL.y - 7.5);
-      ctx.lineTo(TL_END - 3, TL.y + 7.5);
+      ctx.moveTo(curTLEnd + 12 * s, curTL.y);
+      ctx.lineTo(curTLEnd - 3 * s, curTL.y - 7.5 * s);
+      ctx.lineTo(curTLEnd - 3 * s, curTL.y + 7.5 * s);
       ctx.closePath();
       ctx.fillStyle = '#888';
       ctx.fill();
     }
 
-    // "time" label — 22px (was 14px)
+    // "time" label
     if(ap > 0.8){
       var la = clamp01((ap - 0.8) / 0.2);
       ctx.globalAlpha = la;
-      ctx.font = 'italic 22px "Noto Sans", sans-serif';
+      ctx.font = 'italic ' + Math.max(18, Math.round(22 * curScale)) + 'px "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('time', TL.x + TL.w / 2, TL.y + 36, '#888');
+      haloText('time', curTL.x + curTL.w / 2, curTL.y + 36 * curScale, '#888');
       ctx.globalAlpha = 1;
     }
 
@@ -167,40 +179,40 @@
 
   function drawHistoryEvents(t){
     var base = P.A_start + 0.8;
-    var dur = P.A_end - base;
     ctx.save();
-    for(var i = 0; i < histX.length; i++){
-      var delay = i / histX.length * 0.6;
+    for(var i = 0; i < histTimes.length; i++){
+      var delay = i / histTimes.length * 0.6;
       var ap = clamp01((t - base - delay) / 0.4);
       if(ap <= 0) continue;
 
       var ea = ease(ap);
-      var x = histX[i];
-      var my = histMarkY[i];
+      // Compute x dynamically from current TL
+      var x = curTL.x + histTimes[i] * curTL.w * curTL.split;
+      var my = histMarkY[i] * curScale;
 
       // Vertical tick
       ctx.strokeStyle = BLUE;
-      ctx.lineWidth = 3; // was 2
+      ctx.lineWidth = Math.max(2, 3 * curScale);
       ctx.globalAlpha = ea;
       ctx.beginPath();
-      ctx.moveTo(x, TL.y);
-      ctx.lineTo(x, TL.y + my * ea);
+      ctx.moveTo(x, curTL.y);
+      ctx.lineTo(x, curTL.y + my * ea);
       ctx.stroke();
 
-      // Dot at top — radius 8 (was 5, via DOT_R)
+      // Dot at top
       ctx.beginPath();
-      ctx.arc(x, TL.y + my * ea, DOT_R * ea, 0, Math.PI * 2);
+      ctx.arc(x, curTL.y + my * ea, DOT_R_BASE * curScale * ea, 0, Math.PI * 2);
       ctx.fillStyle = BLUE;
       ctx.fill();
     }
 
-    // "History" label — 26px (was 16px)
+    // "History" label
     var labAp = clamp01((t - P.A_end + 0.3) / 0.4);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
-      ctx.font = '600 26px "Google Sans", "Noto Sans", sans-serif';
+      ctx.font = '600 ' + Math.max(18, Math.round(26 * curScale)) + 'px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('History', TL.x + TL.w * TL.split / 2, TL.y + 55, BLUE);
+      haloText('History', curTL.x + curTL.w * curTL.split / 2, curTL.y + 55 * curScale, BLUE);
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -216,36 +228,36 @@
     // Shaded region
     ctx.globalAlpha = 0.12 * ea;
     ctx.fillStyle = GREEN;
-    ctx.fillRect(TL_SPLIT, TL.y - 50, (TL_END - TL_SPLIT) * ea, 85);
+    ctx.fillRect(curTLSplit, curTL.y - 50 * curScale, (curTLEnd - curTLSplit) * ea, 85 * curScale);
     ctx.globalAlpha = 1;
 
     // Dashed separator line
     ctx.globalAlpha = ea;
     ctx.setLineDash([5, 4]);
     ctx.strokeStyle = '#999';
-    ctx.lineWidth = 2; // was 1.5
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(TL_SPLIT, TL.y - 50);
-    ctx.lineTo(TL_SPLIT, TL.y + 35);
+    ctx.moveTo(curTLSplit, curTL.y - 50 * curScale);
+    ctx.lineTo(curTLSplit, curTL.y + 35 * curScale);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // "Prediction Horizon" label — 26px (was 16px)
+    // "Prediction Horizon" label
     var labAp = clamp01((t - P.B_start - 0.4) / 0.5);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
-      ctx.font = '600 26px "Google Sans", "Noto Sans", sans-serif';
+      ctx.font = '600 ' + Math.max(18, Math.round(26 * curScale)) + 'px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('Prediction Horizon', (TL_SPLIT + TL_END) / 2, TL.y + 55, GREEN);
+      haloText('Prediction Horizon', (curTLSplit + curTLEnd) / 2, curTL.y + 55 * curScale, GREEN);
     }
 
-    // "?" marks for unknown events — 36px (was 24px)
+    // "?" marks for unknown events
     var qAp = clamp01((t - P.B_start - 0.6) / 0.5);
     if(qAp > 0 && t < P.F_start){
       ctx.globalAlpha = 0.3 * ease(qAp);
-      ctx.font = '36px "Noto Sans", sans-serif';
+      ctx.font = Math.max(18, Math.round(36 * curScale)) + 'px "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('? ? ?', (TL_SPLIT + TL_END) / 2, TL.y - 18, '#999');
+      haloText('? ? ?', (curTLSplit + curTLEnd) / 2, curTL.y - 18 * curScale, '#999');
     }
 
     ctx.globalAlpha = 1;
@@ -260,16 +272,16 @@
     var ea = ease(ap);
     ctx.globalAlpha = ea;
 
-    // Arrow from history to count — line width 2.5px (was 1.5px)
-    var ax1 = TL_SPLIT - 20, ay1 = TL.y + 65;
-    var ax2 = 230, ay2 = TL.y + 110;
+    // Arrow from history to count box
+    var ax1 = curTLSplit - 20, ay1 = curTL.y + 65;
+    var ax2 = 230, ay2 = curTL.y + 110;
     ctx.strokeStyle = '#aaa';
-    ctx.lineWidth = 2.5; // was 1.5
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(ax1, ay1);
     ctx.quadraticCurveTo(ax1 - 30, ay2, ax2, ay2);
     ctx.stroke();
-    // arrowhead (scaled up 50%)
+    // arrowhead
     ctx.beginPath();
     ctx.moveTo(ax2, ay2);
     ctx.lineTo(ax2 - 9, ay2 - 6);
@@ -278,17 +290,17 @@
     ctx.fillStyle = '#aaa';
     ctx.fill();
 
-    // Count box — enlarged proportionally for 24px text
-    var bx = 230, by = TL.y + 93;
+    // Count box
+    var bx = 230, by = curTL.y + 93;
     ctx.fillStyle = '#f0f4f8';
     ctx.strokeStyle = '#ccc';
-    ctx.lineWidth = 2; // was 1
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(bx, by, 180, 40, 7);
     ctx.fill();
     ctx.stroke();
 
-    // Box text — 24px (was 15px)
+    // Box text
     ctx.font = '600 24px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
     haloText('Predict n = ' + N_PRED, bx + 90, by + 29, '#444');
@@ -305,10 +317,10 @@
     var ea = ease(ap);
     ctx.globalAlpha = ea;
 
-    // Box background — border 2px (was 1px)
+    // Box background
     ctx.fillStyle = '#fafbfd';
     ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 2; // was 1
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(FP.x - 10, FP.y - 10, FP.w + 30, FP.h + 30, 8);
     ctx.fill();
@@ -316,12 +328,12 @@
 
     // Y axis (event time)
     ctx.strokeStyle = '#888';
-    ctx.lineWidth = 2; // was 1.5
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(FP.x, FP.y + FP.h);
     ctx.lineTo(FP.x, FP.y);
     ctx.stroke();
-    // arrow (scaled up 50%)
+    // arrow
     ctx.beginPath();
     ctx.moveTo(FP.x, FP.y - 9);
     ctx.lineTo(FP.x - 6, FP.y + 3);
@@ -335,7 +347,7 @@
     ctx.moveTo(FP.x, FP.y + FP.h);
     ctx.lineTo(FP.x + FP.w, FP.y + FP.h);
     ctx.stroke();
-    // arrow (scaled up 50%)
+    // arrow
     ctx.beginPath();
     ctx.moveTo(FP.x + FP.w + 9, FP.y + FP.h);
     ctx.lineTo(FP.x + FP.w - 3, FP.y + FP.h - 6);
@@ -343,7 +355,7 @@
     ctx.closePath();
     ctx.fill();
 
-    // Labels — 22px (was 13px)
+    // Labels
     ctx.font = 'italic 22px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
     haloText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 32, '#888');
@@ -356,13 +368,13 @@
     haloText('event time', 0, 0, '#888');
     ctx.restore();
 
-    // s=0 and s=1 marks — 20px (was 12px)
+    // s=0 and s=1 marks
     ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
     haloText('s=0', FP.x, FP.y + FP.h + 22, '#aaa');
     haloText('s=1', FP.x + FP.w, FP.y + FP.h + 22, '#aaa');
 
-    // Title — 24px bold (was 15px)
+    // Title
     ctx.font = '700 24px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
     haloText('Flow Matching', FP.x + FP.w / 2, FP.y - 22, '#555');
@@ -384,12 +396,12 @@
 
       ctx.globalAlpha = ea;
       ctx.beginPath();
-      ctx.arc(FP.x + 2, initY[i], 10 * ea, 0, Math.PI * 2); // radius 10 (was 6)
+      ctx.arc(FP.x + 2, initY[i], 10 * ea, 0, Math.PI * 2);
       ctx.fillStyle = ORANGE;
       ctx.fill();
     }
 
-    // Label — 20px (was 12px), positioned to avoid overlap with dots
+    // Label
     var labAp = clamp01((t - P.D_start - 0.3) / 0.4);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
@@ -412,7 +424,7 @@
       var x0 = FP.x + 2;
       var x1 = FP.x + FP.w - 2;
 
-      // Draw trail — line width 3 (was 2)
+      // Draw trail
       ctx.beginPath();
       ctx.moveTo(x0, initY[i]);
       var steps = Math.floor(s * 40);
@@ -427,18 +439,18 @@
       var curY = flowPath(i, s);
       ctx.lineTo(curX, curY);
       ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
-      ctx.lineWidth = 3; // was 2
+      ctx.lineWidth = 3;
       ctx.globalAlpha = 0.5;
       ctx.stroke();
 
-      // Current dot — radius 10 (was 6)
+      // Current dot
       ctx.globalAlpha = 1;
       ctx.beginPath();
       ctx.arc(curX, curY, 10, 0, Math.PI * 2);
       ctx.fillStyle = blendHex(ORANGE, GREEN, s);
       ctx.fill();
 
-      // Velocity arrow (small) — arrowhead scaled up 50%
+      // Velocity arrow
       if(s > 0.02 && s < 0.98){
         var ds = 0.02;
         var nextY = flowPath(i, Math.min(s + ds, 1));
@@ -449,13 +461,13 @@
           var nx = dx / mag * 18;
           var ny = dy / mag * 18;
           ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
-          ctx.lineWidth = 2; // was 1.5
+          ctx.lineWidth = 2;
           ctx.globalAlpha = 0.6;
           ctx.beginPath();
           ctx.moveTo(curX, curY);
           ctx.lineTo(curX + nx, curY + ny);
           ctx.stroke();
-          // small arrowhead (scaled up 50%: 5 -> 7.5)
+          // small arrowhead
           var ang = Math.atan2(ny, nx);
           ctx.beginPath();
           ctx.moveTo(curX + nx, curY + ny);
@@ -478,7 +490,6 @@
     if(ap <= 0) return;
 
     ctx.save();
-    // Hide the "? ? ?" by this point (handled in drawPredictionHorizon)
 
     for(var i = 0; i < N_PRED; i++){
       var delay = i * 0.1;
@@ -486,32 +497,33 @@
       if(da <= 0) continue;
       var ea = ease(da);
 
-      var x = predX[i];
+      // Compute predX dynamically from current TL
+      var x = curTLSplit + predTimes[i] * (curTLEnd - curTLSplit);
       var my = predMarkY[i];
 
-      // Vertical tick — line width 3 (was 2)
+      // Vertical tick
       ctx.strokeStyle = GREEN;
       ctx.lineWidth = 3;
       ctx.globalAlpha = ea;
       ctx.beginPath();
-      ctx.moveTo(x, TL.y);
-      ctx.lineTo(x, TL.y + my * ea);
+      ctx.moveTo(x, curTL.y);
+      ctx.lineTo(x, curTL.y + my * ea);
       ctx.stroke();
 
-      // Dot — radius 8 (was 5, via DOT_R)
+      // Dot
       ctx.beginPath();
-      ctx.arc(x, TL.y + my * ea, DOT_R * ea, 0, Math.PI * 2);
+      ctx.arc(x, curTL.y + my * ea, DOT_R_BASE * ea, 0, Math.PI * 2);
       ctx.fillStyle = GREEN;
       ctx.fill();
     }
 
-    // "Predicted Events" label — 22px (was 14px)
+    // "Predicted Events" label
     var labAp = clamp01((ap - 0.5) / 0.4);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 22px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('Predicted Events', (TL_SPLIT + TL_END) / 2, TL.y - 48, GREEN);
+      haloText('Predicted Events', (curTLSplit + curTLEnd) / 2, curTL.y - 48, GREEN);
     }
 
     ctx.globalAlpha = 1;
@@ -519,13 +531,13 @@
   }
 
   function drawLegend(t){
-    if(t < 2) return;
-    var ap = clamp01((t - 2) / 0.5);
+    if(t < P.C_start) return;
+    var ap = clamp01((t - P.C_start) / 0.5);
     ctx.save();
     ctx.globalAlpha = ease(ap);
 
     var lx = 570, ly = 185;
-    // Legend text — 20px (was 12px), dots radius 7 (was 4)
+    // Legend text
     ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'left';
 
@@ -542,7 +554,7 @@
     if(t > P.F_start + 0.5){
       var pa = clamp01((t - P.F_start - 0.5) / 0.4);
       ctx.globalAlpha = ease(pa);
-      ly += 28; // increased spacing for larger text
+      ly += 28;
       ctx.beginPath();
       ctx.arc(lx, ly, 7, 0, Math.PI * 2);
       ctx.fillStyle = GREEN;
@@ -560,10 +572,9 @@
     var ap = clamp01(t / 0.6);
     ctx.save();
     ctx.globalAlpha = ease(ap);
-    // Title — 30px bold (was 20px). Subtitle removed entirely.
     ctx.font = '700 30px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 44, '#1a1a1a');
+    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 36, '#1a1a1a');
     ctx.globalAlpha = 1;
     ctx.restore();
   }
@@ -572,12 +583,17 @@
     if(startTime === null) startTime = performance.now() / 1000;
     var t = getT();
 
+    // Compute dynamic timeline layout for this frame
+    curTL = getTL(t);
+    curTLEnd = curTL.x + curTL.w;
+    curTLSplit = curTL.x + curTL.w * curTL.split;
+    curScale = curTL.w / TL_SMALL.w;
+
     // Clear
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = BG;
     ctx.fillRect(0, 0, W, H);
 
-    drawTitle(t);
     drawTimeline(t);
     drawHistoryEvents(t);
     drawPredictionHorizon(t);

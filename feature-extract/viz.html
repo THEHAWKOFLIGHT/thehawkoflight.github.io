@@ -108,13 +108,21 @@
     {name:'BARNI Peaks', dim:'ROI features', color:GREEN, f1_low:0.28, f1_high:0.82, time:30}
   ];
 
+  // ---- Shrink animation: spectrum starts big, shrinks to corner ----
+  var SPEC_BIG={sx:180, sy:80, sw:420, sh:340};
+  var SHRINK_T0=2.0, SHRINK_T1=3.0;
+  function getShrink(t){
+    if(t<=SHRINK_T0) return 0;
+    if(t>=SHRINK_T1) return 1;
+    return ease((t-SHRINK_T0)/(SHRINK_T1-SHRINK_T0));
+  }
+
   // Phase timing
   var P={
-    A:0, A_end:2.0,       // Spectrum draws in
-    B:1.8, B_end:4.5,     // Three feature branches
-    C:4.2, C_end:6.0,     // MLP classifiers
-    D:5.8, D_end:9.5,     // F1 comparison
-    E:9.0, E_end:11.0,    // Key insight
+    A:0, A_end:2.0,       // Spectrum draws in (big)
+    B:3.1, B_end:5.8,     // Three feature branches
+    C:5.5, C_end:7.2,     // MLP classifiers
+    D:7.0, D_end:10.5,    // F1 comparison
     FADE_START:11.5,
     FADE_END:13.0,
     TOTAL:13.5
@@ -135,12 +143,12 @@
 
   // Layout constants for the three-column arrangement
   // Left column: spectrum panel
-  var SPEC_SX=30, SPEC_SY=90, SPEC_SW=240, SPEC_SH=140;
+  var SPEC_SX=30, SPEC_SY=95, SPEC_SW=240, SPEC_SH=140;
   var SPEC_CX=SPEC_SX+SPEC_SW/2, SPEC_CY=SPEC_SY+SPEC_SH/2;
 
   // Middle column: feature branch boxes
   var BRANCH_X=310, BRANCH_BW=190, BRANCH_BH=85;
-  var BRANCH_Y=[75, 220, 370]; // y positions for three branches
+  var BRANCH_Y=[80, 225, 375]; // y positions for three branches
 
   // MLP boxes (between middle and right columns)
   var MLP_X=540, MLP_W=90, MLP_H=55;
@@ -163,7 +171,11 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=SPEC_SX, sy=SPEC_SY, sw=SPEC_SW, sh=SPEC_SH;
+    var p=getShrink(t);
+    var sx=lerp(SPEC_BIG.sx,SPEC_SX,p);
+    var sy=lerp(SPEC_BIG.sy,SPEC_SY,p);
+    var sw=lerp(SPEC_BIG.sw,SPEC_SW,p);
+    var sh=lerp(SPEC_BIG.sh,SPEC_SH,p);
 
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(sx-10,sy-28,sw+20,sh+50,8); ctx.fill(); ctx.stroke();
@@ -398,7 +410,6 @@
     var globalFade=Math.min(fadeIn, fadeOut);
     ctx.globalAlpha=ease(globalFade);
 
-    drawTitle(t);
     drawSpectrum(t);
     drawFeatureBranches(t);
     drawClassifier(t);
