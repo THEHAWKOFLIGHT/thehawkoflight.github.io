@@ -42,14 +42,16 @@
     .highlight-box {
       background: #f7f8fb;
       border: 1px solid #e2e6ee;
-      border-left: 4px solid #6C8EBF;
       border-radius: 6px;
       padding: 1.2rem 1.4rem;
       line-height: 1.65;
       font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
     }
     .highlight-box p { color: #3a3a3a; margin-bottom: 0.35rem; }
     .highlight-box p:last-child { margin-bottom: 0; }
+    .highlight-box .viz-frame { margin-top: auto; }
 
     /* ---- Header ---- */
     .site-header { padding: 2.5rem 1.5rem 0.5rem; }
@@ -173,9 +175,9 @@
     <div class="pub-grid">
 
       <!-- ADAPO -->
-      <div class="highlight-box" style="border-left-color: #9673A6;">
+      <div class="highlight-box">
         <p class="pub-title">Adversarial Distribution Alignment with Partial Observations (ADAPO)</p>
-        <p class="pub-authors"><strong>Nelson, K.</strong>, Kreiman, T., Levine, S., Krishnapriyan, A.</p>
+        <p class="pub-authors"><strong>Nelson, K.</strong>, Kreiman, T., <a href="https://people.eecs.berkeley.edu/~svlevine/" target="_blank">Levine, S.</a>, <a href="https://a1k12.github.io/" target="_blank">Krishnapriyan, A.</a></p>
         <p class="pub-links"><a href="adapo/">Project Page</a></p>
         <div class="viz-frame">
           <iframe src="adapo/?viz" scrolling="no" loading="lazy"></iframe>
@@ -183,11 +185,11 @@
       </div>
 
       <!-- AISTATS 2025 / EventFlow -->
-      <div class="highlight-box" style="border-left-color: #82B366;">
+      <div class="highlight-box">
         <span class="venue-tag v-green">AISTATS 2025</span>
         <span class="award-tag">Best Paper + Oral &mdash; Top 0.5%</span>
         <p class="pub-title">EventFlow: Forecasting Continuous-Time Event Data with Flow Matching</p>
-        <p class="pub-authors">Kerrigan, G., <strong>Nelson, K.</strong></p>
+        <p class="pub-authors"><a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a></p>
         <p class="pub-links">
           <a href="https://arxiv.org/pdf/2410.07430" target="_blank">Paper</a>
           <a href="https://openreview.net/forum?id=fmTY6QQHnQ" target="_blank">OpenReview</a>
@@ -198,11 +200,11 @@
       </div>
 
       <!-- NeurIPS 2025 / FlexTPP -->
-      <div class="highlight-box" style="border-left-color: #6C8EBF;">
+      <div class="highlight-box">
         <span class="venue-tag v-blue">NeurIPS 2025</span>
         <span class="award-tag">Spotlight &mdash; Top 2%</span>
         <p class="pub-title">Learning Conditional Marked Event Sequences with Mixed Data Types</p>
-        <p class="pub-authors">Draxler, F., Meng, Y., <strong>Nelson, K.</strong>, Laskowski, L., Yang, Y., Karaletsos, T., &amp; Mandt, S.</p>
+        <p class="pub-authors"><a href="https://fdraxler.github.io/" target="_blank">Draxler, F.</a>, Meng, Y., <strong>Nelson, K.</strong>, Laskowski, L., Yang, Y., <a href="https://karaletsos.com/" target="_blank">Karaletsos, T.</a>, <a href="https://www.stephanmandt.com/" target="_blank">Mandt, S.</a></p>
         <p class="pub-links"><a href="https://openreview.net/forum?id=11098" target="_blank">OpenReview</a></p>
         <div class="viz-frame">
           <iframe src="flextpp/viz.html" scrolling="no" loading="lazy"></iframe>
@@ -210,35 +212,54 @@
       </div>
 
       <!-- IEEE TGRS / DifERS -->
-      <div class="highlight-box" style="border-left-color: #6C8EBF;">
+      <div class="highlight-box">
         <span class="venue-tag v-blue">IEEE TGRS 2024</span>
         <p class="pub-title">A Generative Diffusion Model for Probabilistic Ensembles of Precipitation Maps Conditioned on Multisensor Satellite Observations</p>
-        <p class="pub-authors">Guilloteau, C., Kerrigan, G., <strong>Nelson, K.</strong> et al.</p>
+        <p class="pub-authors">Guilloteau, C., <a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, Pfreundschuh, S., Le, P. V. V., <a href="https://giosueio.github.io/" target="_blank">Migliorini, G.</a>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a>, Li, R., Foufoula-Georgiou, E.</p>
         <p class="pub-links"><a href="https://arxiv.org/pdf/2409.16319" target="_blank">Paper</a></p>
         <div class="viz-frame">
           <iframe src="difers/viz.html" scrolling="no" loading="lazy"></iframe>
         </div>
       </div>
 
+      <!-- Aleatoric Uncertainty / Earth Science DL -->
+      <div class="highlight-box">
+        <span class="venue-tag v-blue">Preprint</span>
+        <p class="pub-title">Using Deep Learning to Handle the Aleatoric Uncertainty for Under-constrained Inverse Problems in Earth Sciences</p>
+        <p class="pub-authors">Guilloteau, C., <a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, Pfreundschuh, S., Le, P. V. V., <a href="https://giosueio.github.io/" target="_blank">Migliorini, G.</a>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a>, Li, R., Foufoula-Georgiou, E.</p>
+        <div class="viz-frame">
+          <iframe src="aleatoric/viz.html" scrolling="no" loading="lazy"></iframe>
+        </div>
+      </div>
+
       <!-- Score-based Likelihood -->
-      <div class="highlight-box" style="border-left-color: #999;">
+      <div class="highlight-box">
         <span class="venue-tag v-grey">In Review</span>
         <p class="pub-title">Score-based Likelihood Ratios for Authorship Verification with Stylometric Text Embeddings</p>
         <p class="pub-authors">Longjohn, R., G., <strong>Nelson, K.</strong> et al.</p>
+        <div class="viz-frame">
+          <iframe src="slr/viz.html" scrolling="no" loading="lazy"></iframe>
+        </div>
       </div>
 
       <!-- INMM 1 -->
-      <div class="highlight-box" style="border-left-color: #999;">
+      <div class="highlight-box">
         <span class="venue-tag v-grey">INMM/ESARDA 2022</span>
         <p class="pub-title">Feature Extraction and Design for Gamma-ray Spectra for Radionuclide Identification</p>
-        <p class="pub-authors"><strong>Nelson, K.</strong> et al.</p>
+        <p class="pub-authors"><strong>Nelson, K. T.</strong>, Romo, J. R., <a href="https://www.monterial.com/" target="_blank">Monterial, M.</a>, Nelson, K. E., Labov, S. E.</p>
+        <div class="viz-frame">
+          <iframe src="feature-extract/viz.html" scrolling="no" loading="lazy"></iframe>
+        </div>
       </div>
 
       <!-- INMM 2 -->
-      <div class="highlight-box" style="border-left-color: #999;">
+      <div class="highlight-box">
         <span class="venue-tag v-grey">INMM/ESARDA 2022</span>
         <p class="pub-title">Classifier Comparison for Radionuclide Identification with Gamma-ray Spectra</p>
-        <p class="pub-authors">Romo, J. R., <strong>Nelson, K.</strong> et al.</p>
+        <p class="pub-authors">Romo, J. R., <strong>Nelson, K. T.</strong>, <a href="https://www.monterial.com/" target="_blank">Monterial, M.</a>, Nelson, K. E., Labov, S. E.</p>
+        <div class="viz-frame">
+          <iframe src="barni/viz.html" scrolling="no" loading="lazy"></iframe>
+        </div>
       </div>
 
     </div>

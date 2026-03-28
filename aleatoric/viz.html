@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Aleatoric Uncertainty Animation</title>
+<style>
+  body { margin:0; padding:0; background:transparent; overflow:hidden; }
+  canvas { display:block; margin:0 auto; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  var W=780, H=640, dpr=window.devicePixelRatio||1;
+  var canvas=document.getElementById('c');
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  if(!ctx.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+      if(typeof r==='number') r=[r,r,r,r]; var tl=r[0]||0;
+      this.moveTo(x+tl,y); this.lineTo(x+w-tl,y);
+      this.arcTo(x+w,y,x+w,y+tl,tl); this.lineTo(x+w,y+h-tl);
+      this.arcTo(x+w,y+h,x+w-tl,y+h,tl); this.lineTo(x+tl,y+h);
+      this.arcTo(x,y+h,x,y+h-tl,tl); this.lineTo(x,y+tl);
+      this.arcTo(x,y,x+tl,y,tl); this.closePath();
+    };
+  }
+
+  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
+  var BG='#fdfdfe';
+
+  function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
+  function clamp01(t){ return t<0?0:t>1?1:t; }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  function haloText(text,x,y,fill,hp){
+    hp=hp||3; ctx.save();
+    ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
+    ctx.lineJoin='round'; ctx.miterLimit=2;
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle=fill; ctx.fillText(text,x,y);
+    ctx.restore();
+  }
+
+  // ---- Grid patterns ----
+  var G=14;
+
+  // Ground truth precipitation: storm with sharp edges
+  var truth=[];
+  for(var gy=0;gy<G;gy++){
+    truth[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      var dx=(gx-8)/3, dy=(gy-5)/3;
+      var d=Math.sqrt(dx*dx+dy*dy);
+      var v=Math.max(0, 1-d*0.7);
+      // Sharp edges: threshold
+      v=v>0.3?v:v*0.2;
+      // Secondary feature
+      var dx2=(gx-3)/2, dy2=(gy-10)/2;
+      var v2=Math.max(0, Math.exp(-dx2*dx2-dy2*dy2)*0.7);
+      v2=v2>0.25?v2:v2*0.15;
+      truth[gy][gx]=Math.min(1, v+v2);
+    }
+  }
+
+  // MSE-smoothed version (blurred truth)
+  var smooth=[];
+  for(var gy=0;gy<G;gy++){
+    smooth[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      var sum=0, cnt=0;
+      for(var dy=-2;dy<=2;dy++){
+        for(var dx=-2;dx<=2;dx++){
+          var ny=gy+dy, nx=gx+dx;
+          if(ny>=0&&ny<G&&nx>=0&&nx<G){
+            var w=Math.exp(-(dx*dx+dy*dy)/3);
+            sum+=truth[ny][nx]*w; cnt+=w;
+          }
+        }
+      }
+      smooth[gy][gx]=sum/cnt*0.75; // compressed dynamic range
+    }
+  }
+
+  // Satellite observation (MW radiances — inverse of precip)
+  var satellite=[];
+  for(var gy=0;gy<G;gy++){
+    satellite[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      satellite[gy][gx]=0.7-truth[gy][gx]*0.5+(Math.random()-0.5)*0.08;
+    }
+  }
+
+  // Ensemble members: truth + small random perturbations
+  var N_ENS=6;
+  var ensMembers=[];
+  for(var e=0;e<N_ENS;e++){
+    ensMembers[e]=[];
+    for(var gy=0;gy<G;gy++){
+      ensMembers[e][gy]=[];
+      for(var gx=0;gx<G;gx++){
+        var noise=(Math.random()-0.5)*0.2;
+        // Edge perturbation: more noise near edges
+        var edgeNoise=0;
+        if(gy>0&&gy<G-1&&gx>0&&gx<G-1){
+          var grad=Math.abs(truth[gy][gx]-truth[gy-1][gx])
+                  +Math.abs(truth[gy][gx]-truth[gy][gx-1]);
+          edgeNoise=(Math.random()-0.5)*grad*1.5;
+        }
+        ensMembers[e][gy][gx]=Math.max(0,Math.min(1, truth[gy][gx]+noise+edgeNoise));
+      }
+    }
+  }
+
+  // Ensemble mean
+  var ensMean=[];
+  for(var gy=0;gy<G;gy++){
+    ensMean[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      var s=0;
+      for(var e=0;e<N_ENS;e++) s+=ensMembers[e][gy][gx];
+      ensMean[gy][gx]=s/N_ENS;
+    }
+  }
+
+  // Uncertainty (ensemble std)
+  var ensUncert=[];
+  var maxU=0;
+  for(var gy=0;gy<G;gy++){
+    ensUncert[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      var s=0;
+      for(var e=0;e<N_ENS;e++){
+        var d=ensMembers[e][gy][gx]-ensMean[gy][gx];
+        s+=d*d;
+      }
+      ensUncert[gy][gx]=Math.sqrt(s/N_ENS);
+      if(ensUncert[gy][gx]>maxU) maxU=ensUncert[gy][gx];
+    }
+  }
+  // Normalize uncertainty
+  for(var gy=0;gy<G;gy++)
+    for(var gx=0;gx<G;gx++)
+      ensUncert[gy][gx]=ensUncert[gy][gx]/maxU;
+
+  // Color maps
+  function precipColor(v){
+    if(v<0.05) return 'rgba(200,210,230,0.3)';
+    var r,g,b;
+    if(v<0.33){ var t=v/0.33; r=lerp(50,50,t); g=lerp(100,180,t); b=lerp(200,100,t); }
+    else if(v<0.66){ var t=(v-0.33)/0.33; r=lerp(50,230,t); g=lerp(180,200,t); b=lerp(100,50,t); }
+    else{ var t=(v-0.66)/0.34; r=lerp(230,200,t); g=lerp(200,50,t); b=lerp(50,30,t); }
+    return 'rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';
+  }
+  function satColor(v){
+    v=Math.max(0,Math.min(1,v));
+    return 'rgb('+Math.round(180+v*70)+','+Math.round(100+v*100)+','+Math.round(50+v*50)+')';
+  }
+  function uncertColor(v){
+    v=Math.max(0,Math.min(1,v));
+    return 'rgb('+Math.round(240-v*100)+','+Math.round(240-v*140)+','+Math.round(240-v*50)+')';
+  }
+
+  // Draw grid
+  function drawGrid(x,y,sz,grid,colorFn){
+    var cellSz=sz/G;
+    for(var gy=0;gy<G;gy++){
+      for(var gx=0;gx<G;gx++){
+        ctx.fillStyle=colorFn(grid[gy][gx]);
+        ctx.fillRect(x+gx*cellSz, y+gy*cellSz, cellSz+0.5, cellSz+0.5);
+      }
+    }
+    ctx.strokeStyle='#ccc'; ctx.lineWidth=0.8;
+    ctx.strokeRect(x,y,sz,sz);
+  }
+
+  function drawArrow(x1,y1,x2,y2,col,lw){
+    ctx.strokeStyle=col; ctx.lineWidth=lw||1.5;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    var ang=Math.atan2(y2-y1,x2-x1);
+    ctx.beginPath(); ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-7*Math.cos(ang-0.35),y2-7*Math.sin(ang-0.35));
+    ctx.lineTo(x2-7*Math.cos(ang+0.35),y2-7*Math.sin(ang+0.35));
+    ctx.closePath(); ctx.fillStyle=col; ctx.fill();
+  }
+
+  // Phase timing
+  var P={
+    A:0, A_end:1.8,       // Satellite input + "under-constrained" label
+    B:1.5, B_end:4.0,     // MSE vs Sharp loss comparison
+    C:3.5, C_end:7.5,     // Generative ensemble
+    D:7.0, D_end:10.0,    // Ensemble mean + uncertainty
+    FADE_START:11.0,
+    FADE_END:12.5,
+    TOTAL:13.0
+  };
+
+  var startTime=null;
+  function getT(){ return ((performance.now()/1000)-startTime)%P.TOTAL; }
+
+  function drawTitle(t){
+    var a=ease(clamp01(t/0.6));
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.font='700 18px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Aleatoric Uncertainty in Satellite Precipitation Retrieval', W/2, 32, '#1a1a1a');
+    ctx.font='12px "Noto Sans",sans-serif';
+    haloText('Under-constrained inversion: from regularization to ensemble generation', W/2, 50, '#999');
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase A: satellite input
+  function drawInput(t){
+    var a=ease(clamp01((t-P.A)/0.8));
+    if(a<=0) return;
+    ctx.save(); ctx.globalAlpha=a;
+
+    var ix=40, iy=80, imgSz=90;
+
+    // Panel
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(ix-8,iy-20,imgSz+16,imgSz+50,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Satellite Obs.', ix+imgSz/2, iy-6, ORANGE);
+
+    // Satellite grid
+    drawGrid(ix, iy+8, imgSz, satellite, satColor);
+
+    ctx.font='9px "Noto Sans",sans-serif';
+    haloText('MW Radiances', ix+imgSz/2, iy+imgSz+22, '#aaa');
+
+    // "Under-constrained" label with question marks
+    var ua=ease(clamp01((a-0.5)/0.5));
+    if(ua>0){
+      ctx.globalAlpha=a*ua;
+      ctx.font='italic 10px "Noto Sans",sans-serif';
+      haloText('Under-constrained', ix+imgSz+35, iy+imgSz/2-5, '#c0392b');
+      ctx.font='9px "Noto Sans",sans-serif';
+      haloText('One input \u2192 many solutions', ix+imgSz+35, iy+imgSz/2+9, '#999');
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase B: MSE vs alternative loss comparison
+  function drawLossComparison(t){
+    if(t<P.B) return;
+    var a=ease(clamp01((t-P.B)/0.8));
+    ctx.save(); ctx.globalAlpha=a;
+
+    var bx=40, by=210, bw=340, bh=195;
+
+    // Panel
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Objective Function \u2192 Regularization', bx+bw/2, by+18, '#444');
+
+    // MSE output (smooth/blurry)
+    var gridSz=72;
+    var msX=bx+30, msY=by+40;
+    var msA=ease(clamp01((a-0.2)/0.5));
+    if(msA>0){
+      ctx.globalAlpha=a*msA;
+
+      // Arrow from input
+      drawArrow(138, 170, msX+gridSz/2, msY-4, '#bbb');
+
+      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('MSE Loss', msX+gridSz/2, msY+10, '#c0392b');
+
+      drawGrid(msX, msY+16, gridSz, smooth, precipColor);
+
+      // "Smooth / blurry" label
+      ctx.font='9px "Noto Sans",sans-serif';
+      haloText('Blurry, low variance', msX+gridSz/2, msY+gridSz+30, '#c0392b');
+
+      // X mark
+      ctx.strokeStyle='#c0392b'; ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(msX+gridSz+6, msY+gridSz/2+10);
+      ctx.lineTo(msX+gridSz+16, msY+gridSz/2+20);
+      ctx.moveTo(msX+gridSz+16, msY+gridSz/2+10);
+      ctx.lineTo(msX+gridSz+6, msY+gridSz/2+20);
+      ctx.stroke();
+    }
+
+    // Sharp/alternative output
+    var shX=bx+bw-30-gridSz, shY=by+40;
+    var shA=ease(clamp01((a-0.5)/0.5));
+    if(shA>0){
+      ctx.globalAlpha=a*shA;
+
+      // Arrow from input
+      drawArrow(138, 170, shX+gridSz/2, shY-4, '#bbb');
+
+      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('Alternative Loss', shX+gridSz/2, shY+10, GREEN);
+
+      drawGrid(shX, shY+16, gridSz, truth, precipColor);
+
+      ctx.font='9px "Noto Sans",sans-serif';
+      haloText('Sharp, preserves extremes', shX+gridSz/2, shY+gridSz+30, GREEN);
+
+      // Check mark
+      ctx.strokeStyle=GREEN; ctx.lineWidth=2.5;
+      ctx.beginPath();
+      ctx.moveTo(shX+gridSz+4, shY+gridSz/2+15);
+      ctx.lineTo(shX+gridSz+10, shY+gridSz/2+21);
+      ctx.lineTo(shX+gridSz+20, shY+gridSz/2+8);
+      ctx.stroke();
+    }
+
+    // "vs" between them
+    if(msA>0.5 && shA>0.5){
+      ctx.globalAlpha=a*Math.min(msA,shA);
+      ctx.font='italic 12px "Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('vs', bx+bw/2, by+90, '#bbb');
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase C: Generative ensemble
+  function drawEnsemble(t){
+    if(t<P.C) return;
+    var a=ease(clamp01((t-P.C)/0.6));
+    ctx.save(); ctx.globalAlpha=a;
+
+    var ex=400, ey=72, ew=365, eh=260;
+
+    // Panel
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(ex,ey,ew,eh,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Conditional Generative Model', ex+ew/2, ey+18, PURPLE);
+    ctx.font='10px "Noto Sans",sans-serif';
+    haloText('Equiprobable realizations respecting observations', ex+ew/2, ey+34, '#aaa');
+
+    // Arrow from input
+    drawArrow(138, 135, ex-4, ey+eh/2, '#bbb');
+
+    // 2x3 grid of ensemble members
+    var memSz=52;
+    var memGap=10;
+    var cols=3, rows=2;
+    var gridW=cols*(memSz+memGap)-memGap;
+    var gridH=rows*(memSz+memGap)-memGap;
+    var startX=ex+(ew-gridW)/2;
+    var startY=ey+50;
+
+    for(var e=0;e<N_ENS;e++){
+      var row=Math.floor(e/cols), col=e%cols;
+      var delay=e*0.1;
+      var ea=ease(clamp01(((t-P.C-0.4)-delay)/0.4));
+      if(ea<=0) continue;
+      ctx.globalAlpha=a*ea;
+
+      var mx=startX+col*(memSz+memGap);
+      var my=startY+row*(memSz+memGap);
+
+      drawGrid(mx, my, memSz, ensMembers[e], precipColor);
+
+      ctx.font='8px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      haloText('Member '+(e+1), mx+memSz/2, my+memSz+10, '#bbb');
+    }
+
+    // "Embrace non-uniqueness" label
+    if(a>0.7){
+      ctx.globalAlpha=a*ease(clamp01((a-0.7)/0.3));
+      ctx.font='italic 9px "Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('Each member is a plausible precipitation field', ex+ew/2, ey+eh-8, '#aaa');
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase D: Ensemble mean + uncertainty
+  function drawResults(t){
+    if(t<P.D) return;
+    var a=ease(clamp01((t-P.D)/0.8));
+    ctx.save(); ctx.globalAlpha=a;
+
+    var rx=400, ry=350, rw=365, rh=155;
+
+    // Panel
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Ensemble Statistics', rx+rw/2, ry+18, '#444');
+
+    // Arrow from ensemble panel
+    drawArrow(rx+rw/2, 332, rx+rw/2, ry-2, '#bbb');
+
+    var gridSz=68;
+
+    // Ensemble mean
+    var mX=rx+rw/2-gridSz-25, mY=ry+35;
+    var ma=ease(clamp01((a-0.1)/0.6));
+    if(ma>0){
+      ctx.globalAlpha=a*ma;
+      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('Ensemble Mean', mX+gridSz/2, mY, GREEN);
+      ctx.font='8px "Noto Sans",sans-serif';
+      haloText('(Min. MSE estimate)', mX+gridSz/2, mY+11, '#aaa');
+      drawGrid(mX, mY+16, gridSz, ensMean, precipColor);
+    }
+
+    // Uncertainty
+    var uX=rx+rw/2+25, uY=ry+35;
+    var ua=ease(clamp01((a-0.3)/0.6));
+    if(ua>0){
+      ctx.globalAlpha=a*ua;
+      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('Uncertainty', uX+gridSz/2, uY, '#B85450');
+      ctx.font='8px "Noto Sans",sans-serif';
+      haloText('(Ens. dispersion)', uX+gridSz/2, uY+11, '#aaa');
+      drawGrid(uX, uY+16, gridSz, ensUncert, uncertColor);
+    }
+
+    // Aleatoric uncertainty label
+    if(a>0.6){
+      ctx.globalAlpha=a*ease(clamp01((a-0.6)/0.4));
+      ctx.font='italic 10px "Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('Dispersion = aleatoric uncertainty from under-constrained inversion', rx+rw/2, ry+rh-10, '#999');
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Bottom pipeline
+  function drawPipeline(t){
+    if(t<2) return;
+    var a=ease(clamp01((t-2)/0.6));
+    ctx.save(); ctx.globalAlpha=a*0.8;
+
+    var by=540;
+    ctx.fillStyle='#f5f6f9'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(30,by,720,55,8); ctx.fill(); ctx.stroke();
+
+    ctx.textAlign='center';
+    var labels=[
+      {text:'MW/IR Obs.', x:95, col:ORANGE},
+      {text:'\u2192', x:160, col:'#bbb'},
+      {text:'Under-constrained', x:250, col:'#c0392b'},
+      {text:'\u2192', x:345, col:'#bbb'},
+      {text:'Generative Model', x:440, col:PURPLE},
+      {text:'\u2192', x:535, col:'#bbb'},
+      {text:'Ensemble + Uncertainty', x:655, col:GREEN}
+    ];
+    for(var i=0;i<labels.length;i++){
+      ctx.font=labels[i].text==='\u2192'?'16px sans-serif':'600 11px "Google Sans","Noto Sans",sans-serif';
+      haloText(labels[i].text, labels[i].x, by+22, labels[i].col);
+    }
+    ctx.font='italic 10px "Noto Sans",sans-serif';
+    haloText('Conditional generation preserves sharp features  |  Ensemble dispersion quantifies aleatoric uncertainty', W/2, by+42, '#aaa');
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function frame(){
+    if(startTime===null) startTime=performance.now()/1000;
+    var t=getT();
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+
+    // Global fade
+    var fadeIn=clamp01(t/0.8);
+    var fadeOut=1-clamp01((t-P.FADE_START)/(P.FADE_END-P.FADE_START));
+    var globalFade=Math.min(fadeIn, fadeOut);
+    ctx.globalAlpha=ease(globalFade);
+
+    drawTitle(t);
+    drawInput(t);
+    drawLossComparison(t);
+    drawEnsemble(t);
+    drawResults(t);
+    drawPipeline(t);
+
+    ctx.globalAlpha=1;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

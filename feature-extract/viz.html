@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Feature Extraction Animation</title>
+<style>
+  body { margin:0; padding:0; background:transparent; overflow:hidden; }
+  canvas { display:block; margin:0 auto; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  var W=780, H=640, dpr=window.devicePixelRatio||1;
+  var canvas=document.getElementById('c');
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  if(!ctx.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+      if(typeof r==='number') r=[r,r,r,r]; var tl=r[0]||0;
+      this.moveTo(x+tl,y); this.lineTo(x+w-tl,y);
+      this.arcTo(x+w,y,x+w,y+tl,tl); this.lineTo(x+w,y+h-tl);
+      this.arcTo(x+w,y+h,x+w-tl,y+h,tl); this.lineTo(x+tl,y+h);
+      this.arcTo(x,y+h,x,y+h-tl,tl); this.lineTo(x,y+tl);
+      this.arcTo(x,y,x+tl,y,tl); this.closePath();
+    };
+  }
+
+  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
+  var RED='#B85450', BG='#fdfdfe';
+
+  function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
+  function clamp01(t){ return t<0?0:t>1?1:t; }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  function haloText(text,x,y,fill,hp){
+    hp=hp||3; ctx.save();
+    ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
+    ctx.lineJoin='round'; ctx.miterLimit=2;
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle=fill; ctx.fillText(text,x,y);
+    ctx.restore();
+  }
+
+  // ---- Physics-based NaI spectrum (same as barni) ----
+  var SPEC_N=512, E_MAX=3000;
+  var spectrum=[];
+  for(var i=0;i<SPEC_N;i++) spectrum[i]=0;
+
+  function naiSigma(E){ return 1.8*Math.sqrt(Math.max(E,10))/2.355; }
+  function addGauss(arr,E,amp){
+    var sig=naiSigma(E);
+    for(var i=0;i<SPEC_N;i++){
+      var e=i*E_MAX/SPEC_N, d=(e-E)/sig;
+      arr[i]+=amp*Math.exp(-0.5*d*d);
+    }
+  }
+  function comptonEdge(E){ return E*(2*E/511)/(1+2*E/511); }
+  function addCompton(arr,E,amp){
+    var Ece=comptonEdge(E);
+    for(var i=0;i<SPEC_N;i++){
+      var e=i*E_MAX/SPEC_N;
+      if(e>Ece+40) continue;
+      var s=e/E, kn=1;
+      if(s>0&&s<1){ var r=1+s*s/((1-s)*(1+2*E*(1-s)/511)); kn=Math.min(r,3); }
+      var fall=1-clamp01((e-Ece)/(naiSigma(Ece)*1.5));
+      arr[i]+=amp*0.18*kn*fall;
+    }
+  }
+
+  var sources=[
+    {E:662,amp:1.0},{E:1173,amp:0.55},{E:1332,amp:0.50},
+    {E:1461,amp:0.20},{E:59.5,amp:0.45},{E:356,amp:0.35},
+    {E:81,amp:0.30},{E:511,amp:0.25},{E:122,amp:0.28}
+  ];
+  for(var s=0;s<sources.length;s++){
+    addGauss(spectrum,sources[s].E,sources[s].amp);
+    addCompton(spectrum,sources[s].E,sources[s].amp);
+    if(sources[s].E>100){
+      var bsE=sources[s].E/(1+2*sources[s].E/511);
+      addGauss(spectrum,bsE,sources[s].amp*0.08);
+    }
+  }
+  for(var i=0;i<SPEC_N;i++) spectrum[i]+=0.08*Math.exp(-i*E_MAX/SPEC_N/300)+0.015;
+  addGauss(spectrum,75,0.18); addGauss(spectrum,85,0.10); addGauss(spectrum,633,0.06);
+  var specMax=0;
+  for(var i=0;i<SPEC_N;i++) if(spectrum[i]>specMax) specMax=spectrum[i];
+  for(var i=0;i<SPEC_N;i++) spectrum[i]=spectrum[i]/specMax*0.92;
+  var specNoise=[];
+  for(var i=0;i<SPEC_N;i++) specNoise[i]=(Math.random()-0.5)*0.015;
+
+  // PCA bars (fake eigenvalue magnitudes, decaying)
+  var N_PCA=20;
+  var pcaBars=[];
+  for(var i=0;i<N_PCA;i++) pcaBars[i]=Math.exp(-i*0.18)*(0.8+Math.random()*0.2);
+
+  // BARNI ROI features (peak regions, normalized counts)
+  var roiFeatures=[0.85,0.42,0.68,0.30,0.55,0.20,0.72,0.38,0.15,0.48,0.25,0.60];
+
+  // Feature method definitions
+  var methods=[
+    {name:'Raw Spectra', dim:'2000 ch', color:BLUE, f1_low:0.35, f1_high:0.88, time:120},
+    {name:'PCA', dim:'256 \u2192 20 dim', color:PURPLE, f1_low:0.40, f1_high:0.90, time:45},
+    {name:'BARNI Peaks', dim:'ROI features', color:GREEN, f1_low:0.28, f1_high:0.82, time:30}
+  ];
+
+  // Phase timing
+  var P={
+    A:0, A_end:2.0,       // Spectrum draws in
+    B:1.8, B_end:4.5,     // Three feature branches
+    C:4.2, C_end:6.0,     // MLP classifiers
+    D:5.8, D_end:9.5,     // F1 comparison
+    E:9.0, E_end:11.0,    // Key insight
+    FADE_START:11.5,
+    FADE_END:13.0,
+    TOTAL:13.5
+  };
+
+  var startTime=null;
+  function getT(){ return ((performance.now()/1000)-startTime)%P.TOTAL; }
+
+  function drawArrow(x1,y1,x2,y2,col,lw){
+    ctx.strokeStyle=col; ctx.lineWidth=lw||1.5;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    var ang=Math.atan2(y2-y1,x2-x1);
+    ctx.beginPath(); ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-7*Math.cos(ang-0.35),y2-7*Math.sin(ang-0.35));
+    ctx.lineTo(x2-7*Math.cos(ang+0.35),y2-7*Math.sin(ang+0.35));
+    ctx.closePath(); ctx.fillStyle=col; ctx.fill();
+  }
+
+  function drawTitle(t){
+    var a=ease(clamp01(t/0.6));
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.font='700 19px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Feature Extraction for Radionuclide Identification', W/2, 32, '#1a1a1a');
+    ctx.font='12px "Noto Sans",sans-serif';
+    haloText('Comparing Raw Spectra, PCA, and BARNI peak features with MLP classifier', W/2, 50, '#999');
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase A: spectrum
+  function drawSpectrum(t){
+    var a=ease(clamp01((t-P.A)/1.0));
+    if(a<=0) return;
+    ctx.save(); ctx.globalAlpha=a;
+
+    var sx=30, sy=75, sw=200, sh=110;
+
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(sx-8,sy-18,sw+16,sh+38,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('NaI(Tl) Spectrum', sx+sw/2, sy-5, '#555');
+
+    // Axes
+    ctx.strokeStyle='#ddd'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy+sh); ctx.lineTo(sx+sw,sy+sh); ctx.stroke();
+
+    // Spectrum line
+    var drawN=Math.round(SPEC_N*a);
+    ctx.beginPath();
+    for(var i=0;i<drawN;i++){
+      var x=sx+(i/SPEC_N)*sw;
+      var v=spectrum[i]+specNoise[i]*a;
+      var y=sy+sh-v*sh;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=BLUE; ctx.lineWidth=1;
+    ctx.stroke();
+
+    // Fill
+    ctx.beginPath(); ctx.moveTo(sx,sy+sh);
+    for(var i=0;i<drawN;i++){
+      var x=sx+(i/SPEC_N)*sw;
+      ctx.lineTo(x,sy+sh-(spectrum[i]+specNoise[i]*a)*sh);
+    }
+    ctx.lineTo(sx+(drawN-1)/SPEC_N*sw,sy+sh); ctx.closePath();
+    ctx.fillStyle='rgba(108,142,191,0.08)'; ctx.fill();
+
+    ctx.font='7px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('0', sx, sy+sh+8, '#ccc');
+    haloText('3000 keV', sx+sw, sy+sh+8, '#ccc');
+    haloText('33 radionuclides  \u00B7  variable SNR  \u00B7  SNM masking', sx+sw/2, sy+sh+20, '#bbb');
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase B: three feature branches
+  function drawFeatureBranches(t){
+    if(t<P.B) return;
+    var a=ease(clamp01((t-P.B)/0.8));
+    ctx.save();
+
+    var specCX=130, specCY=130; // center-right of spectrum
+    var branchX=280; // x where branches start their boxes
+    var yPositions=[80, 195, 310]; // y centers for three branches
+
+    for(var m=0;m<3;m++){
+      var delay=m*0.15;
+      var ma=ease(clamp01((a-delay)/0.5));
+      if(ma<=0) continue;
+      ctx.globalAlpha=ma;
+
+      var by=yPositions[m];
+      var method=methods[m];
+
+      // Arrow from spectrum to branch
+      drawArrow(240, specCY, branchX-4, by+25, '#ccc');
+
+      // Branch box
+      var bw=165, bh=70;
+      ctx.fillStyle='#fafbfd'; ctx.strokeStyle=method.color; ctx.lineWidth=1.8;
+      ctx.beginPath(); ctx.roundRect(branchX,by,bw,bh,6); ctx.fill(); ctx.stroke();
+
+      // Method name
+      ctx.font='700 11px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText(method.name, branchX+bw/2, by+16, method.color);
+
+      ctx.font='9px "Noto Sans",sans-serif';
+      haloText(method.dim, branchX+bw/2, by+28, '#aaa');
+
+      // Visualization inside box
+      if(m===0){
+        // Raw: mini spectrum bars (many thin bars = high dim)
+        var barW=1, nBars=60;
+        var bsX=branchX+15, bsY=by+38, bsH=24;
+        for(var i=0;i<nBars;i++){
+          var idx=Math.floor(i/nBars*SPEC_N);
+          var v=spectrum[idx]*ma;
+          ctx.fillStyle='rgba(108,142,191,'+(0.3+v*0.5)+')';
+          ctx.fillRect(bsX+i*(barW+1), bsY+bsH-v*bsH, barW, v*bsH);
+        }
+        ctx.font='7px "Noto Sans",sans-serif';
+        haloText('2000 channels', branchX+bw/2, by+bh-3, '#ccc');
+      } else if(m===1){
+        // PCA: eigenvalue bars (fewer, decaying)
+        var bsX=branchX+18, bsY=by+38, bsH=24;
+        for(var i=0;i<N_PCA;i++){
+          var v=pcaBars[i]*ma;
+          var barWp=5;
+          ctx.fillStyle='rgba(150,115,166,'+(0.4+v*0.4)+')';
+          ctx.fillRect(bsX+i*(barWp+2), bsY+bsH-v*bsH, barWp, v*bsH);
+        }
+        ctx.font='7px "Noto Sans",sans-serif';
+        haloText('\u221A binning \u2192 top eigenvectors', branchX+bw/2, by+bh-3, '#ccc');
+      } else {
+        // BARNI: ROI feature bars
+        var bsX=branchX+15, bsY=by+38, bsH=24;
+        for(var i=0;i<roiFeatures.length;i++){
+          var v=roiFeatures[i]*ma;
+          var barWr=7;
+          ctx.fillStyle='rgba(130,179,102,'+(0.4+v*0.4)+')';
+          ctx.fillRect(bsX+i*(barWr+3), bsY+bsH-v*bsH, barWr, v*bsH);
+        }
+        ctx.font='7px "Noto Sans",sans-serif';
+        haloText('Peak ROI counts', branchX+bw/2, by+bh-3, '#ccc');
+      }
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase C: MLP classifier block
+  function drawClassifier(t){
+    if(t<P.C) return;
+    var a=ease(clamp01((t-P.C)/0.6));
+    ctx.save(); ctx.globalAlpha=a;
+
+    var mlpX=490, mlpW=70, mlpH=45;
+    var yPositions=[80, 195, 310];
+
+    for(var m=0;m<3;m++){
+      var delay=m*0.1;
+      var ca=ease(clamp01((a-delay)/0.4));
+      if(ca<=0) continue;
+      ctx.globalAlpha=a*ca;
+
+      var by=yPositions[m]+12;
+
+      // Arrow from feature box to MLP
+      drawArrow(445, by+13, mlpX-4, by+13, '#ccc');
+
+      // MLP box
+      ctx.fillStyle='#fff8f0'; ctx.strokeStyle=ORANGE; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.roundRect(mlpX,by-10,mlpW,mlpH,5); ctx.fill(); ctx.stroke();
+
+      ctx.font='700 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('MLP', mlpX+mlpW/2, by+8, ORANGE);
+      ctx.font='7px "Noto Sans",sans-serif';
+      haloText('Classifier', mlpX+mlpW/2, by+20, '#ccc');
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase D: F1 comparison results
+  function drawResults(t){
+    if(t<P.D) return;
+    var a=ease(clamp01((t-P.D)/0.6));
+    ctx.save(); ctx.globalAlpha=a;
+
+    var rx=585, ry=68, rw=180, rh=165;
+
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('F1-Score (High SNR)', rx+rw/2, ry+16, '#444');
+
+    // Horizontal bars
+    var barX=rx+85, barMaxW=80, barH=22, barGap=8;
+    var barStartY=ry+32;
+
+    for(var m=0;m<3;m++){
+      var delay=m*0.15;
+      var ba=ease(clamp01(((t-P.D-0.3)-delay)/0.7));
+      if(ba<=0) continue;
+      ctx.globalAlpha=a*ba;
+
+      var by=barStartY+m*(barH+barGap);
+      var method=methods[m];
+      var barW=(method.f1_high/1.0)*barMaxW*ba;
+
+      // Arrow from MLP
+      var mlpRightX=560, mlpY=[105,220,335];
+      drawArrow(mlpRightX, mlpY[m], rx-4, by+barH/2, '#ccc');
+
+      ctx.font='600 9px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='right';
+      haloText(method.name, barX-6, by+barH/2+3, method.color);
+
+      ctx.fillStyle='#eef0f4';
+      ctx.beginPath(); ctx.roundRect(barX,by,barMaxW,barH,3); ctx.fill();
+
+      ctx.fillStyle=method.color;
+      ctx.beginPath(); ctx.roundRect(barX,by,barW,barH,3); ctx.fill();
+
+      if(ba>0.5){
+        ctx.globalAlpha=a*ease(clamp01((ba-0.5)/0.5));
+        ctx.font='700 10px "Google Sans","Noto Sans",sans-serif';
+        ctx.textAlign='left';
+        haloText(method.f1_high.toFixed(2), barX+barW+4, by+barH/2+4, method.color);
+      }
+    }
+
+    // Low SNR comparison
+    var lowY=barStartY+3*(barH+barGap)+4;
+    var la=ease(clamp01((t-P.D-1.2)/0.6));
+    if(la>0){
+      ctx.globalAlpha=a*la;
+      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('Low SNR (1\u20135):', rx+45, lowY, '#888');
+
+      ctx.font='9px "Noto Sans",sans-serif';
+      haloText('PCA best: 0.40', rx+rw/2+15, lowY+14, PURPLE);
+      haloText('Raw fails at high noise', rx+rw/2+15, lowY+26, RED);
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Phase E: key insights + training time
+  function drawInsights(t){
+    if(t<P.E) return;
+    var a=ease(clamp01((t-P.E)/0.8));
+    ctx.save(); ctx.globalAlpha=a;
+
+    var ix=585, iy=250, iw=180, ih=150;
+
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(ix,iy,iw,ih,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Training Time', ix+iw/2, iy+16, '#444');
+
+    // Time bars (proportional)
+    var times=[{name:'Raw',t:120,col:BLUE},{name:'PCA',t:45,col:PURPLE},{name:'BARNI',t:30,col:GREEN}];
+    var tbX=ix+55, tbMaxW=95, tbH=16, tbGap=6, tbY=iy+30;
+
+    for(var i=0;i<times.length;i++){
+      var ta=ease(clamp01((a-i*0.1-0.1)/0.5));
+      if(ta<=0) continue;
+      ctx.globalAlpha=a*ta;
+
+      var ty=tbY+i*(tbH+tbGap);
+      var tw=(times[i].t/120)*tbMaxW*ta;
+
+      ctx.font='600 8px "Google Sans","Noto Sans",sans-serif';
+      ctx.textAlign='right';
+      haloText(times[i].name, tbX-5, ty+tbH/2+3, times[i].col);
+
+      ctx.fillStyle='#eef0f4';
+      ctx.beginPath(); ctx.roundRect(tbX,ty,tbMaxW,tbH,3); ctx.fill();
+      ctx.fillStyle=times[i].col;
+      ctx.beginPath(); ctx.roundRect(tbX,ty,tw,tbH,3); ctx.fill();
+    }
+
+    // Key insight text
+    var ka=ease(clamp01((a-0.4)/0.6));
+    if(ka>0){
+      ctx.globalAlpha=a*ka;
+      ctx.font='italic 8.5px "Noto Sans",sans-serif';
+      ctx.textAlign='center';
+      haloText('Pre-processing cuts', ix+iw/2, iy+100, '#888');
+      haloText('training time >50%', ix+iw/2, iy+112, '#888');
+
+      ctx.font='600 8.5px "Google Sans","Noto Sans",sans-serif';
+      haloText('BARNI best for masked', ix+iw/2, iy+130, GREEN);
+      haloText('SNM identification', ix+iw/2, iy+142, GREEN);
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Bottom pipeline
+  function drawPipeline(t){
+    if(t<2) return;
+    var a=ease(clamp01((t-2)/0.6));
+    ctx.save(); ctx.globalAlpha=a*0.8;
+
+    var by=430;
+    ctx.fillStyle='#f5f6f9'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(30,by,720,55,8); ctx.fill(); ctx.stroke();
+
+    ctx.textAlign='center';
+    var labels=[
+      {text:'NaI Spectrum', x:90, col:BLUE},
+      {text:'\u2192', x:155, col:'#bbb'},
+      {text:'Raw / PCA / BARNI', x:265, col:'#555'},
+      {text:'\u2192', x:380, col:'#bbb'},
+      {text:'MLP Classifier', x:460, col:ORANGE},
+      {text:'\u2192', x:540, col:'#bbb'},
+      {text:'Radionuclide ID', x:640, col:GREEN}
+    ];
+    for(var i=0;i<labels.length;i++){
+      ctx.font=labels[i].text==='\u2192'?'16px sans-serif':'600 11px "Google Sans","Noto Sans",sans-serif';
+      haloText(labels[i].text, labels[i].x, by+22, labels[i].col);
+    }
+    ctx.font='italic 10px "Noto Sans",sans-serif';
+    haloText('Feature design impacts noise robustness, SNM detection, and training efficiency', W/2, by+42, '#aaa');
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function frame(){
+    if(startTime===null) startTime=performance.now()/1000;
+    var t=getT();
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+
+    var fadeIn=clamp01(t/0.8);
+    var fadeOut=1-clamp01((t-P.FADE_START)/(P.FADE_END-P.FADE_START));
+    var globalFade=Math.min(fadeIn, fadeOut);
+    ctx.globalAlpha=ease(globalFade);
+
+    drawTitle(t);
+    drawSpectrum(t);
+    drawFeatureBranches(t);
+    drawClassifier(t);
+    drawResults(t);
+    drawInsights(t);
+    drawPipeline(t);
+
+    ctx.globalAlpha=1;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
