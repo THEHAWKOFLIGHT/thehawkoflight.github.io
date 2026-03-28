@@ -178,14 +178,16 @@
     ctx.closePath(); ctx.fillStyle=col; ctx.fill();
   }
 
-  // Phase timing
+  // Phase timing (tighter, overlapping)
   var P={
-    A:0, A_end:2.0,       // Inputs appear
-    B:2.0, B_end:3.5,     // Model block + arrows
-    C:3.5, C_end:8.5,     // Diffusion denoising
-    D:8.5, D_end:11.5,    // Ensemble members appear
-    E:11.5, E_end:14.0,   // Ensemble mean + uncertainty
-    TOTAL:17.0
+    A:0, A_end:1.5,       // Inputs appear
+    B:1.2, B_end:2.5,     // Model block + arrows (overlaps A)
+    C:2.3, C_end:7.0,     // Diffusion denoising
+    D:7.0, D_end:9.5,     // Ensemble members appear
+    E:9.0, E_end:11.0,    // Ensemble mean + uncertainty (overlaps D)
+    FADE_START:12.5,       // Start fading out
+    FADE_END:14.0,         // Fully faded
+    TOTAL:14.5
   };
 
   var startTime=null;
@@ -453,8 +455,8 @@
   }
 
   function drawBottomInfo(t){
-    if(t<3) return;
-    var a=ease(clamp01((t-3)/0.6));
+    if(t<2.3) return;
+    var a=ease(clamp01((t-2.3)/0.6));
     ctx.save(); ctx.globalAlpha=a*0.8;
 
     // Pipeline summary at bottom
@@ -484,8 +486,8 @@
 
   // Color legend at bottom
   function drawLegend(t){
-    if(t<4) return;
-    var a=ease(clamp01((t-4)/0.5));
+    if(t<3) return;
+    var a=ease(clamp01((t-3)/0.5));
     ctx.save(); ctx.globalAlpha=a*0.7;
 
     var lx=30, ly=505, lw=200, lh=16;
@@ -513,6 +515,12 @@
     var t=getT();
     ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
 
+    // Global fade: smooth in at start, smooth out before loop
+    var fadeIn=clamp01(t/0.8);
+    var fadeOut=1-clamp01((t-P.FADE_START)/(P.FADE_END-P.FADE_START));
+    var globalFade=Math.min(fadeIn, fadeOut);
+    ctx.globalAlpha=ease(globalFade);
+
     drawTitle(t);
     drawInputs(t);
     drawModelBlock(t);
@@ -521,6 +529,7 @@
     drawBottomInfo(t);
     drawLegend(t);
 
+    ctx.globalAlpha=1;
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
