@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DifERS Animation</title>
+<style>
+  body { margin:0; padding:0; background:transparent; overflow:hidden; }
+  canvas { display:block; margin:0 auto; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  var W=780, H=640, dpr=window.devicePixelRatio||1;
+  var canvas=document.getElementById('c');
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  if(!ctx.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+      if(typeof r==='number') r=[r,r,r,r]; var tl=r[0]||0;
+      this.moveTo(x+tl,y); this.lineTo(x+w-tl,y);
+      this.arcTo(x+w,y,x+w,y+tl,tl); this.lineTo(x+w,y+h-tl);
+      this.arcTo(x+w,y+h,x+w-tl,y+h,tl); this.lineTo(x+tl,y+h);
+      this.arcTo(x,y+h,x,y+h-tl,tl); this.lineTo(x,y+tl);
+      this.arcTo(x,y,x+tl,y,tl); this.closePath();
+    };
+  }
+
+  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
+  var BG='#fdfdfe';
+
+  function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
+  function clamp01(t){ return t<0?0:t>1?1:t; }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  function haloText(text,x,y,fill,hp){
+    hp=hp||3; ctx.save();
+    ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
+    ctx.lineJoin='round'; ctx.miterLimit=2;
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle=fill; ctx.fillText(text,x,y);
+    ctx.restore();
+  }
+
+  // Grid size for mini images
+  var G=12;
+
+  // Generate a precipitation "storm" pattern (12x12)
+  var precipPattern=[];
+  // Storm center around (7,5)
+  for(var gy=0;gy<G;gy++){
+    precipPattern[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      var dx=(gx-7)/3, dy=(gy-5)/3;
+      var d=Math.sqrt(dx*dx+dy*dy);
+      var v=Math.max(0, Math.exp(-d*d*0.8));
+      // Add a secondary feature
+      var dx2=(gx-3)/2, dy2=(gy-9)/2;
+      var v2=Math.max(0, Math.exp(-dx2*dx2-dy2*dy2)*0.6);
+      precipPattern[gy][gx]=Math.min(1, v+v2);
+    }
+  }
+
+  // Generate fixed noise for each ensemble member (vary slightly)
+  var N_ENS=6; // show 6 members
+  var ensNoise=[];
+  for(var e=0;e<N_ENS;e++){
+    ensNoise[e]=[];
+    for(var gy=0;gy<G;gy++){
+      ensNoise[e][gy]=[];
+      for(var gx=0;gx<G;gx++){
+        ensNoise[e][gy][gx]=(Math.random()-0.5)*0.25;
+      }
+    }
+  }
+
+  // Fixed noise pattern for denoising visualization
+  var noiseGrid=[];
+  for(var gy=0;gy<G;gy++){
+    noiseGrid[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      noiseGrid[gy][gx]=Math.random();
+    }
+  }
+
+  // MW brightness temperature pattern (warm colors)
+  var mwGrid=[];
+  for(var gy=0;gy<G;gy++){
+    mwGrid[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      // Cooler where precipitation is (scattering)
+      mwGrid[gy][gx]=0.7-precipPattern[gy][gx]*0.5+(Math.random()-0.5)*0.1;
+    }
+  }
+
+  // IR cloud top temperature pattern (cool colors, low=cold=high cloud)
+  var irGrid=[];
+  for(var gy=0;gy<G;gy++){
+    irGrid[gy]=[];
+    for(var gx=0;gx<G;gx++){
+      irGrid[gy][gx]=0.8-precipPattern[gy][gx]*0.6+(Math.random()-0.5)*0.08;
+    }
+  }
+
+  // Color maps
+  function precipColor(v){
+    // 0=transparent/white, low=blue, mid=green, high=yellow, max=red
+    if(v<0.05) return 'rgba(200,210,230,0.3)';
+    var r,g,b;
+    if(v<0.33){ var t=v/0.33; r=lerp(50,50,t); g=lerp(100,180,t); b=lerp(200,100,t); }
+    else if(v<0.66){ var t=(v-0.33)/0.33; r=lerp(50,230,t); g=lerp(180,200,t); b=lerp(100,50,t); }
+    else{ var t=(v-0.66)/0.34; r=lerp(230,200,t); g=lerp(200,50,t); b=lerp(50,30,t); }
+    return 'rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';
+  }
+  function mwColor(v){
+    v=Math.max(0,Math.min(1,v));
+    return 'rgb('+Math.round(180+v*70)+','+Math.round(100+v*100)+','+Math.round(50+v*50)+')';
+  }
+  function irColor(v){
+    v=Math.max(0,Math.min(1,v));
+    return 'rgb('+Math.round(40+v*60)+','+Math.round(60+v*120)+','+Math.round(140+v*110)+')';
+  }
+  function noiseColor(v){
+    var c=Math.round(80+v*140);
+    return 'rgb('+c+','+c+','+c+')';
+  }
+  function uncertColor(v){
+    v=Math.max(0,Math.min(1,v));
+    // White to purple
+    return 'rgb('+Math.round(240-v*100)+','+Math.round(240-v*140)+','+Math.round(240-v*50)+')';
+  }
+
+  // Draw a mini grid image
+  function drawGrid(x,y,sz,grid,colorFn,alpha){
+    var cellSz=sz/G;
+    ctx.save();
+    ctx.globalAlpha=alpha||1;
+    for(var gy=0;gy<G;gy++){
+      for(var gx=0;gx<G;gx++){
+        ctx.fillStyle=colorFn(grid[gy][gx]);
+        ctx.fillRect(x+gx*cellSz, y+gy*cellSz, cellSz+0.5, cellSz+0.5);
+      }
+    }
+    // Border
+    ctx.strokeStyle='#ccc';
+    ctx.lineWidth=1;
+    ctx.strokeRect(x,y,sz,sz);
+    ctx.restore();
+  }
+
+  // Draw interpolated grid (noise → precip)
+  function drawDenoisingGrid(x,y,sz,t,noiseG,targetG,colorFn){
+    var cellSz=sz/G;
+    for(var gy=0;gy<G;gy++){
+      for(var gx=0;gx<G;gx++){
+        var nv=noiseG[gy][gx];
+        var tv=targetG[gy][gx];
+        var v=lerp(nv,tv,t);
+        ctx.fillStyle=colorFn(v);
+        ctx.fillRect(x+gx*cellSz, y+gy*cellSz, cellSz+0.5, cellSz+0.5);
+      }
+    }
+    ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+    ctx.strokeRect(x,y,sz,sz);
+  }
+
+  function drawArrow(x1,y1,x2,y2,col,lw){
+    ctx.strokeStyle=col; ctx.lineWidth=lw||1.5;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    var ang=Math.atan2(y2-y1,x2-x1);
+    ctx.beginPath(); ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-7*Math.cos(ang-0.35),y2-7*Math.sin(ang-0.35));
+    ctx.lineTo(x2-7*Math.cos(ang+0.35),y2-7*Math.sin(ang+0.35));
+    ctx.closePath(); ctx.fillStyle=col; ctx.fill();
+  }
+
+  // Phase timing
+  var P={
+    A:0, A_end:2.0,       // Inputs appear
+    B:2.0, B_end:3.5,     // Model block + arrows
+    C:3.5, C_end:8.5,     // Diffusion denoising
+    D:8.5, D_end:11.5,    // Ensemble members appear
+    E:11.5, E_end:14.0,   // Ensemble mean + uncertainty
+    TOTAL:17.0
+  };
+
+  var startTime=null;
+  function getT(){ return ((performance.now()/1000)-startTime)%P.TOTAL; }
+
+  function drawTitle(t){
+    var a=ease(clamp01(t/0.6));
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('DifERS: Diffusion Ensemble Rainfall from Satellite', W/2, 35, '#1a1a1a');
+    ctx.font='13px "Noto Sans",sans-serif';
+    haloText('Probabilistic precipitation maps from MW + IR observations', W/2, 55, '#999');
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function drawInputs(t){
+    var a=ease(clamp01((t-P.A)/0.8));
+    if(a<=0) return;
+    ctx.save(); ctx.globalAlpha=a;
+
+    var ix=30, iy=90, imgSz=80;
+
+    // MW panel
+    ctx.font='600 12px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('MW Radiances', ix+imgSz/2, iy-8, ORANGE);
+    ctx.font='10px "Noto Sans",sans-serif';
+    haloText('SSMI/S (10 ch)', ix+imgSz/2, iy+4, '#aaa');
+
+    // Stack of MW grids (show 3 offset)
+    for(var s=2;s>=0;s--){
+      var sa=ease(clamp01((a-(2-s)*0.1)/0.8));
+      ctx.globalAlpha=sa*(s===0?1:0.5);
+      drawGrid(ix+s*4, iy+14+s*4, imgSz-8, mwGrid, mwColor, sa);
+    }
+    ctx.globalAlpha=a;
+
+    // IR panel
+    var iy2=iy+imgSz+50;
+    ctx.font='600 12px "Google Sans","Noto Sans",sans-serif';
+    haloText('IR Time Series', ix+imgSz/2, iy2-8, BLUE);
+    ctx.font='10px "Noto Sans",sans-serif';
+    haloText('ABI 10.3µm (13 frames)', ix+imgSz/2, iy2+4, '#aaa');
+
+    // Stack of IR grids
+    for(var s=2;s>=0;s--){
+      var sa2=ease(clamp01((a-(2-s)*0.1-0.2)/0.8));
+      ctx.globalAlpha=sa2*(s===0?1:0.5);
+      drawGrid(ix+s*4, iy2+14+s*4, imgSz-8, irGrid, irColor, sa2);
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function drawModelBlock(t){
+    var a=ease(clamp01((t-P.B)/0.6));
+    if(a<=0) return;
+    ctx.save(); ctx.globalAlpha=a;
+
+    // Arrows from inputs to model
+    drawArrow(118, 160, 155, 240, '#bbb');
+    drawArrow(118, 290, 155, 270, '#bbb');
+
+    // Model container
+    var mx=160, my=210, mw=140, mh=80;
+    ctx.fillStyle='#f0ecf5'; ctx.strokeStyle=PURPLE; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(mx,my,mw,mh,8); ctx.fill(); ctx.stroke();
+
+    // Title
+    ctx.font='700 14px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('DifERS', mx+mw/2, my+20, PURPLE);
+
+    // Two sub-blocks
+    var uw=55, uh=22;
+    // Predictive UNet
+    ctx.fillStyle='#e0d8ee'; ctx.strokeStyle='#b8a8d0'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(mx+10,my+32,uw,uh,4); ctx.fill(); ctx.stroke();
+    ctx.font='9px "Noto Sans",sans-serif';
+    haloText('Pred. UNet', mx+10+uw/2, my+46, '#7a6a9a');
+
+    // Arrow between UNets
+    drawArrow(mx+10+uw+3, my+43, mx+mw-10-uw-3, my+43, '#b8a8d0', 1);
+
+    // Generative UNet
+    ctx.fillStyle='#e0d8ee'; ctx.strokeStyle='#b8a8d0'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(mx+mw-10-uw,my+32,uw,uh,4); ctx.fill(); ctx.stroke();
+    haloText('Gen. UNet', mx+mw-10-uw/2, my+46, '#7a6a9a');
+
+    // Diffusion label
+    ctx.font='italic 9px "Noto Sans",sans-serif';
+    haloText('Conditional Diffusion', mx+mw/2, my+70, '#aaa');
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function drawDiffusion(t){
+    if(t<P.C) return;
+    var a=ease(clamp01((t-P.C)/0.5));
+    ctx.save(); ctx.globalAlpha=a;
+
+    // Arrow from model to diffusion
+    drawArrow(305, 250, 340, 250, '#bbb');
+
+    // Diffusion process area
+    var dx=345, dy=100, dw=200, dh=280;
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(dx,dy,dw,dh,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Iterative Denoising', dx+dw/2, dy+18, '#555');
+
+    // Show denoising progress
+    var denoise=clamp01((t-P.C-0.3)/(P.C_end-P.C-0.3));
+    var imgSz=100;
+    var imgX=dx+(dw-imgSz)/2, imgY=dy+35;
+
+    // Main denoising grid
+    drawDenoisingGrid(imgX, imgY, imgSz, ease(denoise), noiseGrid, precipPattern, function(v){
+      if(denoise<0.3) return noiseColor(v);
+      var precipV=lerp(0, v, clamp01((denoise-0.1)/0.9));
+      return precipColor(precipV);
+    });
+
+    // Step counter
+    var step=Math.round(lerp(1000,0,denoise));
+    ctx.font='600 12px "Google Sans","Noto Sans",sans-serif';
+    haloText('k = '+step, dx+dw/2, imgY+imgSz+18, PURPLE);
+
+    // Progress bar
+    var barX=imgX, barY=imgY+imgSz+25, barW=imgSz, barH=6;
+    ctx.fillStyle='#e8e0f0';
+    ctx.beginPath(); ctx.roundRect(barX,barY,barW,barH,3); ctx.fill();
+    ctx.fillStyle=PURPLE;
+    ctx.beginPath(); ctx.roundRect(barX,barY,barW*denoise,barH,3); ctx.fill();
+
+    // Show 3 intermediate snapshots below
+    var snapTimes=[0.0, 0.33, 0.66, 1.0];
+    var snapLabels=['k=1000','k=667','k=333','k=0'];
+    var snapSz=38;
+    var snapY=barY+20;
+    var snapStartX=dx+10;
+    var snapGap=(dw-20-snapSz*4)/3;
+
+    for(var s=0;s<4;s++){
+      var st=snapTimes[s];
+      var sa=clamp01((denoise-st+0.1)/0.15);
+      if(sa<=0) continue;
+      ctx.globalAlpha=a*ease(sa);
+      var sx=snapStartX+s*(snapSz+snapGap);
+
+      drawDenoisingGrid(sx, snapY, snapSz, st, noiseGrid, precipPattern, function(v){
+        if(st<0.3) return noiseColor(v);
+        return precipColor(lerp(0,v,clamp01((st-0.1)/0.9)));
+      });
+
+      ctx.font='8px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      ctx.globalAlpha=a*ease(sa);
+      haloText(snapLabels[s], sx+snapSz/2, snapY+snapSz+10, '#aaa');
+    }
+
+    // "×128" label
+    if(denoise>0.9){
+      var ra=ease(clamp01((denoise-0.9)/0.1));
+      ctx.globalAlpha=a*ra;
+      ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+      haloText('× 128 samples', dx+dw/2, snapY+snapSz+28, PURPLE);
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function drawEnsemble(t){
+    if(t<P.D) return;
+    var a=ease(clamp01((t-P.D)/0.5));
+    ctx.save(); ctx.globalAlpha=a;
+
+    // Arrow from diffusion to ensemble
+    drawArrow(550, 250, 575, 250, '#bbb');
+
+    var ex=580, ey=85, ew=185, eh=310;
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(ex,ey,ew,eh,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.textAlign='center';
+    haloText('Ensemble Output', ex+ew/2, ey+18, '#555');
+
+    // Show 6 ensemble members in 2×3 grid
+    var memSz=48;
+    var memGap=8;
+    var memStartX=ex+(ew-2*(memSz+memGap)+memGap)/2;
+    var memStartY=ey+30;
+
+    for(var e=0;e<N_ENS;e++){
+      var row=Math.floor(e/2), col=e%2;
+      var delay=e*0.12;
+      var ea=ease(clamp01(((t-P.D-0.3)-delay)/0.4));
+      if(ea<=0) continue;
+      ctx.globalAlpha=a*ea;
+
+      var mx=memStartX+col*(memSz+memGap);
+      var my=memStartY+row*(memSz+memGap);
+
+      // Draw ensemble member (precip + noise variation)
+      var cellSz=memSz/G;
+      for(var gy=0;gy<G;gy++){
+        for(var gx=0;gx<G;gx++){
+          var v=Math.max(0,Math.min(1, precipPattern[gy][gx]+ensNoise[e][gy][gx]));
+          ctx.fillStyle=precipColor(v);
+          ctx.fillRect(mx+gx*cellSz, my+gy*cellSz, cellSz+0.5, cellSz+0.5);
+        }
+      }
+      ctx.strokeStyle='#ddd'; ctx.lineWidth=0.5;
+      ctx.strokeRect(mx,my,memSz,memSz);
+    }
+
+    // Ensemble mean and uncertainty (phase E)
+    if(t>=P.E){
+      var ea2=ease(clamp01((t-P.E)/0.8));
+      ctx.globalAlpha=a*ea2;
+
+      var bottomY=memStartY+3*(memSz+memGap)+5;
+
+      // Mean
+      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      haloText('Ens. Mean', memStartX+memSz/2, bottomY-4, GREEN);
+      drawGrid(memStartX, bottomY, memSz, precipPattern, precipColor, ea2);
+
+      // Uncertainty
+      haloText('Uncertainty', memStartX+memSz+memGap+memSz/2, bottomY-4, '#B85450');
+
+      // Generate uncertainty grid (higher where precip transitions)
+      var cellSz2=memSz/G;
+      for(var gy=0;gy<G;gy++){
+        for(var gx=0;gx<G;gx++){
+          // Uncertainty is high at edges of precipitation
+          var v=precipPattern[gy][gx];
+          var unc=0;
+          if(gy>0&&gy<G-1&&gx>0&&gx<G-1){
+            var grad=Math.abs(precipPattern[gy][gx]-precipPattern[gy-1][gx])
+                    +Math.abs(precipPattern[gy][gx]-precipPattern[gy][gx-1]);
+            unc=Math.min(1, grad*2+v*0.2);
+          }
+          ctx.fillStyle=uncertColor(unc);
+          ctx.fillRect(memStartX+memSz+memGap+gx*cellSz2,
+                       bottomY+gy*cellSz2, cellSz2+0.5, cellSz2+0.5);
+        }
+      }
+      ctx.strokeStyle='#ddd'; ctx.lineWidth=0.5;
+      ctx.strokeRect(memStartX+memSz+memGap, bottomY, memSz, memSz);
+
+      // Correlation label
+      if(ea2>0.5){
+        var la=ease(clamp01((ea2-0.5)/0.5));
+        ctx.globalAlpha=a*la;
+        ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+        haloText('CC = 0.82 vs ground truth', ex+ew/2, bottomY+memSz+16, GREEN);
+      }
+    }
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function drawBottomInfo(t){
+    if(t<3) return;
+    var a=ease(clamp01((t-3)/0.6));
+    ctx.save(); ctx.globalAlpha=a*0.8;
+
+    // Pipeline summary at bottom
+    var by=430;
+    ctx.fillStyle='#f5f6f9'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(30,by,720,55,8); ctx.fill(); ctx.stroke();
+
+    ctx.font='11px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    var labels=[
+      {text:'SSMI/S + ABI', x:100, col:ORANGE},
+      {text:'→', x:165, col:'#bbb'},
+      {text:'Two-Stage UNet', x:245, col:PURPLE},
+      {text:'→', x:330, col:'#bbb'},
+      {text:'1000-step Denoise', x:430, col:PURPLE},
+      {text:'→', x:530, col:'#bbb'},
+      {text:'128 Ensemble Members', x:640, col:GREEN}
+    ];
+    for(var i=0;i<labels.length;i++){
+      ctx.font=labels[i].text==='→'?'16px sans-serif':'600 11px "Google Sans","Noto Sans",sans-serif';
+      haloText(labels[i].text, labels[i].x, by+22, labels[i].col);
+    }
+    ctx.font='italic 10px "Noto Sans",sans-serif';
+    haloText('5 km × 5 km resolution  |  Hourly precipitation  |  Southeastern US', W/2, by+42, '#aaa');
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  // Color legend at bottom
+  function drawLegend(t){
+    if(t<4) return;
+    var a=ease(clamp01((t-4)/0.5));
+    ctx.save(); ctx.globalAlpha=a*0.7;
+
+    var lx=30, ly=505, lw=200, lh=16;
+    ctx.font='10px "Noto Sans",sans-serif'; ctx.textAlign='left';
+    haloText('Precipitation (mm/h):', lx, ly, '#888');
+
+    // Color bar
+    var bx=lx+120, bw=140;
+    for(var i=0;i<bw;i++){
+      ctx.fillStyle=precipColor(i/bw);
+      ctx.fillRect(bx+i, ly-10, 1.5, 12);
+    }
+    ctx.strokeStyle='#ccc'; ctx.lineWidth=0.5;
+    ctx.strokeRect(bx, ly-10, bw, 12);
+
+    ctx.font='9px "Noto Sans",sans-serif';
+    haloText('0', bx, ly+8, '#aaa');
+    haloText('heavy', bx+bw-15, ly+8, '#aaa');
+
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function frame(){
+    if(startTime===null) startTime=performance.now()/1000;
+    var t=getT();
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+
+    drawTitle(t);
+    drawInputs(t);
+    drawModelBlock(t);
+    drawDiffusion(t);
+    drawEnsemble(t);
+    drawBottomInfo(t);
+    drawLegend(t);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
