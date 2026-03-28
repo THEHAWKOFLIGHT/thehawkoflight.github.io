@@ -198,12 +198,12 @@
           transparent 3.5px,
           transparent 6px
         ),
-        /* Rainbow spectrum */
+        /* Sanguine–violet spectrum */
         repeating-linear-gradient(
           133deg,
-          #ff7878 0%, #ffc864 14%, #b4ff78 28%,
-          #64ffc8 42%, #64c8ff 56%, #9678ff 70%,
-          #ff78c8 84%, #ff7878 100%
+          #d46a6a 0%, #c45080 16%, #a050a8 33%,
+          #7858c0 50%, #9848b0 66%, #c84888 83%,
+          #d46a6a 100%
         );
       background-size: 100% 100%, 6px 6px, 6px 6px, 250% 250%;
       background-position:
@@ -220,7 +220,7 @@
     }
     [data-theme="dark"] .highlight-box:has(.award-tag)::after {
       mix-blend-mode: screen;
-      opacity: calc(var(--card-o, 0) * 0.55);
+      opacity: calc(var(--card-o, 0) * 0.25);
     }
     .highlight-box:has(.award-tag) > * {
       position: relative;
@@ -622,7 +622,7 @@ setTimeout(function(){ clearInterval(_themeInterval); },15000);
         var rx=(dy/cy*-3.5).toFixed(2)+'deg';
         var ry=(dx/cx*3.5).toFixed(2)+'deg';
         var maxD=Math.hypot(cx,cy);
-        var o=Math.min(0.8, 0.5+Math.hypot(dx,dy)/maxD*0.35);
+        var o=Math.min(0.9, 0.6+Math.hypot(dx,dy)/maxD*0.35);
         card.style.setProperty('--card-px',pctX);
         card.style.setProperty('--card-py',pctY);
         card.style.setProperty('--card-dx',dx.toFixed(0)+'px');
