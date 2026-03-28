@@ -133,7 +133,6 @@ a:hover .code-btn-label::after {
 .highlight-box {
   background: #f7f8fb;
   border: 1px solid #e2e6ee;
-  border-left: 4px solid #6C8EBF;
   border-radius: 6px;
   padding: 1.4rem 1.6rem;
   margin: 1.25rem 0 0.5rem;
