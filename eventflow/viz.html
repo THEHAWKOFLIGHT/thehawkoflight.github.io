@@ -40,6 +40,18 @@
   // Colors
   var SILVER = '#636E80', ROSE = '#D4988E', SANGUINE = '#E0756A', VIOLET = '#7B5EC0';
   var BG = '#fdfcfb';
+  var DARK = false;
+  var COLORS_LIGHT = { BG:'#fdfcfb', title:'#2a2d35', gray1:'#888', gray2:'#aaa', gray3:'#999', gray4:'#666', gray5:'#555', gray6:'#444', gray7:'#ccc', panelFill:'#fafaf8', panelStroke:'#ddd8d3', boxFill:'#fafaf8', boxStroke:'#ccc' };
+  var COLORS_DARK  = { BG:'#1c1d22', title:'#e0e0e4', gray1:'#777', gray2:'#666', gray3:'#888', gray4:'#999', gray5:'#aaa', gray6:'#ccc', gray7:'#444', panelFill:'#252630', panelStroke:'#3a3c48', boxFill:'#252630', boxStroke:'#3a3c48' };
+  var C = COLORS_LIGHT;
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){
+      DARK=!!e.data.dark;
+      C=DARK?COLORS_DARK:COLORS_LIGHT;
+      BG=C.BG;
+    }
+  });
+  try{parent.postMessage({type:'viz-ready'},'*');}catch(e){}
 
   // ---- Dynamic Timeline Layout: starts big & centred, shrinks to top strip ----
   var TL_BIG   = { x: 40, y: 280, w: 700, split: 0.55 };
@@ -145,7 +157,7 @@
     ctx.save();
     // Main line
     var endX = curTL.x + curTL.w * ease(ap);
-    ctx.strokeStyle = '#888';
+    ctx.strokeStyle = C.gray1;
     ctx.lineWidth = Math.max(2, 3 * curScale);
     ctx.beginPath();
     ctx.moveTo(curTL.x, curTL.y);
@@ -160,7 +172,7 @@
       ctx.lineTo(curTLEnd - 3 * s, curTL.y - 7.5 * s);
       ctx.lineTo(curTLEnd - 3 * s, curTL.y + 7.5 * s);
       ctx.closePath();
-      ctx.fillStyle = '#888';
+      ctx.fillStyle = C.gray1;
       ctx.fill();
     }
 
@@ -170,7 +182,7 @@
       ctx.globalAlpha = la;
       ctx.font = 'italic ' + Math.max(18, Math.round(22 * curScale)) + 'px "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('time', curTL.x + curTL.w / 2, curTL.y + 36 * curScale, '#888');
+      haloText('time', curTL.x + curTL.w / 2, curTL.y + 36 * curScale, C.gray1);
       ctx.globalAlpha = 1;
     }
 
@@ -234,7 +246,7 @@
     // Dashed separator line
     ctx.globalAlpha = ea;
     ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = '#999';
+    ctx.strokeStyle = C.gray3;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(curTLSplit, curTL.y - 50 * curScale);
@@ -257,7 +269,7 @@
       ctx.globalAlpha = 0.3 * ease(qAp);
       ctx.font = Math.max(18, Math.round(36 * curScale)) + 'px "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('? ? ?', (curTLSplit + curTLEnd) / 2, curTL.y - 18 * curScale, '#999');
+      haloText('? ? ?', (curTLSplit + curTLEnd) / 2, curTL.y - 18 * curScale, C.gray3);
     }
 
     ctx.globalAlpha = 1;
@@ -275,7 +287,7 @@
     // Arrow from history to count box
     var ax1 = curTLSplit - 20, ay1 = curTL.y + 65;
     var ax2 = 230, ay2 = curTL.y + 110;
-    ctx.strokeStyle = '#aaa';
+    ctx.strokeStyle = C.gray2;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(ax1, ay1);
@@ -287,13 +299,13 @@
     ctx.lineTo(ax2 - 9, ay2 - 6);
     ctx.lineTo(ax2 - 9, ay2 + 6);
     ctx.closePath();
-    ctx.fillStyle = '#aaa';
+    ctx.fillStyle = C.gray2;
     ctx.fill();
 
     // Count box
     var bx = 230, by = curTL.y + 93;
-    ctx.fillStyle = '#fafaf8';
-    ctx.strokeStyle = '#ccc';
+    ctx.fillStyle = C.panelFill;
+    ctx.strokeStyle = C.boxStroke;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(bx, by, 180, 40, 7);
@@ -303,7 +315,7 @@
     // Box text
     ctx.font = '600 24px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('Predict n = ' + N_PRED, bx + 90, by + 29, '#444');
+    haloText('Predict n = ' + N_PRED, bx + 90, by + 29, C.gray6);
 
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -318,8 +330,8 @@
     ctx.globalAlpha = ea;
 
     // Box background
-    ctx.fillStyle = '#fafaf8';
-    ctx.strokeStyle = '#ddd';
+    ctx.fillStyle = C.panelFill;
+    ctx.strokeStyle = C.panelStroke;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(FP.x - 10, FP.y - 10, FP.w + 30, FP.h + 30, 8);
@@ -327,7 +339,7 @@
     ctx.stroke();
 
     // Y axis (event time)
-    ctx.strokeStyle = '#888';
+    ctx.strokeStyle = C.gray1;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(FP.x, FP.y + FP.h);
@@ -339,7 +351,7 @@
     ctx.lineTo(FP.x - 6, FP.y + 3);
     ctx.lineTo(FP.x + 6, FP.y + 3);
     ctx.closePath();
-    ctx.fillStyle = '#888';
+    ctx.fillStyle = C.gray1;
     ctx.fill();
 
     // X axis (flow time s)
@@ -358,26 +370,26 @@
     // Labels
     ctx.font = 'italic 22px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 32, '#888');
+    haloText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 32, C.gray1);
 
     ctx.save();
     ctx.translate(FP.x - 50, FP.y + FP.h / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.font = 'italic 22px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('event time', 0, 0, '#888');
+    haloText('event time', 0, 0, C.gray1);
     ctx.restore();
 
     // s=0 and s=1 marks
     ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('s=0', FP.x, FP.y + FP.h + 22, '#aaa');
-    haloText('s=1', FP.x + FP.w, FP.y + FP.h + 22, '#aaa');
+    haloText('s=0', FP.x, FP.y + FP.h + 22, C.gray2);
+    haloText('s=1', FP.x + FP.w, FP.y + FP.h + 22, C.gray2);
 
     // Title
     ctx.font = '700 24px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('Flow Matching', FP.x + FP.w / 2, FP.y - 22, '#555');
+    haloText('Flow Matching', FP.x + FP.w / 2, FP.y - 22, C.gray5);
 
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -548,7 +560,7 @@
     ctx.fill();
     ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'left';
-    haloText('History', lx + 14, ly + 7, '#666');
+    haloText('History', lx + 14, ly + 7, C.gray4);
 
     // Predicted (only after F)
     if(t > P.F_start + 0.5){
@@ -561,7 +573,7 @@
       ctx.fill();
       ctx.font = '20px "Noto Sans", sans-serif';
       ctx.textAlign = 'left';
-      haloText('Predicted', lx + 14, ly + 7, '#666');
+      haloText('Predicted', lx + 14, ly + 7, C.gray4);
     }
 
     ctx.globalAlpha = 1;
@@ -574,7 +586,7 @@
     ctx.globalAlpha = ease(ap);
     ctx.font = '700 30px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 36, '#2a2d35');
+    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 36, C.title);
     ctx.globalAlpha = 1;
     ctx.restore();
   }
@@ -591,7 +603,7 @@
 
     // Clear
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = BG;
+    ctx.fillStyle = C.BG;
     ctx.fillRect(0, 0, W, H);
 
     drawTimeline(t);

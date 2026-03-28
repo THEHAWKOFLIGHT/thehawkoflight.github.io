@@ -33,6 +33,15 @@
   var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
+  var DARK=false;
+  var COLORS_LIGHT={BG:'#fdfcfb',title:'#2a2d35',gray5:'#555',gray4:'#444',gray1:'#888',gray2:'#aaa',gray8:'#bbb',gray7:'#ccc',panelFill:'#fafaf8',panelStroke:'#ddd8d3',boxFillV:'#EBE4F8',boxFillC:'#FAEDED',docPage:'#fff',docStroke:'#d0d4dc',docLines:'#d8dbe3',vecFillQ:'#FAEDED',vecStrokeQ:ROSE,vecFillK:'#e8eaed',lrBg:'#fdf0f0',saFill:'rgba(224,117,106,0.15)',daFill:'rgba(58,61,69,0.10)'};
+  var COLORS_DARK={BG:'#1c1d22',title:'#e0e0e4',gray5:'#aaa',gray4:'#ccc',gray1:'#777',gray2:'#666',gray8:'#555',gray7:'#444',panelFill:'#252630',panelStroke:'#3a3c48',boxFillV:'#2a2640',boxFillC:'#302028',docPage:'#252630',docStroke:'#3a3c48',docLines:'#3a3c48',vecFillQ:'#302028',vecStrokeQ:ROSE,vecFillK:'#262438',lrBg:'#2a2028',saFill:'rgba(224,117,106,0.20)',daFill:'rgba(160,160,170,0.12)'};
+  var C=COLORS_LIGHT;
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){DARK=!!e.data.dark;C=DARK?COLORS_DARK:COLORS_LIGHT;BG=C.BG;}
+  });
+  try{parent.postMessage({type:'viz-ready'},'*');}catch(e){}
+
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
   function lerp(a,b,t){ return a+(b-a)*t; }
@@ -137,7 +146,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Score-based Likelihood Ratios', W/2, 38, '#2a2d35');
+    haloText('Score-based Likelihood Ratios', W/2, 38, C.title);
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -147,7 +156,7 @@
     var sc=w/150; // scale relative to SMALL doc width
 
     // Page
-    ctx.fillStyle='#fff'; ctx.strokeStyle='#d0d4dc'; ctx.lineWidth=Math.max(1,1.5*Math.min(sc,2));
+    ctx.fillStyle=C.docPage; ctx.strokeStyle=C.docStroke; ctx.lineWidth=Math.max(1,1.5*Math.min(sc,2));
     ctx.beginPath(); ctx.roundRect(x,y,w,h,Math.min(6*sc,12)); ctx.fill(); ctx.stroke();
 
     // Fake text lines — scale spacing to fit within height
@@ -160,7 +169,7 @@
 
     for(var i=0;i<lines.length;i++){
       var lineW=lines[i]*lw;
-      ctx.fillStyle='#d8dbe3';
+      ctx.fillStyle=C.docLines;
       ctx.beginPath(); ctx.roundRect(lx, ly+i*lineH, lineW, lineThick, Math.min(3*sc,lineThick/2)); ctx.fill();
     }
 
@@ -199,13 +208,13 @@
     var aa=ease(clamp01(a/0.4));
     ctx.globalAlpha=aa;
     var qDocR=QDOC_SMALL, kDocR=KDOC_SMALL;
-    drawArrow(qDocR.x+qDocR.w+5, qDocR.y+qDocR.h/2, modelX-6, modelY+35, '#ccc');
-    drawArrow(kDocR.x+kDocR.w+5, kDocR.y+kDocR.h/2, modelX-6, modelY+modelH-35, '#ccc');
+    drawArrow(qDocR.x+qDocR.w+5, qDocR.y+qDocR.h/2, modelX-6, modelY+35, C.gray7);
+    drawArrow(kDocR.x+kDocR.w+5, kDocR.y+kDocR.h/2, modelX-6, modelY+modelH-35, C.gray7);
 
     // Model box
     var ma=ease(clamp01((a-0.1)/0.5));
     ctx.globalAlpha=ma;
-    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=2.5;
+    ctx.fillStyle=C.boxFillV; ctx.strokeStyle=VIOLET; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(modelX,modelY,modelW,modelH,10); ctx.fill(); ctx.stroke();
 
     ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
@@ -214,18 +223,18 @@
     haloText('Embedding', modelX+modelW/2, modelY+62, VIOLET);
 
     ctx.font='16px "Noto Sans",sans-serif';
-    haloText('Style Features', modelX+modelW/2, modelY+90, '#aaa');
+    haloText('Style Features', modelX+modelW/2, modelY+90, C.gray2);
 
     // Output vectors
     var va=ease(clamp01((a-0.4)/0.5));
     if(va>0){
       ctx.globalAlpha=va;
-      drawArrow(modelX+modelW+6, modelY+35, vecX-6, modelY+10, '#ccc');
-      drawArrow(modelX+modelW+6, modelY+modelH-35, vecX-6, modelY+modelH-10, '#ccc');
+      drawArrow(modelX+modelW+6, modelY+35, vecX-6, modelY+10, C.gray7);
+      drawArrow(modelX+modelW+6, modelY+modelH-35, vecX-6, modelY+modelH-10, C.gray7);
 
       // Questioned embedding vector
       var vy1=modelY-30;
-      ctx.fillStyle='#FAEDED'; ctx.strokeStyle=ROSE; ctx.lineWidth=1.5;
+      ctx.fillStyle=C.vecFillQ; ctx.strokeStyle=C.vecStrokeQ; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.roundRect(vecX,vy1,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
         var v=embQ[i];
@@ -238,7 +247,7 @@
 
       // Known embedding vector
       var vy2=modelY+modelH-vecH+30;
-      ctx.fillStyle='#e8eaed'; ctx.strokeStyle=SILVER; ctx.lineWidth=1.5;
+      ctx.fillStyle=C.vecFillK; ctx.strokeStyle=SILVER; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.roundRect(vecX,vy2,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
         var v=embK[i];
@@ -259,18 +268,18 @@
     var a=ease(clamp01((t-P.C)/0.7));
     ctx.save(); ctx.globalAlpha=a;
 
-    drawArrow(vecX+vecW+5, modelY+25, scoreBX-6, scoreBY+20, '#ccc');
-    drawArrow(vecX+vecW+5, modelY+modelH-25, scoreBX-6, scoreBY+scoreH-20, '#ccc');
+    drawArrow(vecX+vecW+5, modelY+25, scoreBX-6, scoreBY+20, C.gray7);
+    drawArrow(vecX+vecW+5, modelY+modelH-25, scoreBX-6, scoreBY+scoreH-20, C.gray7);
 
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(scoreBX,scoreBY,scoreW,scoreH,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Distance Score', scoreBX+scoreW/2, scoreBY+22, '#555');
+    haloText('Distance Score', scoreBX+scoreW/2, scoreBY+22, C.gray5);
 
     ctx.font='16px "Noto Sans",sans-serif';
-    haloText('d(e_Q, e_K)', scoreBX+scoreW/2, scoreBY+40, '#aaa');
+    haloText('d(e_Q, e_K)', scoreBX+scoreW/2, scoreBY+40, C.gray2);
 
     var va=ease(clamp01((a-0.3)/0.5));
     if(va>0){
@@ -289,24 +298,24 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Distribution plot area
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(plotX-10,plotY-30,plotW+20,plotH+60,10); ctx.fill(); ctx.stroke();
 
     // "Score-based Likelihood Ratio" label
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Score-based Likelihood Ratio', plotX+plotW/2, plotY-6, '#444');
+    haloText('Score-based Likelihood Ratio', plotX+plotW/2, plotY-6, C.gray4);
 
     // Axes
-    ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5;
+    ctx.strokeStyle=C.gray7; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(plotX,plotY); ctx.lineTo(plotX,plotY+plotH); ctx.lineTo(plotX+plotW,plotY+plotH); ctx.stroke();
 
     // Axis labels
     ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Score s', plotX+plotW/2, plotY+plotH+22, '#aaa');
+    haloText('Score s', plotX+plotW/2, plotY+plotH+22, C.gray2);
     ctx.save(); ctx.translate(plotX-20, plotY+plotH/2); ctx.rotate(-Math.PI/2);
     ctx.textAlign='center';
-    haloText('Density', 0, 0, '#aaa');
+    haloText('Density', 0, 0, C.gray2);
     ctx.restore();
 
     // Same-author distribution (green)
@@ -322,7 +331,7 @@
       }
       ctx.lineTo(plotX+plotW, plotY+plotH);
       ctx.closePath();
-      ctx.fillStyle='rgba(224,117,106,0.15)';
+      ctx.fillStyle=C.saFill;
       ctx.fill();
 
       ctx.beginPath();
@@ -352,7 +361,7 @@
       }
       ctx.lineTo(plotX+plotW, plotY+plotH);
       ctx.closePath();
-      ctx.fillStyle='rgba(58,61,69,0.10)';
+      ctx.fillStyle=C.daFill;
       ctx.fill();
 
       ctx.beginPath();
@@ -391,18 +400,18 @@
 
       ctx.beginPath(); ctx.arc(scoreX, saY, 7, 0, Math.PI*2);
       ctx.fillStyle=SANGUINE; ctx.fill();
-      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+      ctx.strokeStyle=BG; ctx.lineWidth=2; ctx.stroke();
 
       ctx.beginPath(); ctx.arc(scoreX, daY, 7, 0, Math.PI*2);
       ctx.fillStyle=CHARCOAL; ctx.fill();
-      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+      ctx.strokeStyle=BG; ctx.lineWidth=2; ctx.stroke();
     }
 
     // Arrow to LR panel
     var lrA=ease(clamp01((a-0.7)/0.3));
     if(lrA>0){
       ctx.globalAlpha=a*lrA;
-      drawArrow(plotX+plotW+14, plotY+40, lrX-6, plotY+40, '#ccc');
+      drawArrow(plotX+plotW+14, plotY+40, lrX-6, plotY+40, C.gray7);
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -414,17 +423,17 @@
     var a=ease(clamp01((t-P.E)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    ctx.fillStyle='#fdf0f0'; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2;
+    ctx.fillStyle=C.lrBg; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2;
     ctx.beginPath(); ctx.roundRect(lrX,lrY,lrW,lrH,10); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Likelihood Ratio', lrX+lrW/2, lrY+28, '#444');
+    haloText('Likelihood Ratio', lrX+lrW/2, lrY+28, C.gray4);
 
     ctx.font='16px "Noto Sans",sans-serif';
     haloText('P(s | H\u2081)', lrX+lrW/2, lrY+58, SANGUINE);
 
-    ctx.strokeStyle='#888'; ctx.lineWidth=1.5;
+    ctx.strokeStyle=C.gray1; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(lrX+30, lrY+66); ctx.lineTo(lrX+lrW-30, lrY+66); ctx.stroke();
 
     haloText('P(s | H\u2082)', lrX+lrW/2, lrY+84, CHARCOAL);
@@ -436,7 +445,7 @@
       haloText(LR, lrX+lrW/2, lrY+130, SANGUINE);
 
       ctx.font='14px "Noto Sans",sans-serif';
-      haloText('Evidence supports', lrX+lrW/2, lrY+158, '#888');
+      haloText('Evidence supports', lrX+lrW/2, lrY+158, C.gray1);
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       haloText('same authorship', lrX+lrW/2, lrY+180, SANGUINE);
@@ -448,7 +457,7 @@
   function frame(){
     if(startTime===null) startTime=performance.now()/1000;
     var t=getT();
-    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H);
 
     var fadeIn=clamp01(t/0.8);
     var fadeOut=1-clamp01((t-P.FADE_START)/(P.FADE_END-P.FADE_START));

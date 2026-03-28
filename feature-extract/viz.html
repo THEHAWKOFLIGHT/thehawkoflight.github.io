@@ -33,6 +33,15 @@
   var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
+  var DARK=false;
+  var COLORS_LIGHT={BG:'#fdfcfb',title:'#2a2d35',gray5:'#555',gray4:'#666',gray1:'#888',gray2:'#aaa',gray8:'#bbb',gray7:'#ccc',gray9:'#999',panelFill:'#fafaf8',panelStroke:'#ddd8d3',boxFillC:'#FAEDED',barBg:'#eceae6'};
+  var COLORS_DARK={BG:'#1c1d22',title:'#e0e0e4',gray5:'#aaa',gray4:'#999',gray1:'#777',gray2:'#666',gray8:'#555',gray7:'#444',gray9:'#777',panelFill:'#252630',panelStroke:'#3a3c48',boxFillC:'#302028',barBg:'#2a2c34'};
+  var C=COLORS_LIGHT;
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){DARK=!!e.data.dark;C=DARK?COLORS_DARK:COLORS_LIGHT;BG=C.BG;}
+  });
+  try{parent.postMessage({type:'viz-ready'},'*');}catch(e){}
+
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
   function lerp(a,b,t){ return a+(b-a)*t; }
@@ -161,7 +170,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Feature Extraction for Radionuclide Identification', W/2, 42, '#2a2d35');
+    haloText('Feature Extraction for Radionuclide Identification', W/2, 42, C.title);
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -177,15 +186,15 @@
     var sw=lerp(SPEC_BIG.sw,SPEC_SW,p);
     var sh=lerp(SPEC_BIG.sh,SPEC_SH,p);
 
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(sx-10,sy-28,sw+20,sh+50,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('NaI(Tl) Spectrum', sx+sw/2, sy-6, '#555');
+    haloText('NaI(Tl) Spectrum', sx+sw/2, sy-6, C.gray5);
 
     // Axes
-    ctx.strokeStyle='#ddd'; ctx.lineWidth=1.2;
+    ctx.strokeStyle=C.gray7; ctx.lineWidth=1.2;
     ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy+sh); ctx.lineTo(sx+sw,sy+sh); ctx.stroke();
 
     // Spectrum line
@@ -207,12 +216,12 @@
       ctx.lineTo(x,sy+sh-(spectrum[i]+specNoise[i]*a)*sh);
     }
     ctx.lineTo(sx+(drawN-1)/SPEC_N*sw,sy+sh); ctx.closePath();
-    ctx.fillStyle='rgba(99,110,128,0.08)'; ctx.fill();
+    ctx.fillStyle=DARK?'rgba(99,110,128,0.15)':'rgba(99,110,128,0.08)'; ctx.fill();
 
     // Axis labels: just "0" and "3000 keV"
     ctx.font='14px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('0', sx, sy+sh+16, '#999');
-    haloText('3000 keV', sx+sw, sy+sh+16, '#999');
+    haloText('0', sx, sy+sh+16, C.gray9);
+    haloText('3000 keV', sx+sw, sy+sh+16, C.gray9);
 
     ctx.globalAlpha=1; ctx.restore();
   }
@@ -238,10 +247,10 @@
       var bw=BRANCH_BW, bh=BRANCH_BH;
 
       // Arrow from spectrum to branch
-      drawArrow(arrowOriginX, arrowOriginY, BRANCH_X-4, by+bh/2, '#ccc');
+      drawArrow(arrowOriginX, arrowOriginY, BRANCH_X-4, by+bh/2, C.gray7);
 
       // Branch box
-      ctx.fillStyle='#fafaf8'; ctx.strokeStyle=method.color; ctx.lineWidth=2.7;
+      ctx.fillStyle=C.panelFill; ctx.strokeStyle=method.color; ctx.lineWidth=2.7;
       ctx.beginPath(); ctx.roundRect(BRANCH_X,by,bw,bh,6); ctx.fill(); ctx.stroke();
 
       // Method name
@@ -251,7 +260,7 @@
 
       // Dimension label
       ctx.font='16px "Noto Sans",sans-serif';
-      haloText(method.dim, BRANCH_X+bw/2, by+52, '#aaa');
+      haloText(method.dim, BRANCH_X+bw/2, by+52, C.gray2);
 
       // Mini visualizations inside box (bars only, no sub-labels)
       if(m===0){
@@ -302,17 +311,17 @@
       var by=BRANCH_Y[m]+BRANCH_BH/2-mlpH/2;
 
       // Arrow from feature box to MLP
-      drawArrow(BRANCH_X+BRANCH_BW+4, BRANCH_Y[m]+BRANCH_BH/2, mlpX-4, by+mlpH/2, '#ccc');
+      drawArrow(BRANCH_X+BRANCH_BW+4, BRANCH_Y[m]+BRANCH_BH/2, mlpX-4, by+mlpH/2, C.gray7);
 
       // MLP box
-      ctx.fillStyle='#FAEDED'; ctx.strokeStyle=ROSE; ctx.lineWidth=2.25;
+      ctx.fillStyle=C.boxFillC; ctx.strokeStyle=ROSE; ctx.lineWidth=2.25;
       ctx.beginPath(); ctx.roundRect(mlpX,by,mlpW,mlpH,5); ctx.fill(); ctx.stroke();
 
       ctx.font='700 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
       haloText('MLP', mlpX+mlpW/2, by+24, ROSE);
       ctx.font='14px "Noto Sans",sans-serif';
-      haloText('Classifier', mlpX+mlpW/2, by+42, '#ccc');
+      haloText('Classifier', mlpX+mlpW/2, by+42, C.gray7);
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -327,12 +336,12 @@
     // Results panel at bottom spanning full width
     var rx=40, ry=490, rw=420, rh=130;
 
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('F1-Score (High SNR)', rx+rw/2, ry+24, '#444');
+    haloText('F1-Score (High SNR)', rx+rw/2, ry+24, C.gray4);
 
     // Horizontal bars
     var barX=rx+120, barMaxW=200, barH=26, barGap=8;
@@ -352,7 +361,7 @@
       ctx.textAlign='right';
       haloText(method.name, barX-8, by+barH/2+5, method.color);
 
-      ctx.fillStyle='#eceae6';
+      ctx.fillStyle=C.barBg;
       ctx.beginPath(); ctx.roundRect(barX,by,barMaxW,barH,3); ctx.fill();
 
       ctx.fillStyle=method.color;
@@ -369,12 +378,12 @@
     // Training time panel (right side of bottom)
     var tx=480, ty2=ry, tw2=280, th2=130;
     ctx.globalAlpha=a;
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(tx,ty2,tw2,th2,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Training Time', tx+tw2/2, ty2+24, '#444');
+    haloText('Training Time', tx+tw2/2, ty2+24, C.gray4);
 
     var times=[{name:'Raw',t:120,col:SILVER},{name:'PCA',t:45,col:VIOLET},{name:'BARNI',t:30,col:SANGUINE}];
     var tbX=tx+90, tbMaxW=140, tbH=22, tbGap=8, tbStartY=ty2+40;
@@ -391,7 +400,7 @@
       ctx.textAlign='right';
       haloText(times[i].name, tbX-8, tby+tbH/2+5, times[i].col);
 
-      ctx.fillStyle='#eceae6';
+      ctx.fillStyle=C.barBg;
       ctx.beginPath(); ctx.roundRect(tbX,tby,tbMaxW,tbH,3); ctx.fill();
       ctx.fillStyle=times[i].col;
       ctx.beginPath(); ctx.roundRect(tbX,tby,tbw,tbH,3); ctx.fill();
@@ -403,7 +412,7 @@
   function frame(){
     if(startTime===null) startTime=performance.now()/1000;
     var t=getT();
-    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H);
 
     var fadeIn=clamp01(t/0.8);
     var fadeOut=1-clamp01((t-P.FADE_START)/(P.FADE_END-P.FADE_START));

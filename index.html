@@ -5,28 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kai Tyrus Nelson</title>
 
+  <script>
+  (function(){
+    var s=localStorage.getItem('theme');
+    var d=window.matchMedia('(prefers-color-scheme:dark)').matches;
+    document.documentElement.setAttribute('data-theme',s||(d?'dark':'light'));
+  })();
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="adapo/static/css/bulma.min.css">
 
   <style>
+    /* ---- Theme variables ---- */
+    :root {
+      --bg: #faf9f7;
+      --bg-card: #fdfcfb;
+      --text: #2c2c2c;
+      --text-heading: #2a2d35;
+      --text-secondary: #555;
+      --text-muted: #777;
+      --text-card: #3a3a3a;
+      --text-bio: #444;
+      --link: #C2696C;
+      --link-hover: #A04848;
+      --border: #ddd8d3;
+      --border-section: #e5e0db;
+      --border-bio: #F5C6C6;
+      --shadow: rgba(60,40,40,0.06);
+      --viz-bg-start: #fdfcfb;
+      --viz-bg-end: #f5f3f0;
+      --award-bg-start: #FDEAEA;
+      --award-bg-end: #F5C6C6;
+      --award-text: #A04D4D;
+      --venue-bg-start: #2a2d35;
+      --venue-bg-end: #3d4150;
+      --venue-text: #b0b8c8;
+      --footer-text: #a09890;
+      --holo-panel-opacity: 0.04;
+      --holo-tag-opacity: 0.3;
+    }
+    [data-theme="dark"] {
+      --bg: #151518;
+      --bg-card: #1c1d22;
+      --text: #d4d4d8;
+      --text-heading: #e8e8ec;
+      --text-secondary: #9a9aa0;
+      --text-muted: #7a7a82;
+      --text-card: #c0c0c6;
+      --text-bio: #b0b0b6;
+      --link: #E0877E;
+      --link-hover: #ECA49C;
+      --border: #2e3038;
+      --border-section: #2a2c34;
+      --border-bio: #5a3030;
+      --shadow: rgba(0,0,0,0.3);
+      --viz-bg-start: #1c1d22;
+      --viz-bg-end: #181920;
+      --award-bg-start: #2e2025;
+      --award-bg-end: #3a2028;
+      --award-text: #E8A0A0;
+      --venue-bg-start: #1a1c24;
+      --venue-bg-end: #242630;
+      --venue-text: #8890a4;
+      --footer-text: #6a6a72;
+      --holo-panel-opacity: 0.07;
+      --holo-tag-opacity: 0.4;
+    }
+
     body {
       font-family: 'Noto Sans', sans-serif;
-      color: #2c2c2c;
-      background: #faf9f7;
+      color: var(--text);
+      background: var(--bg);
       -webkit-font-smoothing: antialiased;
       font-size: 1.02rem;
+      transition: background-color 0.3s, color 0.3s;
     }
-    a { color: #C2696C; transition: color 0.15s ease; }
-    a:hover { color: #A04848; text-decoration: underline; }
+    a { color: var(--link); transition: color 0.15s ease; }
+    a:hover { color: var(--link-hover); text-decoration: underline; }
 
     .section { padding: 1.8rem 1.5rem; }
-    .section + .section { border-top: 1px solid #e5e0db; }
+    .section + .section { border-top: 1px solid var(--border-section); transition: border-color 0.3s; }
 
     .section-heading {
       font-family: 'Google Sans', sans-serif;
       font-weight: 600;
       font-size: 1.5rem;
-      color: #2a2d35;
+      color: var(--text-heading);
       margin-bottom: 1rem;
       letter-spacing: -0.01em;
     }
@@ -41,16 +106,17 @@
 
     /* ---- Highlight boxes ---- */
     .highlight-box {
-      background: #fdfcfb;
-      border: 1px solid #ddd8d3;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: 6px;
       padding: 1.2rem 1.4rem;
       line-height: 1.65;
       font-size: 0.95rem;
       display: flex;
       flex-direction: column;
+      transition: background-color 0.3s, border-color 0.3s;
     }
-    .highlight-box p { color: #3a3a3a; margin-bottom: 0.35rem; }
+    .highlight-box p { color: var(--text-card); margin-bottom: 0.35rem; }
     .highlight-box p:last-child { margin-bottom: 0; }
     .highlight-box .viz-frame { margin-top: auto; }
 
@@ -65,19 +131,23 @@
       top: -80%; left: -80%; width: 260%; height: 260%;
       background: conic-gradient(
         from var(--holo-rot) at var(--holo-x) var(--holo-y),
-        rgba(255,130,130,0.04),
-        rgba(200,100,160,0.03),
-        rgba(160,100,200,0.04),
-        rgba(200,120,220,0.03),
-        rgba(255,140,180,0.04),
-        rgba(220,100,140,0.03),
-        rgba(180,90,180,0.04),
-        rgba(255,130,130,0.04)
+        rgba(255,130,130,var(--holo-panel-opacity)),
+        rgba(200,100,160,calc(var(--holo-panel-opacity) * 0.75)),
+        rgba(160,100,200,var(--holo-panel-opacity)),
+        rgba(200,120,220,calc(var(--holo-panel-opacity) * 0.75)),
+        rgba(255,140,180,var(--holo-panel-opacity)),
+        rgba(220,100,140,calc(var(--holo-panel-opacity) * 0.75)),
+        rgba(180,90,180,var(--holo-panel-opacity)),
+        rgba(255,130,130,var(--holo-panel-opacity))
       );
       animation: holoRotate 10s linear infinite, holoDrift 14s ease-in-out infinite alternate;
+      mix-blend-mode: multiply;
       pointer-events: none;
       z-index: 0;
       border-radius: 6px;
+    }
+    [data-theme="dark"] .highlight-box:has(.award-tag)::before {
+      mix-blend-mode: screen;
     }
     .highlight-box:has(.award-tag) > * {
       position: relative;
@@ -95,40 +165,41 @@
     .header-info { flex-shrink: 0; }
     .header-bio {
       font-size: 0.93rem;
-      color: #444;
+      color: var(--text-bio);
       line-height: 1.75;
       text-align: left;
       flex: 1;
-      border-left: 3px solid #F5C6C6;
+      border-left: 3px solid var(--border-bio);
       padding: 0.3rem 0 0.3rem 1.2rem;
+      transition: border-color 0.3s, color 0.3s;
     }
     .name-title {
       font-family: 'Google Sans', sans-serif;
       font-size: 2rem;
       font-weight: 700;
-      color: #2a2d35;
+      color: var(--text-heading);
       margin-bottom: 0.2rem;
     }
     .affiliation {
       font-size: 0.95rem;
-      color: #555;
+      color: var(--text-secondary);
       margin-bottom: 0.15rem;
     }
     .contact-line {
       font-size: 0.88rem;
-      color: #777;
+      color: var(--text-muted);
     }
-    .contact-line a { color: #C2696C; }
+    .contact-line a { color: var(--link); }
 
     /* ---- Publication entries ---- */
     .pub-title {
       font-family: 'Google Sans', sans-serif;
       font-size: 1.02rem;
       font-weight: 600;
-      color: #2a2d35;
+      color: var(--text-heading);
       margin-bottom: 0.2rem;
     }
-    .pub-authors { font-size: 0.9rem; color: #555; margin-bottom: 0.2rem; }
+    .pub-authors { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.2rem; }
     .pub-links { font-size: 0.85rem; }
     .pub-links a { margin-right: 0.6rem; }
 
@@ -169,8 +240,8 @@
       border-radius: 4px;
       margin-bottom: 0.4rem;
       margin-left: 0.3rem;
-      background: linear-gradient(135deg, #FDEAEA, #F5C6C6);
-      color: #A04D4D;
+      background: linear-gradient(135deg, var(--award-bg-start), var(--award-bg-end));
+      color: var(--award-text);
       position: relative;
       overflow: hidden;
       z-index: 0;
@@ -185,19 +256,22 @@
       top: -80%; left: -80%; width: 260%; height: 260%;
       background: conic-gradient(
         from var(--holo-rot) at var(--holo-x) var(--holo-y),
-        rgba(255,130,130,0.3),
-        rgba(200,100,160,0.25),
-        rgba(160,100,200,0.3),
-        rgba(200,120,220,0.25),
-        rgba(255,140,180,0.3),
-        rgba(220,100,140,0.25),
-        rgba(180,90,180,0.3),
-        rgba(255,130,130,0.3)
+        rgba(255,130,130,var(--holo-tag-opacity)),
+        rgba(200,100,160,calc(var(--holo-tag-opacity) * 0.83)),
+        rgba(160,100,200,var(--holo-tag-opacity)),
+        rgba(200,120,220,calc(var(--holo-tag-opacity) * 0.83)),
+        rgba(255,140,180,var(--holo-tag-opacity)),
+        rgba(220,100,140,calc(var(--holo-tag-opacity) * 0.83)),
+        rgba(180,90,180,var(--holo-tag-opacity)),
+        rgba(255,130,130,var(--holo-tag-opacity))
       );
       animation: holoRotate 10s linear infinite, holoDrift 14s ease-in-out infinite alternate;
       mix-blend-mode: multiply;
       pointer-events: none;
       z-index: 1;
+    }
+    [data-theme="dark"] .award-tag::before {
+      mix-blend-mode: screen;
     }
     @keyframes holoRotate {
       to { --holo-rot: 360deg; }
@@ -211,19 +285,20 @@
 
     .tag-row { min-height: 2.6rem; }
 
-    .v-blue   { background: linear-gradient(135deg, #2a2d35, #3d4150); color: #b0b8c8; }
+    .v-blue   { background: linear-gradient(135deg, var(--venue-bg-start), var(--venue-bg-end)); color: var(--venue-text); }
 
     /* ---- Animation embed ---- */
     .viz-frame {
       margin-top: 0.8rem;
-      border: 1px solid #ddd8d3;
+      border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 1px 6px rgba(60,40,40,0.06);
-      background: linear-gradient(180deg, #fdfcfb, #f5f3f0);
+      box-shadow: 0 1px 6px var(--shadow);
+      background: linear-gradient(180deg, var(--viz-bg-start), var(--viz-bg-end));
       position: relative;
       width: 100%;
       padding-bottom: 82%; /* 640/780 aspect ratio */
+      transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
     .viz-frame iframe {
       position: absolute;
@@ -239,11 +314,40 @@
     /* ---- Footer ---- */
     .site-footer {
       padding: 1.5rem;
-      border-top: 1px solid #e5e0db;
+      border-top: 1px solid var(--border-section);
       text-align: center;
       font-size: 0.8rem;
-      color: #a09890;
+      color: var(--footer-text);
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
+
+    /* ---- Theme toggle ---- */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1.5rem;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      line-height: 1;
+      box-shadow: 0 1px 6px var(--shadow);
+      transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+      padding: 0;
+    }
+    .theme-toggle:hover { opacity: 0.8; }
+    .theme-toggle .icon-sun,
+    .theme-toggle .icon-moon { pointer-events: none; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    [data-theme="light"] .theme-toggle .icon-sun,
+    :root:not([data-theme="dark"]) .theme-toggle .icon-sun { display: none; }
 
     @media screen and (max-width: 1100px) {
       .pub-grid { grid-template-columns: 1fr 1fr; }
@@ -259,19 +363,24 @@
 </head>
 <body>
 
+<button class="theme-toggle" aria-label="Toggle dark mode" onclick="toggleTheme()">
+  <span class="icon-moon">&#x1F319;</span>
+  <span class="icon-sun">&#x2600;&#xFE0F;</span>
+</button>
+
 <!-- ===== Header ===== -->
 <section class="site-header">
   <div class="container is-max-widescreen">
-    <h1 class="name-title">Kai Tyrus Nelson 🌹</h1>
+    <h1 class="name-title">Kai Tyrus Nelson &#x1F339;</h1>
     <div class="header-columns">
       <div class="header-info">
         <p class="affiliation">PhD Student, Computer Science &mdash; UC Berkeley</p>
-        <p class="affiliation" style="font-size: 0.88rem; color: #777;">PIs: <a href="https://a1k12.github.io/" target="_blank">Aditi Krishnapriyan</a>, <a href="https://people.eecs.berkeley.edu/~svlevine/" target="_blank">Sergey Levine</a></p>
+        <p class="affiliation" style="font-size: 0.88rem; color: var(--text-muted);">PIs: <a href="https://a1k12.github.io/" target="_blank">Aditi Krishnapriyan</a>, <a href="https://people.eecs.berkeley.edu/~svlevine/" target="_blank">Sergey Levine</a></p>
         <p class="contact-line">
           <a href="mailto:kai_nelson@berkeley.edu">kai_nelson@berkeley.edu</a>
           &middot; <a href="https://scholar.google.com/citations?user=Be65jlkAAAAJ&hl=en" target="_blank">Google Scholar</a>
         </p>
-        <p style="margin-top: 0.3rem;">🐘 🚫 ⛓️ ⛓️ 🚫 🪵</p>
+        <p style="margin-top: 0.3rem;">&#x1F418; &#x1F6AB; &#x26D3;&#xFE0F; &#x26D3;&#xFE0F; &#x1F6AB; &#x1FAB5;</p>
       </div>
       <div class="header-bio">
         Hello! I am Kai, and I am broadly interested in applications generative modeling and reinforcement learning for molecular systems and proteins! I am proud to be advised by Aditi S. Krishnapriyan and Sergey Levine. In other studies, I am currently learning functional analysis, probability and martingales, and a little bit of RL theory!
@@ -298,7 +407,7 @@
 
       <!-- AISTATS 2025 / EventFlow -->
       <div class="highlight-box">
-        <div class="tag-row"><span class="venue-tag v-blue">AISTATS 2025</span><span class="award-tag">🌹 Best Paper</span><span class="award-tag">🌹 Oral &mdash; Top 0.5%</span></div>
+        <div class="tag-row"><span class="venue-tag v-blue">AISTATS 2025</span><span class="award-tag">&#x1F339; Best Paper</span><span class="award-tag">&#x1F339; Oral &mdash; Top 0.5%</span></div>
         <p class="pub-title">EventFlow: Forecasting Continuous-Time Event Data with Flow Matching</p>
         <p class="pub-authors"><a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a></p>
         <p class="pub-links">
@@ -312,7 +421,7 @@
 
       <!-- NeurIPS 2025 / FlexTPP -->
       <div class="highlight-box">
-        <div class="tag-row"><span class="venue-tag v-blue">NeurIPS 2025</span><span class="award-tag">🌹 Spotlight &mdash; Top 2%</span></div>
+        <div class="tag-row"><span class="venue-tag v-blue">NeurIPS 2025</span><span class="award-tag">&#x1F339; Spotlight &mdash; Top 2%</span></div>
         <p class="pub-title">Learning Conditional Marked Event Sequences with Mixed Data Types</p>
         <p class="pub-authors"><a href="https://fdraxler.github.io/" target="_blank">Draxler, F.</a>, <a href="https://yangmeng96.github.io/" target="_blank">Meng, Y.</a>, <strong>Nelson, K.</strong>, <a href="https://laskow.ski/" target="_blank">Laskowski, L.</a>, <a href="https://yiboyang.com/about/" target="_blank">Yang, Y.</a>, <a href="https://karaletsos.com/" target="_blank">Karaletsos, T.</a>, <a href="https://www.stephanmandt.com/" target="_blank">Mandt, S.</a></p>
         <p class="pub-links"><a href="https://openreview.net/forum?id=11098" target="_blank">OpenReview</a></p>
@@ -332,9 +441,10 @@
         </div>
       </div>
 
-      <!-- Aleatoric Uncertainty / Earth Science DL -->
+      <!-- Aleatoric Uncertainty / Earth Science DL (abstract — hidden for now) -->
+      <!--
       <div class="highlight-box">
-        <div class="tag-row"><span class="venue-tag v-blue">AGU Fall Meeting 2024</span></div>
+        <div class="tag-row"><span class="venue-tag v-blue">AGU Fall Meeting 2024 (Abstract)</span></div>
         <p class="pub-title">Using Deep Learning to Handle the Aleatoric Uncertainty for Under-constrained Inverse Problems in Earth Sciences</p>
         <p class="pub-authors"><a href="https://clementguilloteau.wixsite.com/home" target="_blank">Guilloteau, C.</a>, <a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, Pfreundschuh, S., Le, P. V. V., <a href="https://giosueio.github.io/" target="_blank">Migliorini, G.</a>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a>, Li, R., <a href="https://efi.eng.uci.edu/" target="_blank">Foufoula-Georgiou, E.</a></p>
         <p class="pub-links"><a href="https://ui.adsabs.harvard.edu/abs/2024AGUFMH34H...01G/abstract" target="_blank">Abstract</a></p>
@@ -342,12 +452,13 @@
           <iframe src="aleatoric/viz.html" scrolling="no" loading="lazy"></iframe>
         </div>
       </div>
+      -->
 
       <!-- Score-based Likelihood -->
       <div class="highlight-box">
         <div class="tag-row"><span class="venue-tag v-blue">In Review</span></div>
         <p class="pub-title">Score-based Likelihood Ratios for Authorship Verification with Stylometric Text Embeddings</p>
-        <p class="pub-authors"><a href="https://rlongjohn.github.io/" target="_blank">Longjohn, R.</a>, G., <strong>Nelson, K.</strong> et al.</p>
+        <p class="pub-authors"><a href="https://rlongjohn.github.io/" target="_blank">Longjohn, R.</a>, <strong>Nelson, K.</strong>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a></p>
         <div class="viz-frame">
           <iframe src="slr/viz.html" scrolling="no" loading="lazy"></iframe>
         </div>
@@ -392,6 +503,43 @@ function scaleViz(){
 }
 scaleViz();
 window.addEventListener('resize',scaleViz);
+
+/* ---- Theme toggle ---- */
+function isDark(){
+  return document.documentElement.getAttribute('data-theme')==='dark';
+}
+function sendThemeToIframes(){
+  var dark=isDark();
+  var iframes=document.querySelectorAll('.viz-frame iframe');
+  for(var i=0;i<iframes.length;i++){
+    try{ iframes[i].contentWindow.postMessage({type:'theme',dark:dark},'*'); }catch(e){}
+  }
+}
+function toggleTheme(){
+  var next=isDark()?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('theme',next);
+  sendThemeToIframes();
+}
+/* Send theme to each iframe once it loads */
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.type==='viz-ready') sendThemeToIframes();
+});
+/* Also send on load with a small delay for lazy iframes */
+window.addEventListener('load',function(){ setTimeout(sendThemeToIframes,500); });
+/* Resend periodically for lazy-loaded iframes */
+var _themeInterval=setInterval(function(){
+  sendThemeToIframes();
+},2000);
+setTimeout(function(){ clearInterval(_themeInterval); },15000);
+
+/* System preference listener */
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(e){
+  if(!localStorage.getItem('theme')){
+    document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');
+    sendThemeToIframes();
+  }
+});
 </script>
 
 </body>

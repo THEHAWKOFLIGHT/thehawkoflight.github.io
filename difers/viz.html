@@ -33,6 +33,14 @@
   var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var CHARCOAL='#3A3D45';
   var BG='#fdfcfb';
+  var DARK=false;
+  var COLORS_LIGHT={BG:'#fdfcfb',title:'#2a2d35',gray5:'#555',gray1:'#888',gray2:'#aaa',gray8:'#bbb',gray7:'#ccc',panelFill:'#fafaf8',panelStroke:'#ddd8d3',boxFillV:'#EBE4F8',gridStroke:'#ccc',gridStrokeSm:'#ddd'};
+  var COLORS_DARK={BG:'#1c1d22',title:'#e0e0e4',gray5:'#aaa',gray1:'#777',gray2:'#666',gray8:'#555',gray7:'#444',panelFill:'#252630',panelStroke:'#3a3c48',boxFillV:'#2a2640',gridStroke:'#3a3c48',gridStrokeSm:'#3a3c48'};
+  var C=COLORS_LIGHT;
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){DARK=!!e.data.dark;C=DARK?COLORS_DARK:COLORS_LIGHT;BG=C.BG;}
+  });
+  try{parent.postMessage({type:'viz-ready'},'*');}catch(e){}
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -141,7 +149,7 @@
         ctx.fillRect(x+gx*cellSz, y+gy*cellSz, cellSz+0.5, cellSz+0.5);
       }
     }
-    ctx.strokeStyle='#ccc';
+    ctx.strokeStyle=C.gridStroke;
     ctx.lineWidth=1.5;
     ctx.strokeRect(x,y,sz,sz);
     ctx.restore();
@@ -159,7 +167,7 @@
         ctx.fillRect(x+gx*cellSz, y+gy*cellSz, cellSz+0.5, cellSz+0.5);
       }
     }
-    ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5;
+    ctx.strokeStyle=C.gridStroke; ctx.lineWidth=1.5;
     ctx.strokeRect(x,y,sz,sz);
   }
 
@@ -218,7 +226,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('DifERS: Diffusion Ensemble Rainfall from Satellite', W/2, 42, '#2a2d35');
+    haloText('DifERS: Diffusion Ensemble Rainfall from Satellite', W/2, 42, C.title);
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -264,11 +272,11 @@
     // Arrows from inputs to model
     var mwBottom=mwTopY+inputSz;
     var irTop=irTopY;
-    drawArrow(inputX+inputSz+5, mwTopY+inputSz/2, modelX-5, modelY+modelH*0.35, '#bbb');
-    drawArrow(inputX+inputSz+5, irTopY+inputSz/2, modelX-5, modelY+modelH*0.65, '#bbb');
+    drawArrow(inputX+inputSz+5, mwTopY+inputSz/2, modelX-5, modelY+modelH*0.35, C.gray8);
+    drawArrow(inputX+inputSz+5, irTopY+inputSz/2, modelX-5, modelY+modelH*0.65, C.gray8);
 
     // Model container
-    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=3;
+    ctx.fillStyle=C.boxFillV; ctx.strokeStyle=VIOLET; ctx.lineWidth=3;
     ctx.beginPath(); ctx.roundRect(modelX,modelY,modelW,modelH,10); ctx.fill(); ctx.stroke();
 
     // "DifERS" label (24px bold)
@@ -278,7 +286,7 @@
 
     // "Conditional Diffusion" label (18px)
     ctx.font='italic 18px "Noto Sans",sans-serif';
-    haloText('Conditional Diffusion', modelX+modelW/2, modelY+72, '#888');
+    haloText('Conditional Diffusion', modelX+modelW/2, modelY+72, C.gray1);
 
     ctx.globalAlpha=1; ctx.restore();
   }
@@ -289,17 +297,17 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Arrow from model to diffusion
-    drawArrow(modelX+modelW+5, flowY, diffX-5, flowY, '#bbb');
+    drawArrow(modelX+modelW+5, flowY, diffX-5, flowY, C.gray8);
 
     // Diffusion process area
     var dy=65, dh=520;
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(diffX,dy,diffW,dh,10); ctx.fill(); ctx.stroke();
 
     // "Iterative Denoising" label (24px)
     ctx.font='600 24px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Iterative Denoising', diffX+diffW/2, dy+32, '#555');
+    haloText('Iterative Denoising', diffX+diffW/2, dy+32, C.gray5);
 
     // Show denoising progress
     var denoise=clamp01((t-P.C-0.3)/(P.C_end-P.C-0.3));
@@ -319,7 +327,7 @@
 
     // Progress bar
     var barX=imgX, barY=imgY+mainDenSz+40, barW=mainDenSz, barH=8;
-    ctx.fillStyle='#EBE4F8';
+    ctx.fillStyle=C.boxFillV;
     ctx.beginPath(); ctx.roundRect(barX,barY,barW,barH,4); ctx.fill();
     ctx.fillStyle=VIOLET;
     ctx.beginPath(); ctx.roundRect(barX,barY,barW*denoise,barH,4); ctx.fill();
@@ -363,17 +371,17 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Arrow from diffusion to ensemble
-    drawArrow(diffX+diffW+5, flowY, ensX-5, flowY, '#bbb');
+    drawArrow(diffX+diffW+5, flowY, ensX-5, flowY, C.gray8);
 
     // Ensemble container
     var ey=65, eh=520;
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(ensX,ey,ensW,eh,10); ctx.fill(); ctx.stroke();
 
     // "Ensemble Output" label (24px) - split into two lines to fit width
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Ensemble Output', ensX+ensW/2, ey+28, '#555');
+    haloText('Ensemble Output', ensX+ensW/2, ey+28, C.gray5);
 
     // Show 6 ensemble members in 2x3 grid (60px each)
     var memStartX=ensX+(ensW-2*memSz-memGap)/2;
@@ -397,7 +405,7 @@
           ctx.fillRect(mx+gx*cellSz, my+gy*cellSz, cellSz+0.5, cellSz+0.5);
         }
       }
-      ctx.strokeStyle='#ddd'; ctx.lineWidth=1;
+      ctx.strokeStyle=C.gridStrokeSm; ctx.lineWidth=1;
       ctx.strokeRect(mx,my,memSz,memSz);
     }
 
@@ -432,7 +440,7 @@
                        bottomY+gy*cellSz2, cellSz2+0.5, cellSz2+0.5);
         }
       }
-      ctx.strokeStyle='#ddd'; ctx.lineWidth=1;
+      ctx.strokeStyle=C.gridStrokeSm; ctx.lineWidth=1;
       ctx.strokeRect(memStartX+memSz+memGap, bottomY, memSz, memSz);
 
       // CC label (18px)
@@ -450,7 +458,7 @@
   function frame(){
     if(startTime===null) startTime=performance.now()/1000;
     var t=getT();
-    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H);
 
     // Global fade: smooth in at start, smooth out before loop
     var fadeIn=clamp01(t/0.8);

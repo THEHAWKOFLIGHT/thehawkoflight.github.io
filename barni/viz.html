@@ -33,6 +33,15 @@
   var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
+  var DARK=false;
+  var COLORS_LIGHT={BG:'#fdfcfb',title:'#2a2d35',gray5:'#555',gray4:'#444',gray1:'#888',gray2:'#aaa',gray8:'#bbb',gray7:'#ccc',gray9:'#999',panelFill:'#fafaf8',panelStroke:'#ddd8d3',boxFillV:'#EBE4F8',boxFillC:'#FAEDED',barBg:'#eceae6',specFill:'rgba(99,110,128,0.10)'};
+  var COLORS_DARK={BG:'#1c1d22',title:'#e0e0e4',gray5:'#aaa',gray4:'#ccc',gray1:'#777',gray2:'#666',gray8:'#555',gray7:'#444',gray9:'#777',panelFill:'#252630',panelStroke:'#3a3c48',boxFillV:'#2a2640',boxFillC:'#302028',barBg:'#2a2c34',specFill:'rgba(99,110,128,0.15)'};
+  var C=COLORS_LIGHT;
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){DARK=!!e.data.dark;C=DARK?COLORS_DARK:COLORS_LIGHT;BG=C.BG;}
+  });
+  try{parent.postMessage({type:'viz-ready'},'*');}catch(e){}
+
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
   function lerp(a,b,t){ return a+(b-a)*t; }
@@ -198,17 +207,17 @@
     var sh=lerp(SPEC_BIG.sh,SPEC_SMALL.sh,p);
 
     // Background panel
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(sx-12,sy-25,sw+24,sh+55,8);
     ctx.fill(); ctx.stroke();
 
     // Title — positioned above the panel to avoid collision with tall peak labels
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-24, '#555');
+    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-24, C.gray5);
 
     // Axes
-    ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+    ctx.strokeStyle=C.gray7; ctx.lineWidth=1;
     ctx.beginPath();
     ctx.moveTo(sx,sy); ctx.lineTo(sx,sy+sh); ctx.lineTo(sx+sw,sy+sh);
     ctx.stroke();
@@ -222,17 +231,17 @@
 
     // Axis labels
     ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Energy (keV)', sx+sw/2, sy+sh+28, '#aaa');
+    haloText('Energy (keV)', sx+sw/2, sy+sh+28, C.gray2);
     ctx.save(); ctx.translate(sx-22, sy+sh/2); ctx.rotate(-Math.PI/2);
     ctx.textAlign='center';
-    haloText('Counts', 0, 0, '#aaa');
+    haloText('Counts', 0, 0, C.gray2);
     ctx.restore();
 
     // Energy tick labels
     ctx.font='14px "Noto Sans",sans-serif'; ctx.textAlign='center';
     for(var i=0;i<eTicks.length;i++){
       var tx=sx+(eTicks[i]/E_MAX)*sw;
-      haloText(eTicks[i]+'', tx, sy+sh+14, '#bbb');
+      haloText(eTicks[i]+'', tx, sy+sh+14, C.gray8);
     }
 
     // Draw spectrum as filled area + line (progressive reveal)
@@ -249,7 +258,7 @@
     }
     ctx.lineTo(sx+(drawN-1)/SPEC_N*sw, sy+sh);
     ctx.closePath();
-    ctx.fillStyle='rgba(99,110,128,0.10)';
+    ctx.fillStyle=C.specFill;
     ctx.fill();
 
     // Spectrum line
@@ -298,7 +307,7 @@
       // Circle marker on the peak
       ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2);
       ctx.fillStyle=VIOLET; ctx.fill();
-      ctx.strokeStyle='#fff'; ctx.lineWidth=1.8; ctx.stroke();
+      ctx.strokeStyle=BG; ctx.lineWidth=1.8; ctx.stroke();
 
       // Isotope label above the marker
       ctx.font='600 14px "Google Sans","Noto Sans",sans-serif';
@@ -327,10 +336,10 @@
     var arrowStartY=sy+sh/2;
     var fvX=450, fvY=90, fvW=32, fvH=200;
 
-    drawArrow(arrowStartX, arrowStartY, fvX-2, arrowStartY, '#bbb');
+    drawArrow(arrowStartX, arrowStartY, fvX-2, arrowStartY, C.gray8);
 
     // Feature vector column
-    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=1.5;
+    ctx.fillStyle=C.boxFillV; ctx.strokeStyle=VIOLET; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(fvX,fvY,fvW,fvH,4); ctx.fill(); ctx.stroke();
 
     // Feature cells
@@ -346,7 +355,7 @@
     }
 
     ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Features', fvX+fvW/2, fvY-8, '#888');
+    haloText('Features', fvX+fvW/2, fvY-8, C.gray1);
 
     // Three classifier blocks
     var clsX=525, clsW=135, clsH=58, clsGap=14;
@@ -363,10 +372,10 @@
       var cl=classifiers[c];
 
       // Arrow from feature vector to classifier
-      drawArrow(fvX+fvW+4, fvY+fvH/2, clsX-4, cy+clsH/2, '#bbb');
+      drawArrow(fvX+fvW+4, fvY+fvH/2, clsX-4, cy+clsH/2, C.gray8);
 
       // Classifier box
-      ctx.fillStyle='#fafaf8'; ctx.strokeStyle=cl.color; ctx.lineWidth=2.5;
+      ctx.fillStyle=C.panelFill; ctx.strokeStyle=cl.color; ctx.lineWidth=2.5;
       ctx.beginPath(); ctx.roundRect(clsX,cy,clsW,clsH,6); ctx.fill(); ctx.stroke();
 
       // Classifier name
@@ -396,12 +405,12 @@
 
     // Results panel - shifted up since pipeline is removed
     var rx=25, ry=365, rw=555, rh=185;
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('F1 Score Comparison', rx+rw/2, ry+28, '#444');
+    haloText('F1 Score Comparison', rx+rw/2, ry+28, C.gray4);
 
     // Bar chart
     var barX=rx+160, barMaxW=320, barH=34, barGap=10;
@@ -424,7 +433,7 @@
       haloText(cl.name, barX-12, by+barH/2+7, cl.color);
 
       // Bar background
-      ctx.fillStyle='#eceae6';
+      ctx.fillStyle=C.barBg;
       ctx.beginPath(); ctx.roundRect(barX,by,barMaxW,barH,4); ctx.fill();
 
       // Bar fill
@@ -452,7 +461,7 @@
 
     // Winner panel
     var wx=595, wy=365, ww=180, wh=200;
-    ctx.fillStyle='#FAEDED'; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2.5;
+    ctx.fillStyle=C.boxFillC; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,8); ctx.fill(); ctx.stroke();
 
     // Star
@@ -463,7 +472,7 @@
     haloText('XGBoost', wx+ww/2, wy+65, SANGUINE);
 
     ctx.font='18px "Noto Sans",sans-serif';
-    haloText('Best Overall', wx+ww/2, wy+88, '#888');
+    haloText('Best Overall', wx+ww/2, wy+88, C.gray1);
 
     // Key stats
     var stats=[
@@ -474,9 +483,9 @@
     for(var i=0;i<stats.length;i++){
       var sy=wy+110+i*32;
       ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-      haloText(stats[i].label, wx+ww/2, sy, '#999');
+      haloText(stats[i].label, wx+ww/2, sy, C.gray9);
       ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
-      haloText(stats[i].val, wx+ww/2, sy+18, '#444');
+      haloText(stats[i].val, wx+ww/2, sy+18, C.gray4);
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -488,14 +497,14 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Classifier Comparison for Radionuclide Identification', W/2, 40, '#2a2d35');
+    haloText('Classifier Comparison for Radionuclide Identification', W/2, 40, C.title);
     ctx.globalAlpha=1; ctx.restore();
   }
 
   function frame(){
     if(startTime===null) startTime=performance.now()/1000;
     var t=getT();
-    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H);
 
     // Global fade
     var fadeIn=clamp01(t/0.8);

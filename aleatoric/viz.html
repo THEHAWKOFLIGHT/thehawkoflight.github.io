@@ -33,6 +33,14 @@
   var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var CHARCOAL='#3A3D45';
   var BG='#fdfcfb';
+  var DARK=false;
+  var COLORS_LIGHT={BG:'#fdfcfb',title:'#2a2d35',gray5:'#555',gray4:'#444',gray1:'#888',gray2:'#aaa',gray8:'#bbb',gray7:'#ccc',panelFill:'#fafaf8',panelStroke:'#ddd8d3',gridStroke:'#ccc'};
+  var COLORS_DARK={BG:'#1c1d22',title:'#e0e0e4',gray5:'#aaa',gray4:'#ccc',gray1:'#777',gray2:'#666',gray8:'#555',gray7:'#444',panelFill:'#252630',panelStroke:'#3a3c48',gridStroke:'#3a3c48'};
+  var C=COLORS_LIGHT;
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){DARK=!!e.data.dark;C=DARK?COLORS_DARK:COLORS_LIGHT;BG=C.BG;}
+  });
+  try{parent.postMessage({type:'viz-ready'},'*');}catch(e){}
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -175,7 +183,7 @@
         ctx.fillRect(x+gx*cellSz, y+gy*cellSz, cellSz+0.5, cellSz+0.5);
       }
     }
-    ctx.strokeStyle='#ccc'; ctx.lineWidth=0.8;
+    ctx.strokeStyle=C.gridStroke; ctx.lineWidth=0.8;
     ctx.strokeRect(x,y,sz,sz);
   }
 
@@ -208,7 +216,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Aleatoric Uncertainty in Precipitation Retrieval', W/2, 38, '#2a2d35');
+    haloText('Aleatoric Uncertainty in Precipitation Retrieval', W/2, 38, C.title);
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -223,7 +231,7 @@
     var ix=panelX+(panelW-imgSz)/2, iy=panelY+42;
 
     // Panel (same width as loss comparison below)
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(panelX,panelY,panelW,panelH,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
@@ -249,7 +257,7 @@
     var bx=25, by=275, bw=365, bh=235;
 
     // Panel
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
@@ -327,7 +335,7 @@
     var ex=415, ey=55, ew=350, eh=300;
 
     // Panel
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(ex,ey,ew,eh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
@@ -371,7 +379,7 @@
     var rx=415, ry=380, rw=350, rh=185;
 
     // Panel
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
@@ -408,7 +416,7 @@
   function frame(){
     if(startTime===null) startTime=performance.now()/1000;
     var t=getT();
-    ctx.clearRect(0,0,W,H); ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H);
 
     // Global fade
     var fadeIn=clamp01(t/0.8);

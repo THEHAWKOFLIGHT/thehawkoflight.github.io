@@ -35,13 +35,22 @@
   var BG='#fdfcfb';
   var CONT_COL=ROSE, DISC_COL='#5656A2';
 
+  var DARK=false;
+  var COLORS_LIGHT={BG:'#fdfcfb',title:'#2a2d35',gray1:'#888',gray2:'#aaa',gray3:'#999',gray4:'#666',gray5:'#555',gray6:'#444',gray7:'#ccc',gray8:'#bbb',gray9:'#ddd8d3',panelFill:'#fafaf8',panelStroke:'#ddd8d3',boxFillV:'#EBE4F8',boxFillC:'#FAEDED',boxFillD:'#EEEDF5',headInact:'#f5f5f5',strokeInact:'#ccc',textInact:'#999',textDiscDk:'#3B3B70',embFill:'#f0f0f5',contTextDk:'#E0756A',sepLine:'#bbb'};
+  var COLORS_DARK={BG:'#1c1d22',title:'#e0e0e4',gray1:'#777',gray2:'#666',gray3:'#888',gray4:'#999',gray5:'#aaa',gray6:'#ccc',gray7:'#444',gray8:'#555',gray9:'#3a3c48',panelFill:'#252630',panelStroke:'#3a3c48',boxFillV:'#2a2640',boxFillC:'#302028',boxFillD:'#262438',headInact:'#252630',strokeInact:'#3a3c48',textInact:'#666',textDiscDk:'#9090c0',embFill:'#2a2c38',contTextDk:'#ECA49C',sepLine:'#444'};
+  var C=COLORS_LIGHT;
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){DARK=!!e.data.dark;C=DARK?COLORS_DARK:COLORS_LIGHT;BG=C.BG;}
+  });
+  try{parent.postMessage({type:'viz-ready'},'*');}catch(e){}
+
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
 
   // Halo text default stroke: 5px (was 3px)
   function haloText(text,x,y,fill,hp){
     hp=hp||5; ctx.save();
-    ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
+    ctx.strokeStyle=C.BG; ctx.lineWidth=hp*2;
     ctx.lineJoin='round'; ctx.miterLimit=2;
     ctx.strokeText(text,x,y);
     ctx.fillStyle=fill; ctx.fillText(text,x,y);
@@ -120,7 +129,7 @@
     ctx.save(); ctx.globalAlpha = ease(a);
     ctx.font = '700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign = 'center';
-    haloText('FlexTPP: Mixed-Type Event Sequences', W/2, 42, '#2a2d35');
+    haloText('FlexTPP: Mixed-Type Event Sequences', W/2, 42, C.title);
     ctx.globalAlpha = 1; ctx.restore();
   }
 
@@ -156,7 +165,7 @@
     // "Generated sequence:" label — 24px (was 14px)
     ctx.font = '600 24px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign = 'left';
-    haloText('Generated sequence:', RIBBON_LEFT, TOK_Y - 55, '#555');
+    haloText('Generated sequence:', RIBBON_LEFT, TOK_Y - 55, C.gray5);
 
     // Type legend — 18px text (was 11px), 18x18 squares (was 12x12)
     ctx.font = '18px "Noto Sans",sans-serif';
@@ -165,14 +174,14 @@
     ctx.fillStyle = CONT_COL; ctx.globalAlpha=0.25; ctx.fill();
     ctx.globalAlpha=1;
     ctx.strokeStyle=CONT_COL; ctx.lineWidth=2.25; ctx.stroke();
-    haloText('continuous', legX+24, TOK_Y-56, '#888');
+    haloText('continuous', legX+24, TOK_Y-56, C.gray1);
 
     legX += 140;
     ctx.beginPath(); ctx.roundRect(legX, TOK_Y-72, 18, 18, 4);
     ctx.fillStyle = DISC_COL; ctx.globalAlpha=0.25; ctx.fill();
     ctx.globalAlpha=1;
     ctx.strokeStyle=DISC_COL; ctx.lineWidth=2.25; ctx.stroke();
-    haloText('discrete', legX+24, TOK_Y-56, '#888');
+    haloText('discrete', legX+24, TOK_Y-56, C.gray1);
 
     // Draw event separators and labels
     for(var i=0; i<N_TOK; i++){
@@ -184,7 +193,7 @@
       ctx.globalAlpha = ease(ap) * 0.6;
       if(i > 0){
         ctx.setLineDash([4,4]);
-        ctx.strokeStyle = '#bbb';
+        ctx.strokeStyle = C.sepLine;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(x-EVENT_XGAP/2, TOK_Y-40);
@@ -196,7 +205,7 @@
       // Day labels: 18px (was 11px)
       ctx.font = '500 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign = 'left';
-      haloText(tokens[i].evLabel, x, TOK_Y-28, '#888');
+      haloText(tokens[i].evLabel, x, TOK_Y-28, C.gray1);
     }
 
     // Draw tokens
@@ -214,7 +223,7 @@
 
       // Token box — TOK_H=48 (was 34)
       ctx.globalAlpha = ea * (isCur ? 1 : 0.85);
-      ctx.fillStyle = tokens[i].type === 'cont' ? '#FAEDED' : '#EEEDF5';
+      ctx.fillStyle = tokens[i].type === 'cont' ? C.boxFillC : C.boxFillD;
       ctx.strokeStyle = col;
       ctx.lineWidth = isCur ? 3.75 : 2.25;
       ctx.beginPath(); ctx.roundRect(x, TOK_Y, w*ea, TOK_H, 8);
@@ -236,7 +245,7 @@
         ctx.globalAlpha = ta * (isCur ? 1 : 0.85);
         ctx.font = '700 18px "Google Sans","Noto Sans",sans-serif';
         ctx.textAlign = 'center';
-        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+6, col === CONT_COL ? '#E0756A' : '#3B3B70');
+        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+6, col === CONT_COL ? C.contTextDk : C.textDiscDk);
       }
 
       // Type sub-labels REMOVED (cont/disc below tokens)
@@ -257,30 +266,30 @@
     var curType = curIdx>=0 ? tokens[curIdx].type : null;
 
     // Background panel
-    ctx.fillStyle = '#fafaf8';
-    ctx.strokeStyle = '#ddd8d3';
+    ctx.fillStyle = C.panelFill;
+    ctx.strokeStyle = C.panelStroke;
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(50, ay, 680, ah, 10);
     ctx.fill(); ctx.stroke();
 
     // Embedding block — enlarged
     var bx=80, by=ay+18, bw=105, bh=50;
-    ctx.fillStyle='#f0f0f5'; ctx.strokeStyle='#bbb'; ctx.lineWidth=2.25;
+    ctx.fillStyle=C.embFill; ctx.strokeStyle=C.gray8; ctx.lineWidth=2.25;
     ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,8); ctx.fill(); ctx.stroke();
     // Embedding label: 18px (was 11px)
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Embedding',bx+bw/2,by+bh/2+6,'#666');
+    haloText('Embedding',bx+bw/2,by+bh/2+6,C.gray4);
 
     // + PE: 18px (was 11px)
     ctx.font='18px "Noto Sans",sans-serif';
-    haloText('+ PE',bx+bw+18,by+bh/2+6,'#aaa');
+    haloText('+ PE',bx+bw+18,by+bh/2+6,C.gray2);
 
     // Arrow from embedding to transformer
-    drawArrow(bx+bw+42, by+bh/2, bx+bw+80, by+bh/2, '#bbb');
+    drawArrow(bx+bw+42, by+bh/2, bx+bw+80, by+bh/2, C.gray8);
 
     // Transformer block — enlarged
     var tx=bx+bw+85, tw=210, tbh=bh+14;
-    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=3;
+    ctx.fillStyle=C.boxFillV; ctx.strokeStyle=VIOLET; ctx.lineWidth=3;
     ctx.beginPath(); ctx.roundRect(tx,by-7,tw,tbh,10); ctx.fill(); ctx.stroke();
     // Transformer label: 20px bold (was 13px)
     ctx.font='700 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
@@ -289,34 +298,34 @@
 
     // Arrows to heads
     var headY = by+tbh/2;
-    drawArrow(tx+tw+5, headY-10, tx+tw+50, headY-24, '#bbb');
-    drawArrow(tx+tw+5, headY+10, tx+tw+50, headY+24, '#bbb');
+    drawArrow(tx+tw+5, headY-10, tx+tw+50, headY-24, C.gray8);
+    drawArrow(tx+tw+5, headY+10, tx+tw+50, headY+24, C.gray8);
 
     // Discrete head — enlarged
     var dx=tx+tw+55, dw=130;
     var discActive = curType==='disc';
-    ctx.fillStyle = discActive?'#EEEDF5':'#f5f5f5';
-    ctx.strokeStyle = discActive?DISC_COL:'#ccc';
+    ctx.fillStyle = discActive?C.boxFillD:C.headInact;
+    ctx.strokeStyle = discActive?DISC_COL:C.strokeInact;
     ctx.lineWidth = discActive?3:1.5;
     ctx.beginPath(); ctx.roundRect(dx,by-16,dw,36,6); ctx.fill(); ctx.stroke();
     // Head label: 18px (was 11px)
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('φ_disc → Cat()',dx+dw/2,by+8,discActive?'#3B3B70':'#999');
+    haloText('φ_disc → Cat()',dx+dw/2,by+8,discActive?C.textDiscDk:C.textInact);
 
     // Continuous head — enlarged
     var cy2=by+bh-8;
     var contActive = curType==='cont';
-    ctx.fillStyle = contActive?'#FAEDED':'#f5f5f5';
-    ctx.strokeStyle = contActive?CONT_COL:'#ccc';
+    ctx.fillStyle = contActive?C.boxFillC:C.headInact;
+    ctx.strokeStyle = contActive?CONT_COL:C.strokeInact;
     ctx.lineWidth = contActive?3:1.5;
     ctx.beginPath(); ctx.roundRect(dx,cy2,dw,36,6); ctx.fill(); ctx.stroke();
     // Head label: 18px (was 11px)
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('φ_cont → Flow()',dx+dw/2,cy2+22,contActive?'#E0756A':'#999');
+    haloText('φ_cont → Flow()',dx+dw/2,cy2+22,contActive?C.contTextDk:C.textInact);
 
     // Causal mask note: 16px (was 10px)
     ctx.font='italic 16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('causal attention mask',tx+tw/2,ay+ah-10,'#bbb');
+    haloText('causal attention mask',tx+tw/2,ay+ah-10,C.gray8);
 
     ctx.globalAlpha=1; ctx.restore();
   }
@@ -347,7 +356,7 @@
 
     // Discrete distribution panel
     var dx = 70;
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(dx,py,pw,ph,10); ctx.fill(); ctx.stroke();
     // Panel header: 20px (was 12px)
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
@@ -368,13 +377,13 @@
       ctx.globalAlpha = ease(a);
       // Bar labels: 16px (was 9px)
       ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-      haloText(labels[j], bx+barW/2, barBase+17, '#aaa');
+      haloText(labels[j], bx+barW/2, barBase+17, C.gray2);
     }
 
     // Continuous distribution panel
     var cx2 = 415;
     ctx.globalAlpha = ease(a);
-    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
+    ctx.fillStyle=C.panelFill; ctx.strokeStyle=C.panelStroke; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(cx2,py,pw,ph,10); ctx.fill(); ctx.stroke();
     // Panel header: 20px (was 12px)
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
@@ -413,18 +422,18 @@
 
     // Axis line
     ctx.globalAlpha = ease(a)*0.4;
-    ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5;
+    ctx.strokeStyle=C.gray7; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(crvLeft,crvBase); ctx.lineTo(crvRight,crvBase); ctx.stroke();
     // Axis label: 16px (was 9px)
     ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
     ctx.globalAlpha = ease(a);
-    haloText('value', cx2+pw/2, crvBase+18, '#aaa');
+    haloText('value', cx2+pw/2, crvBase+18, C.gray2);
 
     // Current prediction label — 18px (was 11px)
     if(curIdx >= 0){
       ctx.font='500 18px "Noto Sans",sans-serif'; ctx.textAlign='center';
       var predText = 'Predicting: ' + tokens[curIdx].text + ' (' + tokens[curIdx].type + ')';
-      haloText(predText, W/2, py+ph+24, '#888');
+      haloText(predText, W/2, py+ph+24, C.gray1);
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -434,7 +443,7 @@
     if(startTime===null) startTime=performance.now()/1000;
     var t=getT();
     ctx.clearRect(0,0,W,H);
-    ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H);
 
     // drawPatientBadge removed
     drawTokenRibbon(t);
