@@ -312,7 +312,8 @@
     var a=ease(clamp01((t-P.D)/0.6));
     ctx.save(); ctx.globalAlpha=a;
 
-    var rx=20, ry=310, rw=260, rh=160;
+    // Results panel at bottom spanning full width
+    var rx=40, ry=490, rw=420, rh=130;
 
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
@@ -322,7 +323,7 @@
     haloText('F1-Score (High SNR)', rx+rw/2, ry+24, '#444');
 
     // Horizontal bars
-    var barX=rx+100, barMaxW=100, barH=28, barGap=10;
+    var barX=rx+120, barMaxW=200, barH=26, barGap=8;
     var barStartY=ry+40;
 
     for(var m=0;m<3;m++){
@@ -334,10 +335,6 @@
       var by=barStartY+m*(barH+barGap);
       var method=methods[m];
       var barW=(method.f1_high/1.0)*barMaxW*ba;
-
-      // Arrow from MLP to F1 panel
-      var mlpCY=BRANCH_Y[m]+BRANCH_BH/2;
-      drawArrow(MLP_X+MLP_W+4, mlpCY, rx+rw+4, ry+rh/2, '#ccc');
 
       ctx.font='600 16px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='right';
@@ -357,44 +354,35 @@
       }
     }
 
-    ctx.globalAlpha=1; ctx.restore();
-  }
-
-  // Phase E: training time
-  function drawInsights(t){
-    if(t<P.E) return;
-    var a=ease(clamp01((t-P.E)/0.8));
-    ctx.save(); ctx.globalAlpha=a;
-
-    var ix=20, iy=490, iw=260, ih=120;
-
+    // Training time panel (right side of bottom)
+    var tx=480, ty2=ry, tw2=280, th2=130;
+    ctx.globalAlpha=a;
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(ix,iy,iw,ih,8); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(tx,ty2,tw2,th2,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Training Time', ix+iw/2, iy+24, '#444');
+    haloText('Training Time', tx+tw2/2, ty2+24, '#444');
 
-    // Time bars (proportional)
     var times=[{name:'Raw',t:120,col:BLUE},{name:'PCA',t:45,col:PURPLE},{name:'BARNI',t:30,col:GREEN}];
-    var tbX=ix+80, tbMaxW=130, tbH=22, tbGap=8, tbY=iy+38;
+    var tbX=tx+90, tbMaxW=140, tbH=22, tbGap=8, tbStartY=ty2+40;
 
     for(var i=0;i<times.length;i++){
       var ta=ease(clamp01((a-i*0.1-0.1)/0.5));
       if(ta<=0) continue;
       ctx.globalAlpha=a*ta;
 
-      var ty=tbY+i*(tbH+tbGap);
-      var tw=(times[i].t/120)*tbMaxW*ta;
+      var tby=tbStartY+i*(tbH+tbGap);
+      var tbw=(times[i].t/120)*tbMaxW*ta;
 
       ctx.font='600 14px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='right';
-      haloText(times[i].name, tbX-8, ty+tbH/2+5, times[i].col);
+      haloText(times[i].name, tbX-8, tby+tbH/2+5, times[i].col);
 
       ctx.fillStyle='#eef0f4';
-      ctx.beginPath(); ctx.roundRect(tbX,ty,tbMaxW,tbH,3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(tbX,tby,tbMaxW,tbH,3); ctx.fill();
       ctx.fillStyle=times[i].col;
-      ctx.beginPath(); ctx.roundRect(tbX,ty,tw,tbH,3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(tbX,tby,tbw,tbH,3); ctx.fill();
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -415,7 +403,6 @@
     drawFeatureBranches(t);
     drawClassifier(t);
     drawResults(t);
-    drawInsights(t);
 
     ctx.globalAlpha=1;
     requestAnimationFrame(frame);

@@ -181,17 +181,17 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=30, sy=70, sw=380, sh=200;
+    var sx=30, sy=90, sw=380, sh=190;
 
     // Background panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(sx-12,sy-36,sw+24,sh+65,8);
+    ctx.beginPath(); ctx.roundRect(sx-12,sy-20,sw+24,sh+50,8);
     ctx.fill(); ctx.stroke();
 
     // Title
-    ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-12, '#555');
+    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-4, '#555');
 
     // Axes
     ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
@@ -258,12 +258,12 @@
     var a=ease(clamp01((t-P.B)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=30, sy=70, sw=380, sh=200;
+    var sx=30, sy=90, sw=380, sh=190;
 
     // "BARNI Peak Finder" label
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('BARNI Peak Finder', sx+sw/2, sy+sh+48, PURPLE);
+    haloText('BARNI Peak Finder', sx+sw/2, sy+sh+38, PURPLE);
 
     // Highlight each peak
     for(var p=0;p<features.length;p++){
@@ -306,12 +306,12 @@
     var a=ease(clamp01((t-P.C)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=30, sy=70, sw=380, sh=200;
+    var sx=30, sy=90, sw=380, sh=190;
 
     // Arrow from spectrum to feature vector
     var arrowStartX=sx+sw+12;
     var arrowStartY=sy+sh/2;
-    var fvX=440, fvY=80, fvW=32, fvH=190;
+    var fvX=440, fvY=95, fvW=32, fvH=180;
 
     drawArrow(arrowStartX, arrowStartY, fvX-2, arrowStartY, '#bbb');
 
@@ -381,7 +381,7 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Results panel - shifted up since pipeline is removed
-    var rx=30, ry=340, rw=550, rh=190;
+    var rx=30, ry=350, rw=550, rh=180;
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
@@ -437,7 +437,7 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Winner panel
-    var wx=590, wy=340, ww=180, wh=210;
+    var wx=590, wy=350, ww=180, wh=200;
     ctx.fillStyle='#f4f9f4'; ctx.strokeStyle=GREEN; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,8); ctx.fill(); ctx.stroke();
 
