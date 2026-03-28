@@ -30,7 +30,7 @@
     };
   }
 
-  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
@@ -225,11 +225,11 @@
 
       // Questioned embedding vector
       var vy1=modelY-30;
-      ctx.fillStyle='#f5f0f0'; ctx.strokeStyle=ROSE; ctx.lineWidth=1.5;
+      ctx.fillStyle='#FAEDED'; ctx.strokeStyle=ROSE; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.roundRect(vecX,vy1,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
         var v=embQ[i];
-        var c=v>0?'rgba(176,134,138,'+(0.3+Math.abs(v)*0.35)+')':'rgba(99,110,128,'+(0.3+Math.abs(v)*0.35)+')';
+        var c=v>0?'rgba(212,152,142,'+(0.3+Math.abs(v)*0.35)+')':'rgba(99,110,128,'+(0.3+Math.abs(v)*0.35)+')';
         ctx.fillStyle=c;
         ctx.fillRect(vecX+3, vy1+3+i*(vecH-6)/12, vecW-6, (vecH-6)/12-1);
       }
@@ -242,7 +242,7 @@
       ctx.beginPath(); ctx.roundRect(vecX,vy2,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
         var v=embK[i];
-        var c=v>0?'rgba(176,134,138,'+(0.3+Math.abs(v)*0.35)+')':'rgba(99,110,128,'+(0.3+Math.abs(v)*0.35)+')';
+        var c=v>0?'rgba(212,152,142,'+(0.3+Math.abs(v)*0.35)+')':'rgba(99,110,128,'+(0.3+Math.abs(v)*0.35)+')';
         ctx.fillStyle=c;
         ctx.fillRect(vecX+3, vy2+3+i*(vecH-6)/12, vecW-6, (vecH-6)/12-1);
       }
@@ -322,7 +322,7 @@
       }
       ctx.lineTo(plotX+plotW, plotY+plotH);
       ctx.closePath();
-      ctx.fillStyle='rgba(181,77,80,0.12)';
+      ctx.fillStyle='rgba(224,117,106,0.15)';
       ctx.fill();
 
       ctx.beginPath();

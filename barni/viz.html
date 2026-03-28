@@ -30,7 +30,7 @@
     };
   }
 
-  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
@@ -291,7 +291,7 @@
 
       // Vertical dashed line from marker to x-axis
       ctx.setLineDash([3,4]);
-      ctx.strokeStyle='rgba(137,104,184,0.4)'; ctx.lineWidth=1.5;
+      ctx.strokeStyle='rgba(123,94,192,0.5)'; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.moveTo(x,y-6); ctx.lineTo(x,sy+sh); ctx.stroke();
       ctx.setLineDash([]);
 
@@ -452,7 +452,7 @@
 
     // Winner panel
     var wx=595, wy=365, ww=180, wh=200;
-    ctx.fillStyle='#fdf0f0'; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2.5;
+    ctx.fillStyle='#FAEDED'; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,8); ctx.fill(); ctx.stroke();
 
     // Star

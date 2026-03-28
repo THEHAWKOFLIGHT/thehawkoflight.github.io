@@ -31,7 +31,7 @@
     };
   }
 
-  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var SILVER='#636E80', ROSE='#D4988E', SANGUINE='#E0756A', VIOLET='#7B5EC0';
   var BG='#fdfcfb';
   var CONT_COL=ROSE, DISC_COL='#5656A2';
 
@@ -214,7 +214,7 @@
 
       // Token box — TOK_H=48 (was 34)
       ctx.globalAlpha = ea * (isCur ? 1 : 0.85);
-      ctx.fillStyle = tokens[i].type === 'cont' ? '#F5ECED' : '#EEEDF5';
+      ctx.fillStyle = tokens[i].type === 'cont' ? '#FAEDED' : '#EEEDF5';
       ctx.strokeStyle = col;
       ctx.lineWidth = isCur ? 3.75 : 2.25;
       ctx.beginPath(); ctx.roundRect(x, TOK_Y, w*ea, TOK_H, 8);
@@ -236,7 +236,7 @@
         ctx.globalAlpha = ta * (isCur ? 1 : 0.85);
         ctx.font = '700 18px "Google Sans","Noto Sans",sans-serif';
         ctx.textAlign = 'center';
-        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+6, col === CONT_COL ? '#A06568' : '#3B3B70');
+        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+6, col === CONT_COL ? '#E0756A' : '#3B3B70');
       }
 
       // Type sub-labels REMOVED (cont/disc below tokens)
@@ -306,13 +306,13 @@
     // Continuous head — enlarged
     var cy2=by+bh-8;
     var contActive = curType==='cont';
-    ctx.fillStyle = contActive?'#F5ECED':'#f5f5f5';
+    ctx.fillStyle = contActive?'#FAEDED':'#f5f5f5';
     ctx.strokeStyle = contActive?CONT_COL:'#ccc';
     ctx.lineWidth = contActive?3:1.5;
     ctx.beginPath(); ctx.roundRect(dx,cy2,dw,36,6); ctx.fill(); ctx.stroke();
     // Head label: 18px (was 11px)
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('φ_cont → Flow()',dx+dw/2,cy2+22,contActive?'#A06568':'#999');
+    haloText('φ_cont → Flow()',dx+dw/2,cy2+22,contActive?'#E0756A':'#999');
 
     // Causal mask note: 16px (was 10px)
     ctx.font='italic 16px "Noto Sans",sans-serif'; ctx.textAlign='center';
