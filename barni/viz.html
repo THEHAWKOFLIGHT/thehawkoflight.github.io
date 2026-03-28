@@ -30,8 +30,8 @@
     };
   }
 
-  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
-  var RED='#B85450', BG='#fdfdfe';
+  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -155,9 +155,9 @@
 
   // ---- Classifier results ----
   var classifiers=[
-    {name:'XGBoost', f1:0.910, color:GREEN, time:'5.97s'},
-    {name:'MLP', f1:0.888, color:BLUE, time:'24.63s'},
-    {name:'Random Forest', f1:0.859, color:ORANGE, time:'42.28s'}
+    {name:'XGBoost', f1:0.910, color:SANGUINE, time:'5.97s'},
+    {name:'MLP', f1:0.888, color:SILVER, time:'24.63s'},
+    {name:'Random Forest', f1:0.859, color:ROSE, time:'42.28s'}
   ];
 
   // ---- Shrink animation: spectrum starts big, shrinks to corner ----
@@ -198,7 +198,7 @@
     var sh=lerp(SPEC_BIG.sh,SPEC_SMALL.sh,p);
 
     // Background panel
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(sx-12,sy-25,sw+24,sh+55,8);
     ctx.fill(); ctx.stroke();
 
@@ -249,7 +249,7 @@
     }
     ctx.lineTo(sx+(drawN-1)/SPEC_N*sw, sy+sh);
     ctx.closePath();
-    ctx.fillStyle='rgba(108,142,191,0.10)';
+    ctx.fillStyle='rgba(99,110,128,0.10)';
     ctx.fill();
 
     // Spectrum line
@@ -260,7 +260,7 @@
       var y=sy+sh-v*sh;
       if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
-    ctx.strokeStyle=BLUE; ctx.lineWidth=1.2;
+    ctx.strokeStyle=SILVER; ctx.lineWidth=1.2;
     ctx.stroke();
 
     ctx.globalAlpha=1; ctx.restore();
@@ -277,7 +277,7 @@
     // "BARNI Peak Finder" label
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('BARNI Peak Finder', sx+sw/2, sy+sh+38, PURPLE);
+    haloText('BARNI Peak Finder', sx+sw/2, sy+sh+38, VIOLET);
 
     // Highlight each peak
     for(var p=0;p<features.length;p++){
@@ -291,23 +291,23 @@
 
       // Vertical dashed line from marker to x-axis
       ctx.setLineDash([3,4]);
-      ctx.strokeStyle='rgba(150,115,166,0.4)'; ctx.lineWidth=1.5;
+      ctx.strokeStyle='rgba(137,104,184,0.4)'; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.moveTo(x,y-6); ctx.lineTo(x,sy+sh); ctx.stroke();
       ctx.setLineDash([]);
 
       // Circle marker on the peak
       ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2);
-      ctx.fillStyle=PURPLE; ctx.fill();
+      ctx.fillStyle=VIOLET; ctx.fill();
       ctx.strokeStyle='#fff'; ctx.lineWidth=1.8; ctx.stroke();
 
       // Isotope label above the marker
       ctx.font='600 14px "Google Sans","Noto Sans",sans-serif';
       if(features[p].pos<0.05){
         ctx.textAlign='left';
-        haloText(features[p].label, x-2, y-14, PURPLE);
+        haloText(features[p].label, x-2, y-14, VIOLET);
       } else {
         ctx.textAlign='center';
-        haloText(features[p].label, x, y-14, PURPLE);
+        haloText(features[p].label, x, y-14, VIOLET);
       }
     }
 
@@ -330,7 +330,7 @@
     drawArrow(arrowStartX, arrowStartY, fvX-2, arrowStartY, '#bbb');
 
     // Feature vector column
-    ctx.fillStyle='#f0ecf5'; ctx.strokeStyle=PURPLE; ctx.lineWidth=1.5;
+    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(fvX,fvY,fvW,fvH,4); ctx.fill(); ctx.stroke();
 
     // Feature cells
@@ -338,9 +338,9 @@
     var cellH=fvH/nCells;
     for(var i=0;i<nCells;i++){
       var intensity=features[i].amp;
-      var r=Math.round(lerp(240,150,intensity));
-      var g=Math.round(lerp(236,115,intensity));
-      var b=Math.round(lerp(245,166,intensity));
+      var r=Math.round(lerp(243,123,intensity));
+      var g=Math.round(lerp(239,94,intensity));
+      var b=Math.round(lerp(248,167,intensity));
       ctx.fillStyle='rgb('+r+','+g+','+b+')';
       ctx.fillRect(fvX+2, fvY+2+i*cellH, fvW-4, cellH-2);
     }
@@ -366,7 +366,7 @@
       drawArrow(fvX+fvW+4, fvY+fvH/2, clsX-4, cy+clsH/2, '#bbb');
 
       // Classifier box
-      ctx.fillStyle='#fafbfd'; ctx.strokeStyle=cl.color; ctx.lineWidth=2.5;
+      ctx.fillStyle='#fafaf8'; ctx.strokeStyle=cl.color; ctx.lineWidth=2.5;
       ctx.beginPath(); ctx.roundRect(clsX,cy,clsW,clsH,6); ctx.fill(); ctx.stroke();
 
       // Classifier name
@@ -396,7 +396,7 @@
 
     // Results panel - shifted up since pipeline is removed
     var rx=25, ry=365, rw=555, rh=185;
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
@@ -424,7 +424,7 @@
       haloText(cl.name, barX-12, by+barH/2+7, cl.color);
 
       // Bar background
-      ctx.fillStyle='#eef0f4';
+      ctx.fillStyle='#eceae6';
       ctx.beginPath(); ctx.roundRect(barX,by,barMaxW,barH,4); ctx.fill();
 
       // Bar fill
@@ -452,7 +452,7 @@
 
     // Winner panel
     var wx=595, wy=365, ww=180, wh=200;
-    ctx.fillStyle='#f4f9f4'; ctx.strokeStyle=GREEN; ctx.lineWidth=2.5;
+    ctx.fillStyle='#fdf0f0'; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,8); ctx.fill(); ctx.stroke();
 
     // Star
@@ -460,7 +460,7 @@
     ctx.fillText('\u2605', wx+ww/2, wy+40);
 
     ctx.font='700 22px "Google Sans","Noto Sans",sans-serif';
-    haloText('XGBoost', wx+ww/2, wy+65, GREEN);
+    haloText('XGBoost', wx+ww/2, wy+65, SANGUINE);
 
     ctx.font='18px "Noto Sans",sans-serif';
     haloText('Best Overall', wx+ww/2, wy+88, '#888');
@@ -488,7 +488,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Classifier Comparison for Radionuclide Identification', W/2, 40, '#1a1a1a');
+    haloText('Classifier Comparison for Radionuclide Identification', W/2, 40, '#2a2d35');
     ctx.globalAlpha=1; ctx.restore();
   }
 

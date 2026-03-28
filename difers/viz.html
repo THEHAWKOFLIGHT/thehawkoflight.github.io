@@ -30,8 +30,9 @@
     };
   }
 
-  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
-  var BG='#fdfdfe';
+  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var CHARCOAL='#3A3D45';
+  var BG='#fdfcfb';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -105,20 +106,20 @@
 
   // Color maps
   function precipColor(v){
-    if(v<0.05) return 'rgba(200,210,230,0.3)';
+    if(v<0.05) return 'rgba(195,205,225,0.3)';
     var r,g,b;
-    if(v<0.33){ var t=v/0.33; r=lerp(50,50,t); g=lerp(100,180,t); b=lerp(200,100,t); }
-    else if(v<0.66){ var t=(v-0.33)/0.33; r=lerp(50,230,t); g=lerp(180,200,t); b=lerp(100,50,t); }
-    else{ var t=(v-0.66)/0.34; r=lerp(230,200,t); g=lerp(200,50,t); b=lerp(50,30,t); }
+    if(v<0.33){ var t=v/0.33; r=lerp(70,140,t); g=lerp(120,75,t); b=lerp(200,180,t); }
+    else if(v<0.66){ var t=(v-0.33)/0.33; r=lerp(140,195,t); g=lerp(75,55,t); b=lerp(180,75,t); }
+    else{ var t=(v-0.66)/0.34; r=lerp(195,150,t); g=lerp(55,25,t); b=lerp(75,35,t); }
     return 'rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';
   }
   function mwColor(v){
     v=Math.max(0,Math.min(1,v));
-    return 'rgb('+Math.round(180+v*70)+','+Math.round(100+v*100)+','+Math.round(50+v*50)+')';
+    return 'rgb('+Math.round(140+v*55)+','+Math.round(70+v*10)+','+Math.round(160+v*20)+')';
   }
   function irColor(v){
     v=Math.max(0,Math.min(1,v));
-    return 'rgb('+Math.round(40+v*60)+','+Math.round(60+v*120)+','+Math.round(140+v*110)+')';
+    return 'rgb('+Math.round(60+v*80)+','+Math.round(65+v*55)+','+Math.round(170+v*30)+')';
   }
   function noiseColor(v){
     var c=Math.round(80+v*140);
@@ -126,7 +127,7 @@
   }
   function uncertColor(v){
     v=Math.max(0,Math.min(1,v));
-    return 'rgb('+Math.round(240-v*100)+','+Math.round(240-v*140)+','+Math.round(240-v*50)+')';
+    return 'rgb('+Math.round(240-v*80)+','+Math.round(235-v*130)+','+Math.round(245-v*45)+')';
   }
 
   // Draw a mini grid image
@@ -217,7 +218,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('DifERS: Diffusion Ensemble Rainfall from Satellite', W/2, 42, '#1a1a1a');
+    haloText('DifERS: Diffusion Ensemble Rainfall from Satellite', W/2, 42, '#2a2d35');
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -230,7 +231,7 @@
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
     var mwCX=inputX+inputSz/2;
-    haloText('MW Radiances', mwCX, mwTopY-12, ORANGE);
+    haloText('MW Radiances', mwCX, mwTopY-12, ROSE);
 
     // Stack of MW grids (3 offset)
     for(var s=2;s>=0;s--){
@@ -243,7 +244,7 @@
     // IR panel label (20px, no sub-label)
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     var irCX=inputX+inputSz/2;
-    haloText('IR Time Series', irCX, irTopY-12, BLUE);
+    haloText('IR Time Series', irCX, irTopY-12, SILVER);
 
     // Stack of IR grids
     for(var s=2;s>=0;s--){
@@ -267,13 +268,13 @@
     drawArrow(inputX+inputSz+5, irTopY+inputSz/2, modelX-5, modelY+modelH*0.65, '#bbb');
 
     // Model container
-    ctx.fillStyle='#f0ecf5'; ctx.strokeStyle=PURPLE; ctx.lineWidth=3;
+    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=3;
     ctx.beginPath(); ctx.roundRect(modelX,modelY,modelW,modelH,10); ctx.fill(); ctx.stroke();
 
     // "DifERS" label (24px bold)
     ctx.font='700 24px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('DifERS', modelX+modelW/2, modelY+42, PURPLE);
+    haloText('DifERS', modelX+modelW/2, modelY+42, VIOLET);
 
     // "Conditional Diffusion" label (18px)
     ctx.font='italic 18px "Noto Sans",sans-serif';
@@ -292,7 +293,7 @@
 
     // Diffusion process area
     var dy=65, dh=520;
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(diffX,dy,diffW,dh,10); ctx.fill(); ctx.stroke();
 
     // "Iterative Denoising" label (24px)
@@ -314,13 +315,13 @@
     // Step counter (22px)
     var step=Math.round(lerp(1000,0,denoise));
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
-    haloText('k = '+step, diffX+diffW/2, imgY+mainDenSz+28, PURPLE);
+    haloText('k = '+step, diffX+diffW/2, imgY+mainDenSz+28, VIOLET);
 
     // Progress bar
     var barX=imgX, barY=imgY+mainDenSz+40, barW=mainDenSz, barH=8;
-    ctx.fillStyle='#e8e0f0';
+    ctx.fillStyle='#EBE4F8';
     ctx.beginPath(); ctx.roundRect(barX,barY,barW,barH,4); ctx.fill();
-    ctx.fillStyle=PURPLE;
+    ctx.fillStyle=VIOLET;
     ctx.beginPath(); ctx.roundRect(barX,barY,barW*denoise,barH,4); ctx.fill();
 
     // 4 intermediate snapshots (14px labels removed per instruction - just show grids)
@@ -350,7 +351,7 @@
       var ra=ease(clamp01((denoise-0.9)/0.1));
       ctx.globalAlpha=a*ra;
       ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
-      haloText('\u00d7 128 samples', diffX+diffW/2, snapY+snapSz+28, PURPLE);
+      haloText('\u00d7 128 samples', diffX+diffW/2, snapY+snapSz+28, VIOLET);
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -366,7 +367,7 @@
 
     // Ensemble container
     var ey=65, eh=520;
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(ensX,ey,ensW,eh,10); ctx.fill(); ctx.stroke();
 
     // "Ensemble Output" label (24px) - split into two lines to fit width
@@ -409,11 +410,11 @@
 
       // Ens. Mean label (18px)
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
-      haloText('Mean', memStartX+memSz/3, bottomY-6, GREEN);
+      haloText('Mean', memStartX+memSz/3, bottomY-6, SANGUINE);
       drawGrid(memStartX, bottomY, memSz, precipPattern, precipColor, ea2);
 
       // Uncertainty label (18px)
-      haloText('Uncertainty', memStartX+memSz+memGap+memSz/2, bottomY-6, '#B85450');
+      haloText('Uncertainty', memStartX+memSz+memGap+memSz/2, bottomY-6, CHARCOAL);
 
       // Generate uncertainty grid
       var cellSz2=memSz/G;
@@ -439,7 +440,7 @@
         var la=ease(clamp01((ea2-0.5)/0.5));
         ctx.globalAlpha=a*la;
         ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
-        haloText('CC = 0.82', ensX+ensW/2, bottomY+memSz+22, GREEN);
+        haloText('CC = 0.82', ensX+ensW/2, bottomY+memSz+22, SANGUINE);
       }
     }
 

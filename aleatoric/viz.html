@@ -30,8 +30,9 @@
     };
   }
 
-  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
-  var BG='#fdfdfe';
+  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var CHARCOAL='#3A3D45';
+  var BG='#fdfcfb';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -149,20 +150,20 @@
 
   // Color maps
   function precipColor(v){
-    if(v<0.05) return 'rgba(200,210,230,0.3)';
+    if(v<0.05) return 'rgba(195,205,225,0.3)';
     var r,g,b;
-    if(v<0.33){ var t=v/0.33; r=lerp(50,50,t); g=lerp(100,180,t); b=lerp(200,100,t); }
-    else if(v<0.66){ var t=(v-0.33)/0.33; r=lerp(50,230,t); g=lerp(180,200,t); b=lerp(100,50,t); }
-    else{ var t=(v-0.66)/0.34; r=lerp(230,200,t); g=lerp(200,50,t); b=lerp(50,30,t); }
+    if(v<0.33){ var t=v/0.33; r=lerp(70,140,t); g=lerp(120,75,t); b=lerp(200,180,t); }
+    else if(v<0.66){ var t=(v-0.33)/0.33; r=lerp(140,195,t); g=lerp(75,55,t); b=lerp(180,75,t); }
+    else{ var t=(v-0.66)/0.34; r=lerp(195,150,t); g=lerp(55,25,t); b=lerp(75,35,t); }
     return 'rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';
   }
   function satColor(v){
     v=Math.max(0,Math.min(1,v));
-    return 'rgb('+Math.round(180+v*70)+','+Math.round(100+v*100)+','+Math.round(50+v*50)+')';
+    return 'rgb('+Math.round(140+v*55)+','+Math.round(70+v*10)+','+Math.round(160+v*20)+')';
   }
   function uncertColor(v){
     v=Math.max(0,Math.min(1,v));
-    return 'rgb('+Math.round(240-v*100)+','+Math.round(240-v*140)+','+Math.round(240-v*50)+')';
+    return 'rgb('+Math.round(240-v*80)+','+Math.round(235-v*130)+','+Math.round(245-v*45)+')';
   }
 
   // Draw grid
@@ -207,7 +208,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Aleatoric Uncertainty in Precipitation Retrieval', W/2, 38, '#1a1a1a');
+    haloText('Aleatoric Uncertainty in Precipitation Retrieval', W/2, 38, '#2a2d35');
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -222,12 +223,12 @@
     var ix=panelX+(panelW-imgSz)/2, iy=panelY+42;
 
     // Panel (same width as loss comparison below)
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(panelX,panelY,panelW,panelH,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Satellite Observation', panelX+panelW/2, panelY+24, ORANGE);
+    haloText('Satellite Observation', panelX+panelW/2, panelY+24, ROSE);
 
     // Satellite grid
     drawGrid(ix, iy, imgSz, satellite, satColor);
@@ -248,7 +249,7 @@
     var bx=25, by=275, bw=365, bh=235;
 
     // Panel
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
@@ -264,16 +265,16 @@
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('MSE Loss', msX+gridSz/2, msY+14, '#c0392b');
+      haloText('MSE Loss', msX+gridSz/2, msY+14, '#3A3D45');
 
       drawGrid(msX, msY+22, gridSz, smooth, precipColor);
 
       // "Smooth / blurry" label
       ctx.font='16px "Noto Sans",sans-serif';
-      haloText('Blurry, low variance', msX+gridSz/2, msY+gridSz+40, '#c0392b');
+      haloText('Blurry, low variance', msX+gridSz/2, msY+gridSz+40, '#3A3D45');
 
       // X mark (scaled up)
-      ctx.strokeStyle='#c0392b'; ctx.lineWidth=4;
+      ctx.strokeStyle='#3A3D45'; ctx.lineWidth=4;
       ctx.beginPath();
       ctx.moveTo(msX+gridSz+8, msY+gridSz/2+14);
       ctx.lineTo(msX+gridSz+24, msY+gridSz/2+30);
@@ -290,15 +291,15 @@
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('Alternative Loss', shX+gridSz/2, shY+14, GREEN);
+      haloText('Alternative Loss', shX+gridSz/2, shY+14, SANGUINE);
 
       drawGrid(shX, shY+22, gridSz, truth, precipColor);
 
       ctx.font='16px "Noto Sans",sans-serif';
-      haloText('Sharp, preserves extremes', shX+gridSz/2, shY+gridSz+40, GREEN);
+      haloText('Sharp, preserves extremes', shX+gridSz/2, shY+gridSz+40, SANGUINE);
 
       // Check mark (scaled up)
-      ctx.strokeStyle=GREEN; ctx.lineWidth=4;
+      ctx.strokeStyle=SANGUINE; ctx.lineWidth=4;
       ctx.beginPath();
       ctx.moveTo(shX+gridSz+6, shY+gridSz/2+20);
       ctx.lineTo(shX+gridSz+14, shY+gridSz/2+28);
@@ -326,12 +327,12 @@
     var ex=415, ey=55, ew=350, eh=300;
 
     // Panel
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(ex,ey,ew,eh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Conditional Generative Model', ex+ew/2, ey+26, PURPLE);
+    haloText('Conditional Generative Model', ex+ew/2, ey+26, VIOLET);
 
     // 2x3 grid of ensemble members
     var memSz=70;
@@ -370,7 +371,7 @@
     var rx=415, ry=380, rw=350, rh=185;
 
     // Panel
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
@@ -386,7 +387,7 @@
       ctx.globalAlpha=a*ma;
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('Mean', mX+gridSz/2, mY, GREEN);
+      haloText('Mean', mX+gridSz/2, mY, SANGUINE);
       drawGrid(mX, mY+10, gridSz, ensMean, precipColor);
     }
 
@@ -397,7 +398,7 @@
       ctx.globalAlpha=a*ua;
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('Uncertainty', uX+gridSz/2, uY, '#B85450');
+      haloText('Uncertainty', uX+gridSz/2, uY, CHARCOAL);
       drawGrid(uX, uY+10, gridSz, ensUncert, uncertColor);
     }
 

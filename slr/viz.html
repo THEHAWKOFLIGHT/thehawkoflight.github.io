@@ -30,8 +30,8 @@
     };
   }
 
-  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
-  var RED='#B85450', BG='#fdfdfe';
+  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -137,7 +137,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Score-based Likelihood Ratios', W/2, 38, '#1a1a1a');
+    haloText('Score-based Likelihood Ratios', W/2, 38, '#2a2d35');
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -183,10 +183,10 @@
     var kr=lerpRect(KDOC_BIG, KDOC_SMALL, p1);
 
     var qa=ease(clamp01(a/0.6));
-    drawDoc(qr.x, qr.y, qr.w, qr.h, textLinesQ, 'Questioned Text', ORANGE, qa);
+    drawDoc(qr.x, qr.y, qr.w, qr.h, textLinesQ, 'Questioned Text', ROSE, qa);
 
     var ka2=ease(clamp01((a-0.3)/0.6));
-    drawDoc(kr.x, kr.y, kr.w, kr.h, textLinesK, 'Known Text', BLUE, ka2);
+    drawDoc(kr.x, kr.y, kr.w, kr.h, textLinesK, 'Known Text', SILVER, ka2);
   }
 
   // Phase B: embedding model + vectors (fixed positions, appear after shrink 1)
@@ -205,13 +205,13 @@
     // Model box
     var ma=ease(clamp01((a-0.1)/0.5));
     ctx.globalAlpha=ma;
-    ctx.fillStyle='#f0ecf5'; ctx.strokeStyle=PURPLE; ctx.lineWidth=2.5;
+    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(modelX,modelY,modelW,modelH,10); ctx.fill(); ctx.stroke();
 
     ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Stylometric', modelX+modelW/2, modelY+40, PURPLE);
-    haloText('Embedding', modelX+modelW/2, modelY+62, PURPLE);
+    haloText('Stylometric', modelX+modelW/2, modelY+40, VIOLET);
+    haloText('Embedding', modelX+modelW/2, modelY+62, VIOLET);
 
     ctx.font='16px "Noto Sans",sans-serif';
     haloText('Style Features', modelX+modelW/2, modelY+90, '#aaa');
@@ -225,29 +225,29 @@
 
       // Questioned embedding vector
       var vy1=modelY-30;
-      ctx.fillStyle='#fff5eb'; ctx.strokeStyle=ORANGE; ctx.lineWidth=1.5;
+      ctx.fillStyle='#f5f0f0'; ctx.strokeStyle=ROSE; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.roundRect(vecX,vy1,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
         var v=embQ[i];
-        var c=v>0?'rgba(215,155,0,'+(0.3+Math.abs(v)*0.35)+')':'rgba(108,142,191,'+(0.3+Math.abs(v)*0.35)+')';
+        var c=v>0?'rgba(176,134,138,'+(0.3+Math.abs(v)*0.35)+')':'rgba(99,110,128,'+(0.3+Math.abs(v)*0.35)+')';
         ctx.fillStyle=c;
         ctx.fillRect(vecX+3, vy1+3+i*(vecH-6)/12, vecW-6, (vecH-6)/12-1);
       }
       ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-      haloText('e_Q', vecX+vecW/2, vy1-8, ORANGE);
+      haloText('e_Q', vecX+vecW/2, vy1-8, ROSE);
 
       // Known embedding vector
       var vy2=modelY+modelH-vecH+30;
-      ctx.fillStyle='#eef3fb'; ctx.strokeStyle=BLUE; ctx.lineWidth=1.5;
+      ctx.fillStyle='#e8eaed'; ctx.strokeStyle=SILVER; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.roundRect(vecX,vy2,vecW,vecH,4); ctx.fill(); ctx.stroke();
       for(var i=0;i<12;i++){
         var v=embK[i];
-        var c=v>0?'rgba(215,155,0,'+(0.3+Math.abs(v)*0.35)+')':'rgba(108,142,191,'+(0.3+Math.abs(v)*0.35)+')';
+        var c=v>0?'rgba(176,134,138,'+(0.3+Math.abs(v)*0.35)+')':'rgba(99,110,128,'+(0.3+Math.abs(v)*0.35)+')';
         ctx.fillStyle=c;
         ctx.fillRect(vecX+3, vy2+3+i*(vecH-6)/12, vecW-6, (vecH-6)/12-1);
       }
       ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
-      haloText('e_K', vecX+vecW/2, vy2-8, BLUE);
+      haloText('e_K', vecX+vecW/2, vy2-8, SILVER);
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -262,7 +262,7 @@
     drawArrow(vecX+vecW+5, modelY+25, scoreBX-6, scoreBY+20, '#ccc');
     drawArrow(vecX+vecW+5, modelY+modelH-25, scoreBX-6, scoreBY+scoreH-20, '#ccc');
 
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(scoreBX,scoreBY,scoreW,scoreH,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
@@ -276,7 +276,7 @@
     if(va>0){
       ctx.globalAlpha=a*va;
       ctx.font='700 24px "Google Sans","Noto Sans",sans-serif';
-      haloText('s = '+scoreVal.toFixed(2), scoreBX+scoreW/2, scoreBY+63, PURPLE);
+      haloText('s = '+scoreVal.toFixed(2), scoreBX+scoreW/2, scoreBY+63, VIOLET);
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -289,7 +289,7 @@
     ctx.save(); ctx.globalAlpha=a;
 
     // Distribution plot area
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(plotX-10,plotY-30,plotW+20,plotH+60,10); ctx.fill(); ctx.stroke();
 
     // "Score-based Likelihood Ratio" label
@@ -322,7 +322,7 @@
       }
       ctx.lineTo(plotX+plotW, plotY+plotH);
       ctx.closePath();
-      ctx.fillStyle='rgba(130,179,102,0.15)';
+      ctx.fillStyle='rgba(181,77,80,0.12)';
       ctx.fill();
 
       ctx.beginPath();
@@ -332,11 +332,11 @@
         if(i===0) ctx.moveTo(plotX+i, plotY+plotH-v*plotH*0.85);
         else ctx.lineTo(plotX+i, plotY+plotH-v*plotH*0.85);
       }
-      ctx.strokeStyle=GREEN; ctx.lineWidth=2.5; ctx.stroke();
+      ctx.strokeStyle=SANGUINE; ctx.lineWidth=2.5; ctx.stroke();
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='left';
-      haloText('H\u2081: Same author', plotX+saMu*plotW-25, plotY+22, GREEN);
+      haloText('H\u2081: Same author', plotX+saMu*plotW-25, plotY+22, SANGUINE);
     }
 
     // Different-author distribution (red)
@@ -352,7 +352,7 @@
       }
       ctx.lineTo(plotX+plotW, plotY+plotH);
       ctx.closePath();
-      ctx.fillStyle='rgba(184,84,80,0.12)';
+      ctx.fillStyle='rgba(58,61,69,0.10)';
       ctx.fill();
 
       ctx.beginPath();
@@ -362,11 +362,11 @@
         if(i===0) ctx.moveTo(plotX+i, plotY+plotH-v*plotH*0.85);
         else ctx.lineTo(plotX+i, plotY+plotH-v*plotH*0.85);
       }
-      ctx.strokeStyle=RED; ctx.lineWidth=2.5; ctx.stroke();
+      ctx.strokeStyle=CHARCOAL; ctx.lineWidth=2.5; ctx.stroke();
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='left';
-      haloText('H\u2082: Different authors', plotX+daMu*plotW-30, plotY+44, RED);
+      haloText('H\u2082: Different authors', plotX+daMu*plotW-30, plotY+44, CHARCOAL);
     }
 
     // Score marker line
@@ -376,13 +376,13 @@
       var scoreX=plotX+scoreVal*plotW;
 
       ctx.setLineDash([5,4]);
-      ctx.strokeStyle=PURPLE; ctx.lineWidth=2;
+      ctx.strokeStyle=VIOLET; ctx.lineWidth=2;
       ctx.beginPath(); ctx.moveTo(scoreX, plotY); ctx.lineTo(scoreX, plotY+plotH); ctx.stroke();
       ctx.setLineDash([]);
 
       ctx.font='700 14px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('s = '+scoreVal.toFixed(2), scoreX, plotY+14, PURPLE);
+      haloText('s = '+scoreVal.toFixed(2), scoreX, plotY+14, VIOLET);
 
       var pSaVal=gauss(scoreVal,saMu,saSig);
       var pDaVal=gauss(scoreVal,daMu,daSig);
@@ -390,11 +390,11 @@
       var daY=plotY+plotH-pDaVal*plotH*0.85;
 
       ctx.beginPath(); ctx.arc(scoreX, saY, 7, 0, Math.PI*2);
-      ctx.fillStyle=GREEN; ctx.fill();
+      ctx.fillStyle=SANGUINE; ctx.fill();
       ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
 
       ctx.beginPath(); ctx.arc(scoreX, daY, 7, 0, Math.PI*2);
-      ctx.fillStyle=RED; ctx.fill();
+      ctx.fillStyle=CHARCOAL; ctx.fill();
       ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
     }
 
@@ -414,7 +414,7 @@
     var a=ease(clamp01((t-P.E)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    ctx.fillStyle='#f4f9f4'; ctx.strokeStyle=GREEN; ctx.lineWidth=2;
+    ctx.fillStyle='#fdf0f0'; ctx.strokeStyle=SANGUINE; ctx.lineWidth=2;
     ctx.beginPath(); ctx.roundRect(lrX,lrY,lrW,lrH,10); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
@@ -422,24 +422,24 @@
     haloText('Likelihood Ratio', lrX+lrW/2, lrY+28, '#444');
 
     ctx.font='16px "Noto Sans",sans-serif';
-    haloText('P(s | H\u2081)', lrX+lrW/2, lrY+58, GREEN);
+    haloText('P(s | H\u2081)', lrX+lrW/2, lrY+58, SANGUINE);
 
     ctx.strokeStyle='#888'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(lrX+30, lrY+66); ctx.lineTo(lrX+lrW-30, lrY+66); ctx.stroke();
 
-    haloText('P(s | H\u2082)', lrX+lrW/2, lrY+84, RED);
+    haloText('P(s | H\u2082)', lrX+lrW/2, lrY+84, CHARCOAL);
 
     var va=ease(clamp01((a-0.3)/0.5));
     if(va>0){
       ctx.globalAlpha=a*va;
       ctx.font='700 36px "Google Sans","Noto Sans",sans-serif';
-      haloText(LR, lrX+lrW/2, lrY+130, GREEN);
+      haloText(LR, lrX+lrW/2, lrY+130, SANGUINE);
 
       ctx.font='14px "Noto Sans",sans-serif';
       haloText('Evidence supports', lrX+lrW/2, lrY+158, '#888');
 
       ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
-      haloText('same authorship', lrX+lrW/2, lrY+180, GREEN);
+      haloText('same authorship', lrX+lrW/2, lrY+180, SANGUINE);
     }
 
     ctx.globalAlpha=1; ctx.restore();

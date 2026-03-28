@@ -6,17 +6,18 @@
 body {
   font-family: 'Noto Sans', sans-serif;
   color: #2c2c2c;
+  background: #faf9f7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ---- Links ------------------------------------------------ */
 a {
-  color: #3d6098;
+  color: #C2696C;
   transition: color 0.15s ease;
 }
 a:hover {
-  color: #1d3f6e;
+  color: #A04848;
 }
 
 /* ---- Section rhythm --------------------------------------- */
@@ -25,7 +26,7 @@ a:hover {
 }
 
 .section + .section {
-  border-top: 1px solid #eaedf2;
+  border-top: 1px solid #e5e0db;
 }
 
 .hero + .section {
@@ -37,7 +38,7 @@ a:hover {
   font-family: 'Google Sans', sans-serif;
   font-weight: 600;
   font-size: 1.65rem;
-  color: #1a1a1a;
+  color: #2a2d35;
   margin-bottom: 1.25rem;
   margin-top: 0;
   letter-spacing: -0.01em;
@@ -50,7 +51,7 @@ a:hover {
   font-size: 2.1rem;
   font-weight: 700;
   line-height: 1.25;
-  color: #1a1a1a;
+  color: #2a2d35;
   letter-spacing: -0.015em;
   margin-bottom: 0.6rem;
 }
@@ -60,12 +61,12 @@ a:hover {
 }
 
 .publication-authors a {
-  color: #3d6098 !important;
+  color: #C2696C !important;
   transition: color 0.15s ease;
 }
 
 .publication-authors a:hover {
-  color: #1d3f6e !important;
+  color: #A04848 !important;
   text-decoration: underline;
 }
 
@@ -131,8 +132,8 @@ a:hover .code-btn-label::after {
 
 /* ---- Highlight / summary box ------------------------------ */
 .highlight-box {
-  background: #f7f8fb;
-  border: 1px solid #e2e6ee;
+  background: #fdfcfb;
+  border: 1px solid #ddd8d3;
   border-radius: 6px;
   padding: 1.4rem 1.6rem;
   margin: 1.25rem 0 0.5rem;
@@ -143,7 +144,7 @@ a:hover .code-btn-label::after {
 .highlight-box .title.is-5 {
   font-family: 'Google Sans', sans-serif;
   font-size: 1.1rem;
-  color: #1a1a1a;
+  color: #2a2d35;
 }
 
 .highlight-box p {
@@ -168,8 +169,8 @@ a:hover .code-btn-label::after {
 }
 
 .highlight-box pre {
-  background: #eef0f5;
-  border: 1px solid #d8dce6;
+  background: #f5f3f0;
+  border: 1px solid #ddd8d3;
 }
 
 .highlight-box .content h3 {
@@ -234,19 +235,19 @@ mjx-container[display="true"] {
 
 /* Takeaway / bold callout */
 .takeaway {
-  background: #f0f4f8;
+  background: #fdfcfb;
   border-radius: 5px;
   padding: 0.9rem 1.2rem;
   margin: 1rem 0;
   font-size: 0.97rem;
   line-height: 1.65;
-  border-left: 3px solid #82B366;
+  border-left: 3px solid #F5C6C6;
 }
 
 /* ---- BibTeX ----------------------------------------------- */
 #BibTeX pre {
-  background: #f5f6f9;
-  border: 1px solid #e2e5ec;
+  background: #f5f3f0;
+  border: 1px solid #ddd8d3;
   border-radius: 6px;
   padding: 1.1rem 1.3rem;
   font-size: 0.82rem;
@@ -258,8 +259,8 @@ mjx-container[display="true"] {
 /* ---- Footer ----------------------------------------------- */
 .footer {
   padding: 2rem 1.5rem 1.5rem;
-  background: #f8f9fb;
-  border-top: 1px solid #eaedf2;
+  background: #faf9f7;
+  border-top: 1px solid #e5e0db;
 }
 
 .footer .content p {

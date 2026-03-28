@@ -38,8 +38,8 @@
   }
 
   // Colors
-  var BLUE = '#6C8EBF', ORANGE = '#D79B00', GREEN = '#82B366', PURPLE = '#9673A6';
-  var BG = '#fdfdfe';
+  var SILVER = '#636E80', ROSE = '#B0868A', SANGUINE = '#C2696C', VIOLET = '#7B5EC0';
+  var BG = '#fdfcfb';
 
   // ---- Dynamic Timeline Layout: starts big & centred, shrinks to top strip ----
   var TL_BIG   = { x: 40, y: 280, w: 700, split: 0.55 };
@@ -191,7 +191,7 @@
       var my = histMarkY[i] * curScale;
 
       // Vertical tick
-      ctx.strokeStyle = BLUE;
+      ctx.strokeStyle = SILVER;
       ctx.lineWidth = Math.max(2, 3 * curScale);
       ctx.globalAlpha = ea;
       ctx.beginPath();
@@ -202,7 +202,7 @@
       // Dot at top
       ctx.beginPath();
       ctx.arc(x, curTL.y + my * ea, DOT_R_BASE * curScale * ea, 0, Math.PI * 2);
-      ctx.fillStyle = BLUE;
+      ctx.fillStyle = SILVER;
       ctx.fill();
     }
 
@@ -212,7 +212,7 @@
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 ' + Math.max(18, Math.round(26 * curScale)) + 'px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('History', curTL.x + curTL.w * curTL.split / 2, curTL.y + 55 * curScale, BLUE);
+      haloText('History', curTL.x + curTL.w * curTL.split / 2, curTL.y + 55 * curScale, SILVER);
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -227,7 +227,7 @@
 
     // Shaded region
     ctx.globalAlpha = 0.12 * ea;
-    ctx.fillStyle = GREEN;
+    ctx.fillStyle = SANGUINE;
     ctx.fillRect(curTLSplit, curTL.y - 50 * curScale, (curTLEnd - curTLSplit) * ea, 85 * curScale);
     ctx.globalAlpha = 1;
 
@@ -248,7 +248,7 @@
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 ' + Math.max(18, Math.round(26 * curScale)) + 'px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('Prediction Horizon', (curTLSplit + curTLEnd) / 2, curTL.y + 55 * curScale, GREEN);
+      haloText('Prediction Horizon', (curTLSplit + curTLEnd) / 2, curTL.y + 55 * curScale, SANGUINE);
     }
 
     // "?" marks for unknown events
@@ -292,7 +292,7 @@
 
     // Count box
     var bx = 230, by = curTL.y + 93;
-    ctx.fillStyle = '#f0f4f8';
+    ctx.fillStyle = '#fafaf8';
     ctx.strokeStyle = '#ccc';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -318,7 +318,7 @@
     ctx.globalAlpha = ea;
 
     // Box background
-    ctx.fillStyle = '#fafbfd';
+    ctx.fillStyle = '#fafaf8';
     ctx.strokeStyle = '#ddd';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -397,7 +397,7 @@
       ctx.globalAlpha = ea;
       ctx.beginPath();
       ctx.arc(FP.x + 2, initY[i], 10 * ea, 0, Math.PI * 2);
-      ctx.fillStyle = ORANGE;
+      ctx.fillStyle = ROSE;
       ctx.fill();
     }
 
@@ -407,7 +407,7 @@
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 20px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'left';
-      haloText('random init (s=0)', FP.x + 16, FP.y + 20, ORANGE);
+      haloText('random init (s=0)', FP.x + 16, FP.y + 20, ROSE);
     }
 
     ctx.globalAlpha = 1;
@@ -438,7 +438,7 @@
       var curX = lerp(x0, x1, s);
       var curY = flowPath(i, s);
       ctx.lineTo(curX, curY);
-      ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
+      ctx.strokeStyle = blendHex(ROSE, SANGUINE, s);
       ctx.lineWidth = 3;
       ctx.globalAlpha = 0.5;
       ctx.stroke();
@@ -447,7 +447,7 @@
       ctx.globalAlpha = 1;
       ctx.beginPath();
       ctx.arc(curX, curY, 10, 0, Math.PI * 2);
-      ctx.fillStyle = blendHex(ORANGE, GREEN, s);
+      ctx.fillStyle = blendHex(ROSE, SANGUINE, s);
       ctx.fill();
 
       // Velocity arrow
@@ -460,7 +460,7 @@
         if(mag > 0){
           var nx = dx / mag * 18;
           var ny = dy / mag * 18;
-          ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
+          ctx.strokeStyle = blendHex(ROSE, SANGUINE, s);
           ctx.lineWidth = 2;
           ctx.globalAlpha = 0.6;
           ctx.beginPath();
@@ -474,7 +474,7 @@
           ctx.lineTo(curX + nx - 7.5*Math.cos(ang - 0.5), curY + ny - 7.5*Math.sin(ang - 0.5));
           ctx.lineTo(curX + nx - 7.5*Math.cos(ang + 0.5), curY + ny - 7.5*Math.sin(ang + 0.5));
           ctx.closePath();
-          ctx.fillStyle = blendHex(ORANGE, GREEN, s);
+          ctx.fillStyle = blendHex(ROSE, SANGUINE, s);
           ctx.globalAlpha = 0.6;
           ctx.fill();
         }
@@ -502,7 +502,7 @@
       var my = predMarkY[i];
 
       // Vertical tick
-      ctx.strokeStyle = GREEN;
+      ctx.strokeStyle = SANGUINE;
       ctx.lineWidth = 3;
       ctx.globalAlpha = ea;
       ctx.beginPath();
@@ -513,7 +513,7 @@
       // Dot
       ctx.beginPath();
       ctx.arc(x, curTL.y + my * ea, DOT_R_BASE * ea, 0, Math.PI * 2);
-      ctx.fillStyle = GREEN;
+      ctx.fillStyle = SANGUINE;
       ctx.fill();
     }
 
@@ -523,7 +523,7 @@
       ctx.globalAlpha = ease(labAp);
       ctx.font = '600 22px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('Predicted Events', (curTLSplit + curTLEnd) / 2, curTL.y - 48, GREEN);
+      haloText('Predicted Events', (curTLSplit + curTLEnd) / 2, curTL.y - 48, SANGUINE);
     }
 
     ctx.globalAlpha = 1;
@@ -544,7 +544,7 @@
     // History
     ctx.beginPath();
     ctx.arc(lx, ly, 7, 0, Math.PI * 2);
-    ctx.fillStyle = BLUE;
+    ctx.fillStyle = SILVER;
     ctx.fill();
     ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'left';
@@ -557,7 +557,7 @@
       ly += 28;
       ctx.beginPath();
       ctx.arc(lx, ly, 7, 0, Math.PI * 2);
-      ctx.fillStyle = GREEN;
+      ctx.fillStyle = SANGUINE;
       ctx.fill();
       ctx.font = '20px "Noto Sans", sans-serif';
       ctx.textAlign = 'left';
@@ -574,7 +574,7 @@
     ctx.globalAlpha = ease(ap);
     ctx.font = '700 30px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 36, '#1a1a1a');
+    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 36, '#2a2d35');
     ctx.globalAlpha = 1;
     ctx.restore();
   }

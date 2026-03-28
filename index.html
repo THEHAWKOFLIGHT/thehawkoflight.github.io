@@ -16,8 +16,8 @@
       -webkit-font-smoothing: antialiased;
       font-size: 1.02rem;
     }
-    a { color: #A84444; transition: color 0.15s ease; }
-    a:hover { color: #8B2E2E; text-decoration: underline; }
+    a { color: #C2696C; transition: color 0.15s ease; }
+    a:hover { color: #A04848; text-decoration: underline; }
 
     .section { padding: 1.8rem 1.5rem; }
     .section + .section { border-top: 1px solid #e5e0db; }
@@ -54,6 +54,36 @@
     .highlight-box p:last-child { margin-bottom: 0; }
     .highlight-box .viz-frame { margin-top: auto; }
 
+    /* Subtle conic holofoil on award-winning panels */
+    .highlight-box:has(.award-tag) {
+      position: relative;
+      overflow: hidden;
+    }
+    .highlight-box:has(.award-tag)::before {
+      content: '';
+      position: absolute;
+      top: -80%; left: -80%; width: 260%; height: 260%;
+      background: conic-gradient(
+        from var(--holo-rot) at var(--holo-x) var(--holo-y),
+        rgba(255,130,130,0.04),
+        rgba(200,100,160,0.03),
+        rgba(160,100,200,0.04),
+        rgba(200,120,220,0.03),
+        rgba(255,140,180,0.04),
+        rgba(220,100,140,0.03),
+        rgba(180,90,180,0.04),
+        rgba(255,130,130,0.04)
+      );
+      animation: holoRotate 10s linear infinite, holoDrift 14s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+      border-radius: 6px;
+    }
+    .highlight-box:has(.award-tag) > * {
+      position: relative;
+      z-index: 1;
+    }
+
     /* ---- Header ---- */
     .site-header { padding: 2.5rem 1.5rem 1.2rem; }
     .header-columns {
@@ -88,7 +118,7 @@
       font-size: 0.88rem;
       color: #777;
     }
-    .contact-line a { color: #A84444; }
+    .contact-line a { color: #C2696C; }
 
     /* ---- Publication entries ---- */
     .pub-title {
@@ -113,6 +143,22 @@
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
+    /* Animated custom property for conic-gradient rotation (iridescence) */
+    @property --holo-rot {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+    @property --holo-x {
+      syntax: '<percentage>';
+      initial-value: 50%;
+      inherits: false;
+    }
+    @property --holo-y {
+      syntax: '<percentage>';
+      initial-value: 50%;
+      inherits: false;
+    }
     .award-tag {
       display: inline-block;
       vertical-align: middle;
@@ -124,26 +170,43 @@
       margin-bottom: 0.4rem;
       margin-left: 0.3rem;
       background: linear-gradient(135deg, #FDEAEA, #F5C6C6);
-      color: #8B3A3A;
+      color: #A04D4D;
       position: relative;
       overflow: hidden;
+      z-index: 0;
     }
     .venue-tag {
       vertical-align: middle;
     }
-    .award-tag::after {
+    /* Layer 1: Rotating conic iridescence (angle-dependent color shift) */
+    .award-tag::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 50%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
-      animation: shine 3.5s ease-in-out infinite;
+      top: -80%; left: -80%; width: 260%; height: 260%;
+      background: conic-gradient(
+        from var(--holo-rot) at var(--holo-x) var(--holo-y),
+        rgba(255,130,130,0.3),
+        rgba(200,100,160,0.25),
+        rgba(160,100,200,0.3),
+        rgba(200,120,220,0.25),
+        rgba(255,140,180,0.3),
+        rgba(220,100,140,0.25),
+        rgba(180,90,180,0.3),
+        rgba(255,130,130,0.3)
+      );
+      animation: holoRotate 10s linear infinite, holoDrift 14s ease-in-out infinite alternate;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 1;
     }
-    @keyframes shine {
-      0%, 70% { left: -100%; }
-      100% { left: 200%; }
+    @keyframes holoRotate {
+      to { --holo-rot: 360deg; }
+    }
+    @keyframes holoDrift {
+      0%   { --holo-x: 30%; --holo-y: 30%; }
+      33%  { --holo-x: 70%; --holo-y: 40%; }
+      66%  { --holo-x: 40%; --holo-y: 70%; }
+      100% { --holo-x: 60%; --holo-y: 30%; }
     }
 
     .tag-row { min-height: 2.6rem; }
@@ -199,13 +262,14 @@
 <!-- ===== Header ===== -->
 <section class="site-header">
   <div class="container is-max-widescreen">
-    <h1 class="name-title">Kai Nelson</h1>
+    <h1 class="name-title">Kai Tyrus Nelson</h1>
     <div class="header-columns">
       <div class="header-info">
         <p class="affiliation">PhD Student, Computer Science &mdash; UC Berkeley</p>
         <p class="affiliation" style="font-size: 0.88rem; color: #777;">PIs: <a href="https://a1k12.github.io/" target="_blank">Aditi Krishnapriyan</a>, <a href="https://people.eecs.berkeley.edu/~svlevine/" target="_blank">Sergey Levine</a></p>
         <p class="contact-line">
           <a href="mailto:kai_nelson@berkeley.edu">kai_nelson@berkeley.edu</a>
+          &middot; <a href="https://scholar.google.com/citations?user=Be65jlkAAAAJ&hl=en" target="_blank">Google Scholar</a>
         </p>
         <p style="margin-top: 0.3rem;">🐘 🚫 ⛓️ ⛓️ 🚫 🪵</p>
       </div>
@@ -250,7 +314,7 @@
       <div class="highlight-box">
         <div class="tag-row"><span class="venue-tag v-blue">NeurIPS 2025</span><span class="award-tag">🌹 Spotlight &mdash; Top 2%</span></div>
         <p class="pub-title">Learning Conditional Marked Event Sequences with Mixed Data Types</p>
-        <p class="pub-authors"><a href="https://fdraxler.github.io/" target="_blank">Draxler, F.</a>, Meng, Y., <strong>Nelson, K.</strong>, Laskowski, L., Yang, Y., <a href="https://karaletsos.com/" target="_blank">Karaletsos, T.</a>, <a href="https://www.stephanmandt.com/" target="_blank">Mandt, S.</a></p>
+        <p class="pub-authors"><a href="https://fdraxler.github.io/" target="_blank">Draxler, F.</a>, <a href="https://yangmeng96.github.io/" target="_blank">Meng, Y.</a>, <strong>Nelson, K.</strong>, <a href="https://laskow.ski/" target="_blank">Laskowski, L.</a>, <a href="https://yiboyang.com/about/" target="_blank">Yang, Y.</a>, <a href="https://karaletsos.com/" target="_blank">Karaletsos, T.</a>, <a href="https://www.stephanmandt.com/" target="_blank">Mandt, S.</a></p>
         <p class="pub-links"><a href="https://openreview.net/forum?id=11098" target="_blank">OpenReview</a></p>
         <div class="viz-frame">
           <iframe src="flextpp/viz.html" scrolling="no" loading="lazy"></iframe>
@@ -261,7 +325,7 @@
       <div class="highlight-box">
         <div class="tag-row"><span class="venue-tag v-blue">IEEE TGRS 2024</span></div>
         <p class="pub-title">A Generative Diffusion Model for Probabilistic Ensembles of Precipitation Maps Conditioned on Multisensor Satellite Observations</p>
-        <p class="pub-authors">Guilloteau, C., <a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, Pfreundschuh, S., Le, P. V. V., <a href="https://giosueio.github.io/" target="_blank">Migliorini, G.</a>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a>, Li, R., Foufoula-Georgiou, E.</p>
+        <p class="pub-authors"><a href="https://clementguilloteau.wixsite.com/home" target="_blank">Guilloteau, C.</a>, <a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, Pfreundschuh, S., Le, P. V. V., <a href="https://giosueio.github.io/" target="_blank">Migliorini, G.</a>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a>, Li, R., <a href="https://efi.eng.uci.edu/" target="_blank">Foufoula-Georgiou, E.</a></p>
         <p class="pub-links"><a href="https://arxiv.org/pdf/2409.16319" target="_blank">Paper</a></p>
         <div class="viz-frame">
           <iframe src="difers/viz.html" scrolling="no" loading="lazy"></iframe>
@@ -272,7 +336,8 @@
       <div class="highlight-box">
         <div class="tag-row"><span class="venue-tag v-blue">AGU Fall Meeting 2024</span></div>
         <p class="pub-title">Using Deep Learning to Handle the Aleatoric Uncertainty for Under-constrained Inverse Problems in Earth Sciences</p>
-        <p class="pub-authors">Guilloteau, C., <a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, Pfreundschuh, S., Le, P. V. V., <a href="https://giosueio.github.io/" target="_blank">Migliorini, G.</a>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a>, Li, R., Foufoula-Georgiou, E.</p>
+        <p class="pub-authors"><a href="https://clementguilloteau.wixsite.com/home" target="_blank">Guilloteau, C.</a>, <a href="https://gavinkerrigan.github.io/" target="_blank">Kerrigan, G.</a>, <strong>Nelson, K.</strong>, Pfreundschuh, S., Le, P. V. V., <a href="https://giosueio.github.io/" target="_blank">Migliorini, G.</a>, <a href="https://ics.uci.edu/~smyth/" target="_blank">Smyth, P.</a>, Li, R., <a href="https://efi.eng.uci.edu/" target="_blank">Foufoula-Georgiou, E.</a></p>
+        <p class="pub-links"><a href="https://ui.adsabs.harvard.edu/abs/2024AGUFMH34H...01G/abstract" target="_blank">Abstract</a></p>
         <div class="viz-frame">
           <iframe src="aleatoric/viz.html" scrolling="no" loading="lazy"></iframe>
         </div>
@@ -282,7 +347,7 @@
       <div class="highlight-box">
         <div class="tag-row"><span class="venue-tag v-blue">In Review</span></div>
         <p class="pub-title">Score-based Likelihood Ratios for Authorship Verification with Stylometric Text Embeddings</p>
-        <p class="pub-authors">Longjohn, R., G., <strong>Nelson, K.</strong> et al.</p>
+        <p class="pub-authors"><a href="https://rlongjohn.github.io/" target="_blank">Longjohn, R.</a>, G., <strong>Nelson, K.</strong> et al.</p>
         <div class="viz-frame">
           <iframe src="slr/viz.html" scrolling="no" loading="lazy"></iframe>
         </div>
@@ -292,7 +357,7 @@
       <div class="highlight-box">
         <div class="tag-row"><span class="venue-tag v-blue">INMM/ESARDA 2022</span></div>
         <p class="pub-title">Feature Extraction and Design for Gamma-ray Spectra for Radionuclide Identification</p>
-        <p class="pub-authors"><strong>Nelson, K. T.</strong>, Romo, J. R., <a href="https://www.monterial.com/" target="_blank">Monterial, M.</a>, Nelson, K. E., Labov, S. E.</p>
+        <p class="pub-authors"><strong>Nelson, K. T.</strong>, <a href="https://www.linkedin.com/in/john-ryan-romo/" target="_blank">Romo, J. R.</a>, <a href="https://www.monterial.com/" target="_blank">Monterial, M.</a>, Nelson, K. E., Labov, S. E.</p>
         <div class="viz-frame">
           <iframe src="feature-extract/viz.html" scrolling="no" loading="lazy"></iframe>
         </div>
@@ -302,7 +367,8 @@
       <div class="highlight-box">
         <div class="tag-row"><span class="venue-tag v-blue">INMM/ESARDA 2022</span></div>
         <p class="pub-title">Classifier Comparison for Radionuclide Identification with Gamma-ray Spectra</p>
-        <p class="pub-authors">Romo, J. R., <strong>Nelson, K. T.</strong>, <a href="https://www.monterial.com/" target="_blank">Monterial, M.</a>, Nelson, K. E., Labov, S. E.</p>
+        <p class="pub-authors"><a href="https://www.linkedin.com/in/john-ryan-romo/" target="_blank">Romo, J. R.</a>, <strong>Nelson, K. T.</strong>, <a href="https://www.monterial.com/" target="_blank">Monterial, M.</a>, Nelson, K. E., Labov, S. E.</p>
+        <p class="pub-links"><a href="https://resources.inmm.org/sites/default/files/2021-09/a457.pdf" target="_blank">Paper</a></p>
         <div class="viz-frame">
           <iframe src="barni/viz.html" scrolling="no" loading="lazy"></iframe>
         </div>

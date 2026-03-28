@@ -30,8 +30,8 @@
     };
   }
 
-  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
-  var RED='#B85450', BG='#fdfdfe';
+  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var CHARCOAL='#3A3D45', BG='#fdfcfb';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -103,9 +103,9 @@
 
   // Feature method definitions
   var methods=[
-    {name:'Raw Spectra', dim:'2000 ch', color:BLUE, f1_low:0.35, f1_high:0.88, time:120},
-    {name:'PCA', dim:'256 \u2192 20 dim', color:PURPLE, f1_low:0.40, f1_high:0.90, time:45},
-    {name:'BARNI Peaks', dim:'ROI features', color:GREEN, f1_low:0.28, f1_high:0.82, time:30}
+    {name:'Raw Spectra', dim:'2000 ch', color:SILVER, f1_low:0.35, f1_high:0.88, time:120},
+    {name:'PCA', dim:'256 \u2192 20 dim', color:VIOLET, f1_low:0.40, f1_high:0.90, time:45},
+    {name:'BARNI Peaks', dim:'ROI features', color:SANGUINE, f1_low:0.28, f1_high:0.82, time:30}
   ];
 
   // ---- Shrink animation: spectrum starts big, shrinks to corner ----
@@ -161,7 +161,7 @@
     ctx.save(); ctx.globalAlpha=a;
     ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Feature Extraction for Radionuclide Identification', W/2, 42, '#1a1a1a');
+    haloText('Feature Extraction for Radionuclide Identification', W/2, 42, '#2a2d35');
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -177,7 +177,7 @@
     var sw=lerp(SPEC_BIG.sw,SPEC_SW,p);
     var sh=lerp(SPEC_BIG.sh,SPEC_SH,p);
 
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(sx-10,sy-28,sw+20,sh+50,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
@@ -197,7 +197,7 @@
       var y=sy+sh-v*sh;
       if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
-    ctx.strokeStyle=BLUE; ctx.lineWidth=1.5;
+    ctx.strokeStyle=SILVER; ctx.lineWidth=1.5;
     ctx.stroke();
 
     // Fill
@@ -207,7 +207,7 @@
       ctx.lineTo(x,sy+sh-(spectrum[i]+specNoise[i]*a)*sh);
     }
     ctx.lineTo(sx+(drawN-1)/SPEC_N*sw,sy+sh); ctx.closePath();
-    ctx.fillStyle='rgba(108,142,191,0.08)'; ctx.fill();
+    ctx.fillStyle='rgba(99,110,128,0.08)'; ctx.fill();
 
     // Axis labels: just "0" and "3000 keV"
     ctx.font='14px "Noto Sans",sans-serif'; ctx.textAlign='center';
@@ -241,7 +241,7 @@
       drawArrow(arrowOriginX, arrowOriginY, BRANCH_X-4, by+bh/2, '#ccc');
 
       // Branch box
-      ctx.fillStyle='#fafbfd'; ctx.strokeStyle=method.color; ctx.lineWidth=2.7;
+      ctx.fillStyle='#fafaf8'; ctx.strokeStyle=method.color; ctx.lineWidth=2.7;
       ctx.beginPath(); ctx.roundRect(BRANCH_X,by,bw,bh,6); ctx.fill(); ctx.stroke();
 
       // Method name
@@ -260,7 +260,7 @@
         for(var i=0;i<nBars;i++){
           var idx=Math.floor(i/nBars*SPEC_N);
           var v=spectrum[idx]*ma;
-          ctx.fillStyle='rgba(108,142,191,'+(0.3+v*0.5)+')';
+          ctx.fillStyle='rgba(99,110,128,'+(0.3+v*0.5)+')';
           ctx.fillRect(bsX+i*(barW+1.2), bsY+bsH-v*bsH, barW, v*bsH);
         }
       } else if(m===1){
@@ -268,7 +268,7 @@
         for(var i=0;i<N_PCA;i++){
           var v=pcaBars[i]*ma;
           var barWp=5;
-          ctx.fillStyle='rgba(150,115,166,'+(0.4+v*0.4)+')';
+          ctx.fillStyle='rgba(137,104,184,'+(0.4+v*0.4)+')';
           ctx.fillRect(bsX+i*(barWp+2.5), bsY+bsH-v*bsH, barWp, v*bsH);
         }
       } else {
@@ -276,7 +276,7 @@
         for(var i=0;i<roiFeatures.length;i++){
           var v=roiFeatures[i]*ma;
           var barWr=9;
-          ctx.fillStyle='rgba(130,179,102,'+(0.4+v*0.4)+')';
+          ctx.fillStyle='rgba(181,77,80,'+(0.4+v*0.4)+')';
           ctx.fillRect(bsX+i*(barWr+3.5), bsY+bsH-v*bsH, barWr, v*bsH);
         }
       }
@@ -305,12 +305,12 @@
       drawArrow(BRANCH_X+BRANCH_BW+4, BRANCH_Y[m]+BRANCH_BH/2, mlpX-4, by+mlpH/2, '#ccc');
 
       // MLP box
-      ctx.fillStyle='#fff8f0'; ctx.strokeStyle=ORANGE; ctx.lineWidth=2.25;
+      ctx.fillStyle='#f5f0f0'; ctx.strokeStyle=ROSE; ctx.lineWidth=2.25;
       ctx.beginPath(); ctx.roundRect(mlpX,by,mlpW,mlpH,5); ctx.fill(); ctx.stroke();
 
       ctx.font='700 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('MLP', mlpX+mlpW/2, by+24, ORANGE);
+      haloText('MLP', mlpX+mlpW/2, by+24, ROSE);
       ctx.font='14px "Noto Sans",sans-serif';
       haloText('Classifier', mlpX+mlpW/2, by+42, '#ccc');
     }
@@ -327,7 +327,7 @@
     // Results panel at bottom spanning full width
     var rx=40, ry=490, rw=420, rh=130;
 
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
@@ -352,7 +352,7 @@
       ctx.textAlign='right';
       haloText(method.name, barX-8, by+barH/2+5, method.color);
 
-      ctx.fillStyle='#eef0f4';
+      ctx.fillStyle='#eceae6';
       ctx.beginPath(); ctx.roundRect(barX,by,barMaxW,barH,3); ctx.fill();
 
       ctx.fillStyle=method.color;
@@ -369,14 +369,14 @@
     // Training time panel (right side of bottom)
     var tx=480, ty2=ry, tw2=280, th2=130;
     ctx.globalAlpha=a;
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(tx,ty2,tw2,th2,8); ctx.fill(); ctx.stroke();
 
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
     haloText('Training Time', tx+tw2/2, ty2+24, '#444');
 
-    var times=[{name:'Raw',t:120,col:BLUE},{name:'PCA',t:45,col:PURPLE},{name:'BARNI',t:30,col:GREEN}];
+    var times=[{name:'Raw',t:120,col:SILVER},{name:'PCA',t:45,col:VIOLET},{name:'BARNI',t:30,col:SANGUINE}];
     var tbX=tx+90, tbMaxW=140, tbH=22, tbGap=8, tbStartY=ty2+40;
 
     for(var i=0;i<times.length;i++){
@@ -391,7 +391,7 @@
       ctx.textAlign='right';
       haloText(times[i].name, tbX-8, tby+tbH/2+5, times[i].col);
 
-      ctx.fillStyle='#eef0f4';
+      ctx.fillStyle='#eceae6';
       ctx.beginPath(); ctx.roundRect(tbX,tby,tbMaxW,tbH,3); ctx.fill();
       ctx.fillStyle=times[i].col;
       ctx.beginPath(); ctx.roundRect(tbX,tby,tbw,tbH,3); ctx.fill();

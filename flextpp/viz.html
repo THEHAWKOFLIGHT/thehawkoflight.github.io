@@ -31,9 +31,9 @@
     };
   }
 
-  var BLUE='#6C8EBF', ORANGE='#D79B00', GREEN='#82B366', PURPLE='#9673A6';
-  var BG='#fdfdfe';
-  var CONT_COL='#D79B00', DISC_COL='#5B9BD5';
+  var SILVER='#636E80', ROSE='#B0868A', SANGUINE='#C2696C', VIOLET='#7B5EC0';
+  var BG='#fdfcfb';
+  var CONT_COL=ROSE, DISC_COL='#5656A2';
 
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
@@ -120,7 +120,7 @@
     ctx.save(); ctx.globalAlpha = ease(a);
     ctx.font = '700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign = 'center';
-    haloText('FlexTPP: Mixed-Type Event Sequences', W/2, 42, '#1a1a1a');
+    haloText('FlexTPP: Mixed-Type Event Sequences', W/2, 42, '#2a2d35');
     ctx.globalAlpha = 1; ctx.restore();
   }
 
@@ -214,7 +214,7 @@
 
       // Token box — TOK_H=48 (was 34)
       ctx.globalAlpha = ea * (isCur ? 1 : 0.85);
-      ctx.fillStyle = tokens[i].type === 'cont' ? '#FFF8E7' : '#EBF3FB';
+      ctx.fillStyle = tokens[i].type === 'cont' ? '#F5ECED' : '#EEEDF5';
       ctx.strokeStyle = col;
       ctx.lineWidth = isCur ? 3.75 : 2.25;
       ctx.beginPath(); ctx.roundRect(x, TOK_Y, w*ea, TOK_H, 8);
@@ -236,7 +236,7 @@
         ctx.globalAlpha = ta * (isCur ? 1 : 0.85);
         ctx.font = '700 18px "Google Sans","Noto Sans",sans-serif';
         ctx.textAlign = 'center';
-        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+6, col === CONT_COL ? '#9A7200' : '#3670A0');
+        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+6, col === CONT_COL ? '#A06568' : '#3B3B70');
       }
 
       // Type sub-labels REMOVED (cont/disc below tokens)
@@ -257,8 +257,8 @@
     var curType = curIdx>=0 ? tokens[curIdx].type : null;
 
     // Background panel
-    ctx.fillStyle = '#fafbfd';
-    ctx.strokeStyle = '#e0e4ec';
+    ctx.fillStyle = '#fafaf8';
+    ctx.strokeStyle = '#ddd8d3';
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(50, ay, 680, ah, 10);
     ctx.fill(); ctx.stroke();
@@ -280,12 +280,12 @@
 
     // Transformer block — enlarged
     var tx=bx+bw+85, tw=210, tbh=bh+14;
-    ctx.fillStyle='#e8e0f0'; ctx.strokeStyle=PURPLE; ctx.lineWidth=3;
+    ctx.fillStyle='#EBE4F8'; ctx.strokeStyle=VIOLET; ctx.lineWidth=3;
     ctx.beginPath(); ctx.roundRect(tx,by-7,tw,tbh,10); ctx.fill(); ctx.stroke();
     // Transformer label: 20px bold (was 13px)
     ctx.font='700 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Autoregressive',tx+tw/2,by+16,PURPLE);
-    haloText('Transformer',tx+tw/2,by+40,PURPLE);
+    haloText('Autoregressive',tx+tw/2,by+16,VIOLET);
+    haloText('Transformer',tx+tw/2,by+40,VIOLET);
 
     // Arrows to heads
     var headY = by+tbh/2;
@@ -295,24 +295,24 @@
     // Discrete head — enlarged
     var dx=tx+tw+55, dw=130;
     var discActive = curType==='disc';
-    ctx.fillStyle = discActive?'#EBF3FB':'#f5f5f5';
+    ctx.fillStyle = discActive?'#EEEDF5':'#f5f5f5';
     ctx.strokeStyle = discActive?DISC_COL:'#ccc';
     ctx.lineWidth = discActive?3:1.5;
     ctx.beginPath(); ctx.roundRect(dx,by-16,dw,36,6); ctx.fill(); ctx.stroke();
     // Head label: 18px (was 11px)
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('φ_disc → Cat()',dx+dw/2,by+8,discActive?'#3670A0':'#999');
+    haloText('φ_disc → Cat()',dx+dw/2,by+8,discActive?'#3B3B70':'#999');
 
     // Continuous head — enlarged
     var cy2=by+bh-8;
     var contActive = curType==='cont';
-    ctx.fillStyle = contActive?'#FFF8E7':'#f5f5f5';
+    ctx.fillStyle = contActive?'#F5ECED':'#f5f5f5';
     ctx.strokeStyle = contActive?CONT_COL:'#ccc';
     ctx.lineWidth = contActive?3:1.5;
     ctx.beginPath(); ctx.roundRect(dx,cy2,dw,36,6); ctx.fill(); ctx.stroke();
     // Head label: 18px (was 11px)
     ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('φ_cont → Flow()',dx+dw/2,cy2+22,contActive?'#9A7200':'#999');
+    haloText('φ_cont → Flow()',dx+dw/2,cy2+22,contActive?'#A06568':'#999');
 
     // Causal mask note: 16px (was 10px)
     ctx.font='italic 16px "Noto Sans",sans-serif'; ctx.textAlign='center';
@@ -347,7 +347,7 @@
 
     // Discrete distribution panel
     var dx = 70;
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(dx,py,pw,ph,10); ctx.fill(); ctx.stroke();
     // Panel header: 20px (was 12px)
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
@@ -374,7 +374,7 @@
     // Continuous distribution panel
     var cx2 = 415;
     ctx.globalAlpha = ease(a);
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.fillStyle='#fafaf8'; ctx.strokeStyle='#ddd8d3'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.roundRect(cx2,py,pw,ph,10); ctx.fill(); ctx.stroke();
     // Panel header: 20px (was 12px)
     ctx.font='600 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
