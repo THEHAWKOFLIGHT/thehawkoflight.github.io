@@ -38,7 +38,7 @@
   function lerp(a,b,t){ return a+(b-a)*t; }
 
   function haloText(text,x,y,fill,hp){
-    hp=hp||3; ctx.save();
+    hp=hp||5; ctx.save();
     ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
     ctx.lineJoin='round'; ctx.miterLimit=2;
     ctx.strokeText(text,x,y);
@@ -179,12 +179,12 @@
   }
 
   function drawArrow(x1,y1,x2,y2,col,lw){
-    ctx.strokeStyle=col; ctx.lineWidth=lw||1.5;
+    ctx.strokeStyle=col; ctx.lineWidth=lw||2.25;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     var ang=Math.atan2(y2-y1,x2-x1);
     ctx.beginPath(); ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-7*Math.cos(ang-0.35),y2-7*Math.sin(ang-0.35));
-    ctx.lineTo(x2-7*Math.cos(ang+0.35),y2-7*Math.sin(ang+0.35));
+    ctx.lineTo(x2-10.5*Math.cos(ang-0.35),y2-10.5*Math.sin(ang-0.35));
+    ctx.lineTo(x2-10.5*Math.cos(ang+0.35),y2-10.5*Math.sin(ang+0.35));
     ctx.closePath(); ctx.fillStyle=col; ctx.fill();
   }
 
@@ -205,11 +205,9 @@
   function drawTitle(t){
     var a=ease(clamp01(t/0.6));
     ctx.save(); ctx.globalAlpha=a;
-    ctx.font='700 18px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Aleatoric Uncertainty in Satellite Precipitation Retrieval', W/2, 32, '#1a1a1a');
-    ctx.font='12px "Noto Sans",sans-serif';
-    haloText('Under-constrained inversion: from regularization to ensemble generation', W/2, 50, '#999');
+    haloText('Aleatoric Uncertainty in Satellite Precipitation Retrieval', W/2, 38, '#1a1a1a');
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -219,30 +217,28 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha=a;
 
-    var ix=40, iy=80, imgSz=90;
+    var imgSz=110;
+    var ix=30, iy=80;
 
     // Panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(ix-8,iy-20,imgSz+16,imgSz+50,8); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(ix-10,iy-28,imgSz+20,imgSz+48,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
     haloText('Satellite Obs.', ix+imgSz/2, iy-6, ORANGE);
 
     // Satellite grid
-    drawGrid(ix, iy+8, imgSz, satellite, satColor);
-
-    ctx.font='9px "Noto Sans",sans-serif';
-    haloText('MW Radiances', ix+imgSz/2, iy+imgSz+22, '#aaa');
+    drawGrid(ix, iy+6, imgSz, satellite, satColor);
 
     // "Under-constrained" label with question marks
     var ua=ease(clamp01((a-0.5)/0.5));
     if(ua>0){
       ctx.globalAlpha=a*ua;
-      ctx.font='italic 10px "Noto Sans",sans-serif';
-      haloText('Under-constrained', ix+imgSz+35, iy+imgSz/2-5, '#c0392b');
-      ctx.font='9px "Noto Sans",sans-serif';
-      haloText('One input \u2192 many solutions', ix+imgSz+35, iy+imgSz/2+9, '#999');
+      ctx.font='italic 18px "Noto Sans",sans-serif';
+      haloText('Under-constrained', ix+imgSz+40, iy+imgSz/2-8, '#c0392b');
+      ctx.font='16px "Noto Sans",sans-serif';
+      haloText('One input \u2192 many solutions', ix+imgSz+40, iy+imgSz/2+16, '#999');
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -254,79 +250,79 @@
     var a=ease(clamp01((t-P.B)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var bx=40, by=210, bw=340, bh=195;
+    var bx=30, by=230, bw=370, bh=230;
 
     // Panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Objective Function \u2192 Regularization', bx+bw/2, by+18, '#444');
+    haloText('Objective Function \u2192 Regularization', bx+bw/2, by+24, '#444');
 
     // MSE output (smooth/blurry)
-    var gridSz=72;
-    var msX=bx+30, msY=by+40;
+    var gridSz=90;
+    var msX=bx+25, msY=by+44;
     var msA=ease(clamp01((a-0.2)/0.5));
     if(msA>0){
       ctx.globalAlpha=a*msA;
 
       // Arrow from input
-      drawArrow(138, 170, msX+gridSz/2, msY-4, '#bbb');
+      drawArrow(148, 196, msX+gridSz/2, msY-4, '#bbb');
 
-      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('MSE Loss', msX+gridSz/2, msY+10, '#c0392b');
+      haloText('MSE Loss', msX+gridSz/2, msY+14, '#c0392b');
 
-      drawGrid(msX, msY+16, gridSz, smooth, precipColor);
+      drawGrid(msX, msY+22, gridSz, smooth, precipColor);
 
       // "Smooth / blurry" label
-      ctx.font='9px "Noto Sans",sans-serif';
-      haloText('Blurry, low variance', msX+gridSz/2, msY+gridSz+30, '#c0392b');
+      ctx.font='16px "Noto Sans",sans-serif';
+      haloText('Blurry, low variance', msX+gridSz/2, msY+gridSz+40, '#c0392b');
 
-      // X mark
-      ctx.strokeStyle='#c0392b'; ctx.lineWidth=2;
+      // X mark (scaled up)
+      ctx.strokeStyle='#c0392b'; ctx.lineWidth=4;
       ctx.beginPath();
-      ctx.moveTo(msX+gridSz+6, msY+gridSz/2+10);
-      ctx.lineTo(msX+gridSz+16, msY+gridSz/2+20);
-      ctx.moveTo(msX+gridSz+16, msY+gridSz/2+10);
-      ctx.lineTo(msX+gridSz+6, msY+gridSz/2+20);
+      ctx.moveTo(msX+gridSz+8, msY+gridSz/2+14);
+      ctx.lineTo(msX+gridSz+24, msY+gridSz/2+30);
+      ctx.moveTo(msX+gridSz+24, msY+gridSz/2+14);
+      ctx.lineTo(msX+gridSz+8, msY+gridSz/2+30);
       ctx.stroke();
     }
 
     // Sharp/alternative output
-    var shX=bx+bw-30-gridSz, shY=by+40;
+    var shX=bx+bw-25-gridSz, shY=by+44;
     var shA=ease(clamp01((a-0.5)/0.5));
     if(shA>0){
       ctx.globalAlpha=a*shA;
 
       // Arrow from input
-      drawArrow(138, 170, shX+gridSz/2, shY-4, '#bbb');
+      drawArrow(148, 196, shX+gridSz/2, shY-4, '#bbb');
 
-      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('Alternative Loss', shX+gridSz/2, shY+10, GREEN);
+      haloText('Alternative Loss', shX+gridSz/2, shY+14, GREEN);
 
-      drawGrid(shX, shY+16, gridSz, truth, precipColor);
+      drawGrid(shX, shY+22, gridSz, truth, precipColor);
 
-      ctx.font='9px "Noto Sans",sans-serif';
-      haloText('Sharp, preserves extremes', shX+gridSz/2, shY+gridSz+30, GREEN);
+      ctx.font='16px "Noto Sans",sans-serif';
+      haloText('Sharp, preserves extremes', shX+gridSz/2, shY+gridSz+40, GREEN);
 
-      // Check mark
-      ctx.strokeStyle=GREEN; ctx.lineWidth=2.5;
+      // Check mark (scaled up)
+      ctx.strokeStyle=GREEN; ctx.lineWidth=4;
       ctx.beginPath();
-      ctx.moveTo(shX+gridSz+4, shY+gridSz/2+15);
-      ctx.lineTo(shX+gridSz+10, shY+gridSz/2+21);
-      ctx.lineTo(shX+gridSz+20, shY+gridSz/2+8);
+      ctx.moveTo(shX+gridSz+6, shY+gridSz/2+20);
+      ctx.lineTo(shX+gridSz+14, shY+gridSz/2+28);
+      ctx.lineTo(shX+gridSz+28, shY+gridSz/2+10);
       ctx.stroke();
     }
 
     // "vs" between them
     if(msA>0.5 && shA>0.5){
       ctx.globalAlpha=a*Math.min(msA,shA);
-      ctx.font='italic 12px "Noto Sans",sans-serif';
+      ctx.font='italic 20px "Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('vs', bx+bw/2, by+90, '#bbb');
+      haloText('vs', bx+bw/2, by+100, '#bbb');
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -338,29 +334,27 @@
     var a=ease(clamp01((t-P.C)/0.6));
     ctx.save(); ctx.globalAlpha=a;
 
-    var ex=400, ey=72, ew=365, eh=260;
+    var ex=410, ey=60, ew=360, eh=290;
 
     // Panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(ex,ey,ew,eh,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Conditional Generative Model', ex+ew/2, ey+18, PURPLE);
-    ctx.font='10px "Noto Sans",sans-serif';
-    haloText('Equiprobable realizations respecting observations', ex+ew/2, ey+34, '#aaa');
+    haloText('Conditional Generative Model', ex+ew/2, ey+26, PURPLE);
 
     // Arrow from input
-    drawArrow(138, 135, ex-4, ey+eh/2, '#bbb');
+    drawArrow(148, 145, ex-4, ey+eh/2, '#bbb');
 
     // 2x3 grid of ensemble members
-    var memSz=52;
-    var memGap=10;
+    var memSz=65;
+    var memGap=12;
     var cols=3, rows=2;
     var gridW=cols*(memSz+memGap)-memGap;
     var gridH=rows*(memSz+memGap)-memGap;
     var startX=ex+(ew-gridW)/2;
-    var startY=ey+50;
+    var startY=ey+48;
 
     for(var e=0;e<N_ENS;e++){
       var row=Math.floor(e/cols), col=e%cols;
@@ -374,16 +368,8 @@
 
       drawGrid(mx, my, memSz, ensMembers[e], precipColor);
 
-      ctx.font='8px "Noto Sans",sans-serif'; ctx.textAlign='center';
-      haloText('Member '+(e+1), mx+memSz/2, my+memSz+10, '#bbb');
-    }
-
-    // "Embrace non-uniqueness" label
-    if(a>0.7){
-      ctx.globalAlpha=a*ease(clamp01((a-0.7)/0.3));
-      ctx.font='italic 9px "Noto Sans",sans-serif';
-      ctx.textAlign='center';
-      haloText('Each member is a plausible precipitation field', ex+ew/2, ey+eh-8, '#aaa');
+      ctx.font='14px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      haloText('Member '+(e+1), mx+memSz/2, my+memSz+14, '#bbb');
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -395,84 +381,42 @@
     var a=ease(clamp01((t-P.D)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var rx=400, ry=350, rw=365, rh=155;
+    var rx=410, ry=370, rw=360, rh=170;
 
     // Panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Ensemble Statistics', rx+rw/2, ry+18, '#444');
+    haloText('Ensemble Statistics', rx+rw/2, ry+24, '#444');
 
     // Arrow from ensemble panel
-    drawArrow(rx+rw/2, 332, rx+rw/2, ry-2, '#bbb');
+    drawArrow(rx+rw/2, 350, rx+rw/2, ry-2, '#bbb');
 
-    var gridSz=68;
+    var gridSz=85;
 
     // Ensemble mean
-    var mX=rx+rw/2-gridSz-25, mY=ry+35;
+    var mX=rx+rw/2-gridSz-20, mY=ry+40;
     var ma=ease(clamp01((a-0.1)/0.6));
     if(ma>0){
       ctx.globalAlpha=a*ma;
-      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
       haloText('Ensemble Mean', mX+gridSz/2, mY, GREEN);
-      ctx.font='8px "Noto Sans",sans-serif';
-      haloText('(Min. MSE estimate)', mX+gridSz/2, mY+11, '#aaa');
-      drawGrid(mX, mY+16, gridSz, ensMean, precipColor);
+      drawGrid(mX, mY+10, gridSz, ensMean, precipColor);
     }
 
     // Uncertainty
-    var uX=rx+rw/2+25, uY=ry+35;
+    var uX=rx+rw/2+20, uY=ry+40;
     var ua=ease(clamp01((a-0.3)/0.6));
     if(ua>0){
       ctx.globalAlpha=a*ua;
-      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
       haloText('Uncertainty', uX+gridSz/2, uY, '#B85450');
-      ctx.font='8px "Noto Sans",sans-serif';
-      haloText('(Ens. dispersion)', uX+gridSz/2, uY+11, '#aaa');
-      drawGrid(uX, uY+16, gridSz, ensUncert, uncertColor);
+      drawGrid(uX, uY+10, gridSz, ensUncert, uncertColor);
     }
-
-    // Aleatoric uncertainty label
-    if(a>0.6){
-      ctx.globalAlpha=a*ease(clamp01((a-0.6)/0.4));
-      ctx.font='italic 10px "Noto Sans",sans-serif';
-      ctx.textAlign='center';
-      haloText('Dispersion = aleatoric uncertainty from under-constrained inversion', rx+rw/2, ry+rh-10, '#999');
-    }
-
-    ctx.globalAlpha=1; ctx.restore();
-  }
-
-  // Bottom pipeline
-  function drawPipeline(t){
-    if(t<2) return;
-    var a=ease(clamp01((t-2)/0.6));
-    ctx.save(); ctx.globalAlpha=a*0.8;
-
-    var by=540;
-    ctx.fillStyle='#f5f6f9'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(30,by,720,55,8); ctx.fill(); ctx.stroke();
-
-    ctx.textAlign='center';
-    var labels=[
-      {text:'MW/IR Obs.', x:95, col:ORANGE},
-      {text:'\u2192', x:160, col:'#bbb'},
-      {text:'Under-constrained', x:250, col:'#c0392b'},
-      {text:'\u2192', x:345, col:'#bbb'},
-      {text:'Generative Model', x:440, col:PURPLE},
-      {text:'\u2192', x:535, col:'#bbb'},
-      {text:'Ensemble + Uncertainty', x:655, col:GREEN}
-    ];
-    for(var i=0;i<labels.length;i++){
-      ctx.font=labels[i].text==='\u2192'?'16px sans-serif':'600 11px "Google Sans","Noto Sans",sans-serif';
-      haloText(labels[i].text, labels[i].x, by+22, labels[i].col);
-    }
-    ctx.font='italic 10px "Noto Sans",sans-serif';
-    haloText('Conditional generation preserves sharp features  |  Ensemble dispersion quantifies aleatoric uncertainty', W/2, by+42, '#aaa');
 
     ctx.globalAlpha=1; ctx.restore();
   }
@@ -493,7 +437,6 @@
     drawLossComparison(t);
     drawEnsemble(t);
     drawResults(t);
-    drawPipeline(t);
 
     ctx.globalAlpha=1;
     requestAnimationFrame(frame);

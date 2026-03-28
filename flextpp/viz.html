@@ -38,8 +38,9 @@
   function ease(t){ return t<0.5?2*t*t:-1+(4-2*t)*t; }
   function clamp01(t){ return t<0?0:t>1?1:t; }
 
+  // Halo text default stroke: 5px (was 3px)
   function haloText(text,x,y,fill,hp){
-    hp=hp||3; ctx.save();
+    hp=hp||5; ctx.save();
     ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
     ctx.lineJoin='round'; ctx.miterLimit=2;
     ctx.strokeText(text,x,y);
@@ -74,9 +75,9 @@
   ];
   var N_TOK = tokens.length;
 
-  // Compute token widths
-  ctx.font = '600 13px "Google Sans","Noto Sans",sans-serif';
-  var tokW = tokens.map(function(tok){ return Math.max(70, ctx.measureText(tok.text).width + 20); });
+  // Compute token widths — using larger font for measurement (18px bold)
+  ctx.font = '700 18px "Google Sans","Noto Sans",sans-serif';
+  var tokW = tokens.map(function(tok){ return Math.max(90, ctx.measureText(tok.text).width + 28); });
 
   // Compute appearance times
   var tokTime = [];
@@ -103,7 +104,8 @@
     contCurve.push({mu: 0.3+Math.random()*0.4, sigma: 0.08+Math.random()*0.12});
   }
 
-  var TOK_Y = 235, TOK_H = 34, TOK_GAP = 5, EVENT_XGAP = 18;
+  // Shifted up since patient badge is removed: was 235, now 185
+  var TOK_Y = 185, TOK_H = 48, TOK_GAP = 6, EVENT_XGAP = 22;
   var RIBBON_LEFT = 60;
 
   // Smooth scroll state
@@ -112,31 +114,17 @@
   var startTime = null;
   function getT(){ return ((performance.now()/1000)-startTime) % LOOP; }
 
+  // Title: 30px bold, no subtitle
   function drawTitle(t){
     var a = clamp01(t/0.6);
     ctx.save(); ctx.globalAlpha = ease(a);
-    ctx.font = '700 22px "Google Sans","Noto Sans",sans-serif';
+    ctx.font = '700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign = 'center';
-    haloText('FlexTPP: Mixed-Type Event Sequences', W/2, 35, '#1a1a1a');
-    ctx.font = '13px "Noto Sans",sans-serif';
-    haloText('Autoregressive transformer with discrete + continuous heads', W/2, 55, '#999');
+    haloText('FlexTPP: Mixed-Type Event Sequences', W/2, 42, '#1a1a1a');
     ctx.globalAlpha = 1; ctx.restore();
   }
 
-  function drawPatientBadge(t){
-    var a = clamp01((t-0.3)/0.5);
-    if(a<=0) return;
-    ctx.save(); ctx.globalAlpha = ease(a);
-    var bx = 60, by = 72, bw = 660, bh = 30;
-    ctx.fillStyle = '#f0f4f8';
-    ctx.strokeStyle = '#d0d8e4';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,5); ctx.fill(); ctx.stroke();
-    ctx.font = '500 12px "Google Sans","Noto Sans",sans-serif';
-    ctx.textAlign = 'center';
-    haloText('Patient 1  |  M  |  DOB 1951  |  Diagnosis: Type 2 Diabetes', bx+bw/2, by+20, '#666');
-    ctx.globalAlpha = 1; ctx.restore();
-  }
+  // Patient badge REMOVED
 
   function getCurIdx(t){
     var idx = -1;
@@ -165,26 +153,26 @@
 
     ctx.save();
 
-    // "Generated sequence:" label
-    ctx.font = '600 14px "Google Sans","Noto Sans",sans-serif';
+    // "Generated sequence:" label — 24px (was 14px)
+    ctx.font = '600 24px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign = 'left';
-    haloText('Generated sequence:', RIBBON_LEFT, TOK_Y - 50, '#555');
+    haloText('Generated sequence:', RIBBON_LEFT, TOK_Y - 55, '#555');
 
-    // Type legend
-    ctx.font = '11px "Noto Sans",sans-serif';
-    var legX = 500;
-    ctx.beginPath(); ctx.roundRect(legX, TOK_Y-62, 12, 12, 3);
+    // Type legend — 18px text (was 11px), 18x18 squares (was 12x12)
+    ctx.font = '18px "Noto Sans",sans-serif';
+    var legX = 480;
+    ctx.beginPath(); ctx.roundRect(legX, TOK_Y-72, 18, 18, 4);
     ctx.fillStyle = CONT_COL; ctx.globalAlpha=0.25; ctx.fill();
     ctx.globalAlpha=1;
-    ctx.strokeStyle=CONT_COL; ctx.lineWidth=1.5; ctx.stroke();
-    haloText('continuous', legX+16, TOK_Y-52, '#888');
+    ctx.strokeStyle=CONT_COL; ctx.lineWidth=2.25; ctx.stroke();
+    haloText('continuous', legX+24, TOK_Y-56, '#888');
 
-    legX += 100;
-    ctx.beginPath(); ctx.roundRect(legX, TOK_Y-62, 12, 12, 3);
+    legX += 140;
+    ctx.beginPath(); ctx.roundRect(legX, TOK_Y-72, 18, 18, 4);
     ctx.fillStyle = DISC_COL; ctx.globalAlpha=0.25; ctx.fill();
     ctx.globalAlpha=1;
-    ctx.strokeStyle=DISC_COL; ctx.lineWidth=1.5; ctx.stroke();
-    haloText('discrete', legX+16, TOK_Y-52, '#888');
+    ctx.strokeStyle=DISC_COL; ctx.lineWidth=2.25; ctx.stroke();
+    haloText('discrete', legX+24, TOK_Y-56, '#888');
 
     // Draw event separators and labels
     for(var i=0; i<N_TOK; i++){
@@ -195,19 +183,20 @@
       if(x < 20 || x > W-20) continue;
       ctx.globalAlpha = ease(ap) * 0.6;
       if(i > 0){
-        ctx.setLineDash([3,3]);
+        ctx.setLineDash([4,4]);
         ctx.strokeStyle = '#bbb';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(x-EVENT_XGAP/2, TOK_Y-35);
-        ctx.lineTo(x-EVENT_XGAP/2, TOK_Y+TOK_H+15);
+        ctx.moveTo(x-EVENT_XGAP/2, TOK_Y-40);
+        ctx.lineTo(x-EVENT_XGAP/2, TOK_Y+TOK_H+10);
         ctx.stroke();
         ctx.setLineDash([]);
       }
       ctx.globalAlpha = ease(ap);
-      ctx.font = '500 11px "Google Sans","Noto Sans",sans-serif';
+      // Day labels: 18px (was 11px)
+      ctx.font = '500 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign = 'left';
-      haloText(tokens[i].evLabel, x, TOK_Y-25, '#888');
+      haloText(tokens[i].evLabel, x, TOK_Y-28, '#888');
     }
 
     // Draw tokens
@@ -223,12 +212,12 @@
       var isCur = (i === curIdx);
       var col = tokens[i].type === 'cont' ? CONT_COL : DISC_COL;
 
-      // Token box
+      // Token box — TOK_H=48 (was 34)
       ctx.globalAlpha = ea * (isCur ? 1 : 0.85);
       ctx.fillStyle = tokens[i].type === 'cont' ? '#FFF8E7' : '#EBF3FB';
       ctx.strokeStyle = col;
-      ctx.lineWidth = isCur ? 2.5 : 1.5;
-      ctx.beginPath(); ctx.roundRect(x, TOK_Y, w*ea, TOK_H, 6);
+      ctx.lineWidth = isCur ? 3.75 : 2.25;
+      ctx.beginPath(); ctx.roundRect(x, TOK_Y, w*ea, TOK_H, 8);
       ctx.fill(); ctx.stroke();
 
       // Pulse glow on current
@@ -236,25 +225,21 @@
         var pulse = 0.5 + 0.5*Math.sin(t*5);
         ctx.globalAlpha = pulse * 0.15;
         ctx.fillStyle = col;
-        ctx.beginPath(); ctx.roundRect(x-3, TOK_Y-3, w+6, TOK_H+6, 8);
+        ctx.beginPath(); ctx.roundRect(x-4, TOK_Y-4, w+8, TOK_H+8, 10);
         ctx.fill();
         ctx.globalAlpha = ea;
       }
 
-      // Token text
+      // Token text — 18px bold (was 12px)
       if(ea > 0.6){
         var ta = clamp01((ea-0.6)/0.4);
         ctx.globalAlpha = ta * (isCur ? 1 : 0.85);
-        ctx.font = '600 12px "Google Sans","Noto Sans",sans-serif';
+        ctx.font = '700 18px "Google Sans","Noto Sans",sans-serif';
         ctx.textAlign = 'center';
-        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+4.5, col === CONT_COL ? '#9A7200' : '#3670A0');
+        haloText(tokens[i].text, x+w/2, TOK_Y+TOK_H/2+6, col === CONT_COL ? '#9A7200' : '#3670A0');
       }
 
-      // Type label below
-      ctx.globalAlpha = ea * 0.5;
-      ctx.font = '10px "Noto Sans",sans-serif';
-      ctx.textAlign = 'center';
-      haloText(tokens[i].type === 'cont' ? 'cont' : 'disc', x+w/2, TOK_Y+TOK_H+12, '#aaa');
+      // Type sub-labels REMOVED (cont/disc below tokens)
     }
 
     ctx.globalAlpha = 1;
@@ -266,79 +251,86 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha = ease(a);
 
-    var ay = 340, ah = 90;
+    // Shifted up from 340 to 300; enlarged height from 90 to 120
+    var ay = 300, ah = 120;
     var curIdx = getCurIdx(t);
     var curType = curIdx>=0 ? tokens[curIdx].type : null;
 
     // Background panel
     ctx.fillStyle = '#fafbfd';
     ctx.strokeStyle = '#e0e4ec';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.roundRect(60, ay, 660, ah, 8);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(50, ay, 680, ah, 10);
     ctx.fill(); ctx.stroke();
 
-    // Embedding block
-    var bx=90, by=ay+15, bw=80, bh=35;
-    ctx.fillStyle='#f0f0f5'; ctx.strokeStyle='#bbb'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6); ctx.fill(); ctx.stroke();
-    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Embedding',bx+bw/2,by+bh/2+4,'#666');
+    // Embedding block — enlarged
+    var bx=80, by=ay+18, bw=105, bh=50;
+    ctx.fillStyle='#f0f0f5'; ctx.strokeStyle='#bbb'; ctx.lineWidth=2.25;
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,8); ctx.fill(); ctx.stroke();
+    // Embedding label: 18px (was 11px)
+    ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Embedding',bx+bw/2,by+bh/2+6,'#666');
 
-    // + PE
-    ctx.font='11px "Noto Sans",sans-serif';
-    haloText('+ PE',bx+bw+15,by+bh/2+4,'#aaa');
+    // + PE: 18px (was 11px)
+    ctx.font='18px "Noto Sans",sans-serif';
+    haloText('+ PE',bx+bw+18,by+bh/2+6,'#aaa');
 
-    // Arrow
-    drawArrow(bx+bw+35, by+bh/2, bx+bw+70, by+bh/2, '#bbb');
+    // Arrow from embedding to transformer
+    drawArrow(bx+bw+42, by+bh/2, bx+bw+80, by+bh/2, '#bbb');
 
-    // Transformer block
-    var tx=bx+bw+75, tw=180;
-    ctx.fillStyle='#e8e0f0'; ctx.strokeStyle=PURPLE; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.roundRect(tx,by-5,tw,bh+10,8); ctx.fill(); ctx.stroke();
-    ctx.font='700 13px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Autoregressive',tx+tw/2,by+12,PURPLE);
-    haloText('Transformer',tx+tw/2,by+28,PURPLE);
+    // Transformer block — enlarged
+    var tx=bx+bw+85, tw=210, tbh=bh+14;
+    ctx.fillStyle='#e8e0f0'; ctx.strokeStyle=PURPLE; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.roundRect(tx,by-7,tw,tbh,10); ctx.fill(); ctx.stroke();
+    // Transformer label: 20px bold (was 13px)
+    ctx.font='700 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Autoregressive',tx+tw/2,by+16,PURPLE);
+    haloText('Transformer',tx+tw/2,by+40,PURPLE);
 
     // Arrows to heads
-    var headY = by+bh/2;
-    drawArrow(tx+tw+5, headY-8, tx+tw+50, headY-20, '#bbb');
-    drawArrow(tx+tw+5, headY+8, tx+tw+50, headY+20, '#bbb');
+    var headY = by+tbh/2;
+    drawArrow(tx+tw+5, headY-10, tx+tw+50, headY-24, '#bbb');
+    drawArrow(tx+tw+5, headY+10, tx+tw+50, headY+24, '#bbb');
 
-    // Discrete head
-    var dx=tx+tw+55, dw=110;
+    // Discrete head — enlarged
+    var dx=tx+tw+55, dw=130;
     var discActive = curType==='disc';
     ctx.fillStyle = discActive?'#EBF3FB':'#f5f5f5';
     ctx.strokeStyle = discActive?DISC_COL:'#ccc';
-    ctx.lineWidth = discActive?2:1;
-    ctx.beginPath(); ctx.roundRect(dx,by-12,dw,28,5); ctx.fill(); ctx.stroke();
-    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('φ_disc → Cat()',dx+dw/2,by+5,discActive?'#3670A0':'#999');
+    ctx.lineWidth = discActive?3:1.5;
+    ctx.beginPath(); ctx.roundRect(dx,by-16,dw,36,6); ctx.fill(); ctx.stroke();
+    // Head label: 18px (was 11px)
+    ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('φ_disc → Cat()',dx+dw/2,by+8,discActive?'#3670A0':'#999');
 
-    // Continuous head
-    var cy2=by+bh-12;
+    // Continuous head — enlarged
+    var cy2=by+bh-8;
     var contActive = curType==='cont';
     ctx.fillStyle = contActive?'#FFF8E7':'#f5f5f5';
     ctx.strokeStyle = contActive?CONT_COL:'#ccc';
-    ctx.lineWidth = contActive?2:1;
-    ctx.beginPath(); ctx.roundRect(dx,cy2,dw,28,5); ctx.fill(); ctx.stroke();
-    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('φ_cont → Flow()',dx+dw/2,cy2+17,contActive?'#9A7200':'#999');
+    ctx.lineWidth = contActive?3:1.5;
+    ctx.beginPath(); ctx.roundRect(dx,cy2,dw,36,6); ctx.fill(); ctx.stroke();
+    // Head label: 18px (was 11px)
+    ctx.font='600 18px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('φ_cont → Flow()',dx+dw/2,cy2+22,contActive?'#9A7200':'#999');
 
-    // Causal mask note
-    ctx.font='italic 10px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('causal attention mask',tx+tw/2,ay+ah-8,'#bbb');
+    // Causal mask note: 16px (was 10px)
+    ctx.font='italic 16px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('causal attention mask',tx+tw/2,ay+ah-10,'#bbb');
 
     ctx.globalAlpha=1; ctx.restore();
   }
 
+  // Arrow with 50% larger heads and 50% thicker lines
   function drawArrow(x1,y1,x2,y2,col){
-    ctx.strokeStyle=col; ctx.lineWidth=1.5;
+    ctx.strokeStyle=col; ctx.lineWidth=2.25;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     var ang=Math.atan2(y2-y1,x2-x1);
+    var aLen = 9; // was 6, now 50% larger
     ctx.beginPath();
     ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-6*Math.cos(ang-0.4),y2-6*Math.sin(ang-0.4));
-    ctx.lineTo(x2-6*Math.cos(ang+0.4),y2-6*Math.sin(ang+0.4));
+    ctx.lineTo(x2-aLen*Math.cos(ang-0.4),y2-aLen*Math.sin(ang-0.4));
+    ctx.lineTo(x2-aLen*Math.cos(ang+0.4),y2-aLen*Math.sin(ang+0.4));
     ctx.closePath();
     ctx.fillStyle=col; ctx.fill();
   }
@@ -350,42 +342,46 @@
     if(a<=0) return;
 
     ctx.save(); ctx.globalAlpha = ease(a);
-    var py = 455, pw = 290, ph = 150;
+    // Shifted up from 455 to 438, slightly taller
+    var py = 438, pw = 295, ph = 160;
 
     // Discrete distribution panel
-    var dx = 80;
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(dx,py,pw,ph,8); ctx.fill(); ctx.stroke();
-    ctx.font='600 12px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Discrete Head: Categorical', dx+pw/2, py+18, DISC_COL);
+    var dx = 70;
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(dx,py,pw,ph,10); ctx.fill(); ctx.stroke();
+    // Panel header: 20px (was 12px)
+    ctx.font='600 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Discrete Head: Categorical', dx+pw/2, py+24, DISC_COL);
 
     // Bar chart
     var bars = discBars[curIdx];
-    var barW = 36, barGap = 10, barMaxH = 90;
+    var barW = 38, barGap = 10, barMaxH = 85;
     var bx0 = dx + (pw - (bars.length*(barW+barGap)-barGap))/2;
-    var barBase = py+ph-20;
+    var barBase = py+ph-28;
     var labels = ['Lab','Proc','Med','Diag','EOS'];
     for(var j=0; j<bars.length; j++){
       var bh = bars[j]*barMaxH*ease(a);
       var bx = bx0 + j*(barW+barGap);
       ctx.fillStyle = DISC_COL;
       ctx.globalAlpha = ease(a) * (tokens[curIdx].type==='disc'?0.7:0.25);
-      ctx.beginPath(); ctx.roundRect(bx, barBase-bh, barW, bh, 3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx, barBase-bh, barW, bh, 4); ctx.fill();
       ctx.globalAlpha = ease(a);
-      ctx.font='9px "Noto Sans",sans-serif'; ctx.textAlign='center';
-      haloText(labels[j], bx+barW/2, barBase+11, '#aaa');
+      // Bar labels: 16px (was 9px)
+      ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      haloText(labels[j], bx+barW/2, barBase+17, '#aaa');
     }
 
     // Continuous distribution panel
-    var cx = 410;
+    var cx2 = 415;
     ctx.globalAlpha = ease(a);
-    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(cx,py,pw,ph,8); ctx.fill(); ctx.stroke();
-    ctx.font='600 12px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Continuous Head: NF Density', cx+pw/2, py+18, CONT_COL);
+    ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(cx2,py,pw,ph,10); ctx.fill(); ctx.stroke();
+    // Panel header: 20px (was 12px)
+    ctx.font='600 20px "Google Sans","Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Continuous Head: NF Density', cx2+pw/2, py+24, CONT_COL);
 
     // Density curve
-    var crvLeft=cx+20, crvRight=cx+pw-20, crvBase=py+ph-20, crvTop=py+35;
+    var crvLeft=cx2+25, crvRight=cx2+pw-25, crvBase=py+ph-30, crvTop=py+42;
     var crvH=crvBase-crvTop;
     var cc = contCurve[curIdx];
     ctx.beginPath();
@@ -404,7 +400,7 @@
     ctx.fill();
     ctx.globalAlpha = ease(a)*contAlpha;
     ctx.strokeStyle = CONT_COL;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     // Redraw just the curve part (not the base line)
     ctx.beginPath();
     for(var px=0; px<=1; px+=0.01){
@@ -417,17 +413,18 @@
 
     // Axis line
     ctx.globalAlpha = ease(a)*0.4;
-    ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+    ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(crvLeft,crvBase); ctx.lineTo(crvRight,crvBase); ctx.stroke();
-    ctx.font='9px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    // Axis label: 16px (was 9px)
+    ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
     ctx.globalAlpha = ease(a);
-    haloText('value', cx+pw/2, crvBase+12, '#aaa');
+    haloText('value', cx2+pw/2, crvBase+18, '#aaa');
 
-    // Current prediction label
+    // Current prediction label — 18px (was 11px)
     if(curIdx >= 0){
-      ctx.font='500 11px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      ctx.font='500 18px "Noto Sans",sans-serif'; ctx.textAlign='center';
       var predText = 'Predicting: ' + tokens[curIdx].text + ' (' + tokens[curIdx].type + ')';
-      haloText(predText, W/2, py+ph+18, '#888');
+      haloText(predText, W/2, py+ph+24, '#888');
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -440,7 +437,7 @@
     ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
 
     drawTitle(t);
-    drawPatientBadge(t);
+    // drawPatientBadge removed
     drawTokenRibbon(t);
     drawArchitecture(t);
     drawDistributions(t);

@@ -38,7 +38,7 @@
   function lerp(a,b,t){ return a+(b-a)*t; }
 
   function haloText(text,x,y,fill,hp){
-    hp=hp||3; ctx.save();
+    hp=hp||5; ctx.save();
     ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
     ctx.lineJoin='round'; ctx.miterLimit=2;
     ctx.strokeText(text,x,y);
@@ -52,7 +52,7 @@
   var spectrum=[];
   for(var i=0;i<SPEC_N;i++) spectrum[i]=0;
 
-  // NaI resolution: FWHM(E) ≈ k * sqrt(E), k ≈ 1.8 for NaI(Tl)
+  // NaI resolution: FWHM(E) ~ k * sqrt(E), k ~ 1.8 for NaI(Tl)
   function naiSigma(E_keV){ return 1.8*Math.sqrt(Math.max(E_keV,10))/2.355; }
 
   // Add a Gaussian peak at energy E (keV) with given amplitude
@@ -74,86 +74,71 @@
   function addCompton(arr, E_keV, amp){
     var Ece=comptonEdge(E_keV);
     var edgeCh=Math.round(Ece/E_MAX*SPEC_N);
-    // Klein-Nishina-like shape: slight rise toward edge
     for(var i=0;i<SPEC_N;i++){
       var e=i*E_MAX/SPEC_N;
       if(e>Ece+40) continue;
-      // Differential cross section shape (simplified)
       var s=e/E_keV;
-      var kn=1; // flat approximation
+      var kn=1;
       if(s>0 && s<1){
-        // rough Klein-Nishina: rises gently toward edge
         var r=1+s*s/((1-s)*(1+2*E_keV*(1-s)/511));
         kn=Math.min(r, 3);
       }
-      // Smooth cutoff at Compton edge (NaI broadening)
       var edgeFalloff=1-clamp01((e-Ece)/(naiSigma(Ece)*1.5));
       arr[i]+=amp*0.18*kn*edgeFalloff;
     }
   }
 
-  // Source definitions: {E: energy keV, amp: relative intensity, label: name}
+  // Source definitions
   var sources=[
-    // Cs-137
     {E:662, amp:1.0, label:'Cs-137'},
-    // Co-60
     {E:1173, amp:0.55, label:'Co-60'},
     {E:1332, amp:0.50, label:'Co-60'},
-    // K-40
     {E:1461, amp:0.20, label:'K-40'},
-    // Am-241 (low energy)
     {E:59.5, amp:0.45, label:'Am-241'},
-    // Ba-133
     {E:356, amp:0.35, label:'Ba-133'},
     {E:81, amp:0.30, label:'Ba-133'},
-    // Na-22
     {E:511, amp:0.25, label:'Na-22'},
     {E:1275, amp:0.18, label:'Na-22'},
-    // Eu-152
     {E:122, amp:0.28, label:'Eu-152'},
     {E:344, amp:0.22, label:'Eu-152'}
   ];
 
-  // Build spectrum: for each source add photopeak + Compton + backscatter
+  // Build spectrum
   for(var s=0;s<sources.length;s++){
     var src=sources[s];
-    // Photopeak
     addGaussian(spectrum, src.E, src.amp);
-    // Compton continuum
     addCompton(spectrum, src.E, src.amp);
-    // Backscatter peak (small, broad Gaussian near backscatter energy)
     if(src.E>100){
       var bsE=backscatterE(src.E);
       addGaussian(spectrum, bsE, src.amp*0.08);
     }
   }
 
-  // Environmental background: exponential + constant
+  // Environmental background
   for(var i=0;i<SPEC_N;i++){
     var e=i*E_MAX/SPEC_N;
     spectrum[i]+=0.08*Math.exp(-e/300)+0.015;
   }
 
-  // Lead X-ray fluorescence peaks (from shielding)
+  // Lead X-ray fluorescence peaks
   addGaussian(spectrum, 75, 0.18);
   addGaussian(spectrum, 85, 0.10);
 
-  // Iodine escape peak for Cs-137 (662 - 28.6 keV)
+  // Iodine escape peak for Cs-137
   addGaussian(spectrum, 633, 0.06);
 
-  // Normalize to max ≈ 0.92 so it fits the plot nicely
+  // Normalize
   var specMax=0;
   for(var i=0;i<SPEC_N;i++) if(spectrum[i]>specMax) specMax=spectrum[i];
   for(var i=0;i<SPEC_N;i++) spectrum[i]=spectrum[i]/specMax*0.92;
 
-  // Poisson-like noise (proportional to sqrt of counts)
+  // Poisson-like noise
   var specNoise=[];
   for(var i=0;i<SPEC_N;i++){
     specNoise[i]=(Math.random()-0.5)*0.02*Math.sqrt(Math.max(spectrum[i],0.02)/0.5);
   }
 
-  // ---- Extracted features (identified photopeaks for BARNI) ----
-  // Label only well-separated prominent peaks to avoid text overlap
+  // ---- Extracted features ----
   var features=[
     {E:59.5,  label:'Am-241', yOff:0},
     {E:356,   label:'Ba-133', yOff:0},
@@ -161,7 +146,6 @@
     {E:1173,  label:'Co-60',  yOff:0},
     {E:1461,  label:'K-40',   yOff:0}
   ];
-  // Compute feature positions & amplitudes in normalized coords
   for(var f=0;f<features.length;f++){
     features[f].pos=features[f].E/E_MAX;
     var ch=Math.round(features[f].E/E_MAX*SPEC_N);
@@ -178,11 +162,11 @@
 
   // ---- Phase timing ----
   var P={
-    A:0, A_end:2.0,         // Spectrum draws in
-    B:1.8, B_end:3.5,       // Feature extraction (peaks highlighted)
-    C:3.2, C_end:5.5,       // Feature vector → classifiers
-    D:5.2, D_end:8.5,       // F1-score bars animate
-    E:8.0, E_end:10.5,      // Winner highlight + details
+    A:0, A_end:2.0,
+    B:1.8, B_end:3.5,
+    C:3.2, C_end:5.5,
+    D:5.2, D_end:8.5,
+    E:8.0, E_end:10.5,
     FADE_START:11.5,
     FADE_END:13.0,
     TOTAL:13.5
@@ -197,17 +181,17 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=40, sy=80, sw=340, sh=175;
+    var sx=30, sy=70, sw=380, sh=200;
 
     // Background panel
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(sx-10,sy-30,sw+20,sh+55,8);
+    ctx.beginPath(); ctx.roundRect(sx-12,sy-36,sw+24,sh+65,8);
     ctx.fill(); ctx.stroke();
 
     // Title
-    ctx.font='600 13px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-14, '#555');
+    haloText('NaI(Tl) Gamma-ray Spectrum', sx+sw/2, sy-12, '#555');
 
     // Axes
     ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
@@ -215,26 +199,26 @@
     ctx.moveTo(sx,sy); ctx.lineTo(sx,sy+sh); ctx.lineTo(sx+sw,sy+sh);
     ctx.stroke();
 
-    // Tick marks on axes
-    var eTicks=[0, 500, 1000, 1500, 2000, 2500, 3000];
+    // Tick marks - fewer ticks: 0, 1000, 2000, 3000
+    var eTicks=[0, 1000, 2000, 3000];
     for(var i=0;i<eTicks.length;i++){
       var tx=sx+(eTicks[i]/E_MAX)*sw;
-      ctx.beginPath(); ctx.moveTo(tx,sy+sh); ctx.lineTo(tx,sy+sh+3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(tx,sy+sh); ctx.lineTo(tx,sy+sh+4); ctx.stroke();
     }
 
     // Axis labels
-    ctx.font='9px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Energy (keV)', sx+sw/2, sy+sh+18, '#aaa');
-    ctx.save(); ctx.translate(sx-16, sy+sh/2); ctx.rotate(-Math.PI/2);
+    ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Energy (keV)', sx+sw/2, sy+sh+28, '#aaa');
+    ctx.save(); ctx.translate(sx-22, sy+sh/2); ctx.rotate(-Math.PI/2);
     ctx.textAlign='center';
     haloText('Counts', 0, 0, '#aaa');
     ctx.restore();
 
     // Energy tick labels
-    ctx.font='8px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    ctx.font='14px "Noto Sans",sans-serif'; ctx.textAlign='center';
     for(var i=0;i<eTicks.length;i++){
       var tx=sx+(eTicks[i]/E_MAX)*sw;
-      haloText(eTicks[i]+'', tx, sy+sh+10, '#bbb');
+      haloText(eTicks[i]+'', tx, sy+sh+14, '#bbb');
     }
 
     // Draw spectrum as filled area + line (progressive reveal)
@@ -274,14 +258,14 @@
     var a=ease(clamp01((t-P.B)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=40, sy=80, sw=340, sh=175;
+    var sx=30, sy=70, sw=380, sh=200;
 
-    // "BARNI Feature Extraction" label
-    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+    // "BARNI Peak Finder" label
+    ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('BARNI Peak Finder', sx+sw/2, sy+sh+32, PURPLE);
+    haloText('BARNI Peak Finder', sx+sw/2, sy+sh+48, PURPLE);
 
-    // Highlight each peak with a marker and isotope label
+    // Highlight each peak
     for(var p=0;p<features.length;p++){
       var delay=p*0.08;
       var pa=ease(clamp01((a-delay)/0.35));
@@ -292,43 +276,42 @@
       var y=sy+sh-features[p].amp*sh;
 
       // Vertical dashed line from marker to x-axis
-      ctx.setLineDash([2,3]);
-      ctx.strokeStyle='rgba(150,115,166,0.4)'; ctx.lineWidth=0.8;
-      ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x,sy+sh); ctx.stroke();
+      ctx.setLineDash([3,4]);
+      ctx.strokeStyle='rgba(150,115,166,0.4)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(x,y-6); ctx.lineTo(x,sy+sh); ctx.stroke();
       ctx.setLineDash([]);
 
       // Circle marker on the peak
-      ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2);
+      ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2);
       ctx.fillStyle=PURPLE; ctx.fill();
-      ctx.strokeStyle='#fff'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1.8; ctx.stroke();
 
       // Isotope label above the marker
-      ctx.font='600 8px "Google Sans","Noto Sans",sans-serif';
-      // Left-align labels near the y-axis so they don't clip
+      ctx.font='600 14px "Google Sans","Noto Sans",sans-serif';
       if(features[p].pos<0.05){
         ctx.textAlign='left';
-        haloText(features[p].label, x-2, y-10, PURPLE, 2.5);
+        haloText(features[p].label, x-2, y-14, PURPLE);
       } else {
         ctx.textAlign='center';
-        haloText(features[p].label, x, y-10, PURPLE, 2.5);
+        haloText(features[p].label, x, y-14, PURPLE);
       }
     }
 
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Feature vector → classifier blocks
+  // Feature vector -> classifier blocks
   function drawClassifiers(t){
     if(t<P.C) return;
     var a=ease(clamp01((t-P.C)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=40, sy=80, sw=340, sh=175;
+    var sx=30, sy=70, sw=380, sh=200;
 
     // Arrow from spectrum to feature vector
-    var arrowStartX=sx+sw+10;
+    var arrowStartX=sx+sw+12;
     var arrowStartY=sy+sh/2;
-    var fvX=410, fvY=90, fvW=24, fvH=165;
+    var fvX=440, fvY=80, fvW=32, fvH=190;
 
     drawArrow(arrowStartX, arrowStartY, fvX-2, arrowStartY, '#bbb');
 
@@ -348,11 +331,11 @@
       ctx.fillRect(fvX+2, fvY+2+i*cellH, fvW-4, cellH-2);
     }
 
-    ctx.font='9px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('Features', fvX+fvW/2, fvY-6, '#888');
+    ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('Features', fvX+fvW/2, fvY-8, '#888');
 
     // Three classifier blocks
-    var clsX=480, clsW=100, clsH=44, clsGap=12;
+    var clsX=520, clsW=130, clsH=55, clsGap=14;
     var totalH=classifiers.length*(clsH+clsGap)-clsGap;
     var clsStartY=fvY+(fvH-totalH)/2;
 
@@ -369,25 +352,25 @@
       drawArrow(fvX+fvW+4, fvY+fvH/2, clsX-4, cy+clsH/2, '#bbb');
 
       // Classifier box
-      ctx.fillStyle='#fafbfd'; ctx.strokeStyle=cl.color; ctx.lineWidth=2;
+      ctx.fillStyle='#fafbfd'; ctx.strokeStyle=cl.color; ctx.lineWidth=2.5;
       ctx.beginPath(); ctx.roundRect(clsX,cy,clsW,clsH,6); ctx.fill(); ctx.stroke();
 
       // Classifier name
-      ctx.font='700 12px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText(cl.name, clsX+clsW/2, cy+clsH/2+5, cl.color);
+      haloText(cl.name, clsX+clsW/2, cy+clsH/2+7, cl.color);
     }
 
     ctx.globalAlpha=1; ctx.restore();
   }
 
   function drawArrow(x1,y1,x2,y2,col,lw){
-    ctx.strokeStyle=col; ctx.lineWidth=lw||1.5;
+    ctx.strokeStyle=col; ctx.lineWidth=lw||2.25;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     var ang=Math.atan2(y2-y1,x2-x1);
     ctx.beginPath(); ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-7*Math.cos(ang-0.35),y2-7*Math.sin(ang-0.35));
-    ctx.lineTo(x2-7*Math.cos(ang+0.35),y2-7*Math.sin(ang+0.35));
+    ctx.lineTo(x2-10.5*Math.cos(ang-0.35),y2-10.5*Math.sin(ang-0.35));
+    ctx.lineTo(x2-10.5*Math.cos(ang+0.35),y2-10.5*Math.sin(ang+0.35));
     ctx.closePath(); ctx.fillStyle=col; ctx.fill();
   }
 
@@ -397,18 +380,18 @@
     var a=ease(clamp01((t-P.D)/0.6));
     ctx.save(); ctx.globalAlpha=a;
 
-    // Results panel
-    var rx=40, ry=325, rw=540, rh=190;
+    // Results panel - shifted up since pipeline is removed
+    var rx=30, ry=340, rw=550, rh=190;
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 14px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 22px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Macro-Averaged F1 Score — 33 Radionuclides', rx+rw/2, ry+22, '#444');
+    haloText('F1 Score Comparison', rx+rw/2, ry+28, '#444');
 
     // Bar chart
-    var barX=rx+140, barMaxW=340, barH=32, barGap=14;
-    var barStartY=ry+45;
+    var barX=rx+160, barMaxW=320, barH=40, barGap=14;
+    var barStartY=ry+50;
     var maxF1=1.0;
 
     for(var c=0;c<classifiers.length;c++){
@@ -422,9 +405,9 @@
       var barW=(cl.f1/maxF1)*barMaxW*ba;
 
       // Label
-      ctx.font='600 12px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='right';
-      haloText(cl.name, barX-10, by+barH/2+4, cl.color);
+      haloText(cl.name, barX-12, by+barH/2+7, cl.color);
 
       // Bar background
       ctx.fillStyle='#eef0f4';
@@ -438,50 +421,35 @@
       if(ba>0.5){
         var la=ease(clamp01((ba-0.5)/0.5));
         ctx.globalAlpha=a*la;
-        ctx.font='700 13px "Google Sans","Noto Sans",sans-serif';
+        ctx.font='700 22px "Google Sans","Noto Sans",sans-serif';
         ctx.textAlign='left';
-        haloText(cl.f1.toFixed(3), barX+barW+8, by+barH/2+5, cl.color);
-      }
-    }
-
-    // Training time comparison below bars
-    var ttY=barStartY+3*(barH+barGap)+8;
-    var tta=ease(clamp01((t-P.D-1.5)/0.6));
-    if(tta>0){
-      ctx.globalAlpha=a*tta;
-      ctx.font='11px "Noto Sans",sans-serif'; ctx.textAlign='center';
-      haloText('Training Time:', rx+80, ttY, '#888');
-      for(var c=0;c<classifiers.length;c++){
-        var cl=classifiers[c];
-        var tx=rx+180+c*140;
-        ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
-        haloText(cl.name+': '+cl.time, tx, ttY, cl.color);
+        haloText(cl.f1.toFixed(3), barX+barW+10, by+barH/2+8, cl.color);
       }
     }
 
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Winner highlight + mini confusion matrix hint
+  // Winner highlight
   function drawWinner(t){
     if(t<P.E) return;
     var a=ease(clamp01((t-P.E)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    // Winner panel on the right
-    var wx=600, wy=325, ww=160, wh=190;
-    ctx.fillStyle='#f4f9f4'; ctx.strokeStyle=GREEN; ctx.lineWidth=2;
+    // Winner panel
+    var wx=590, wy=340, ww=180, wh=210;
+    ctx.fillStyle='#f4f9f4'; ctx.strokeStyle=GREEN; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,8); ctx.fill(); ctx.stroke();
 
-    // Crown / star
-    ctx.font='24px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('\u2605', wx+ww/2, wy+30);
+    // Star
+    ctx.font='36px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('\u2605', wx+ww/2, wy+40);
 
-    ctx.font='700 14px "Google Sans","Noto Sans",sans-serif';
-    haloText('XGBoost', wx+ww/2, wy+50, GREEN);
+    ctx.font='700 22px "Google Sans","Noto Sans",sans-serif';
+    haloText('XGBoost', wx+ww/2, wy+65, GREEN);
 
-    ctx.font='11px "Noto Sans",sans-serif';
-    haloText('Best Overall', wx+ww/2, wy+66, '#888');
+    ctx.font='18px "Noto Sans",sans-serif';
+    haloText('Best Overall', wx+ww/2, wy+88, '#888');
 
     // Key stats
     var stats=[
@@ -490,11 +458,11 @@
       {label:'One-vs-All', val:'33 classes'}
     ];
     for(var i=0;i<stats.length;i++){
-      var sy=wy+90+i*28;
-      ctx.font='10px "Noto Sans",sans-serif'; ctx.textAlign='center';
+      var sy=wy+110+i*32;
+      ctx.font='16px "Noto Sans",sans-serif'; ctx.textAlign='center';
       haloText(stats[i].label, wx+ww/2, sy, '#999');
-      ctx.font='700 13px "Google Sans","Noto Sans",sans-serif';
-      haloText(stats[i].val, wx+ww/2, sy+15, '#444');
+      ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
+      haloText(stats[i].val, wx+ww/2, sy+18, '#444');
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -504,40 +472,9 @@
   function drawTitle(t){
     var a=ease(clamp01(t/0.6));
     ctx.save(); ctx.globalAlpha=a;
-    ctx.font='700 20px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='700 30px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Classifier Comparison for Radionuclide Identification', W/2, 35, '#1a1a1a');
-    ctx.font='13px "Noto Sans",sans-serif';
-    ctx.globalAlpha=1; ctx.restore();
-  }
-
-  // Bottom pipeline summary
-  function drawPipeline(t){
-    if(t<2) return;
-    var a=ease(clamp01((t-2)/0.6));
-    ctx.save(); ctx.globalAlpha=a*0.8;
-
-    var by=545;
-    ctx.fillStyle='#f5f6f9'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(30,by,720,55,8); ctx.fill(); ctx.stroke();
-
-    ctx.font='11px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    var labels=[
-      {text:'NaI Spectrum', x:100, col:BLUE},
-      {text:'\u2192', x:170, col:'#bbb'},
-      {text:'BARNI Features', x:250, col:PURPLE},
-      {text:'\u2192', x:335, col:'#bbb'},
-      {text:'RF / MLP / XGBoost', x:450, col:'#555'},
-      {text:'\u2192', x:555, col:'#bbb'},
-      {text:'Radionuclide ID', x:650, col:GREEN}
-    ];
-    for(var i=0;i<labels.length;i++){
-      ctx.font=labels[i].text==='\u2192'?'16px sans-serif':'600 11px "Google Sans","Noto Sans",sans-serif';
-      haloText(labels[i].text, labels[i].x, by+22, labels[i].col);
-    }
-    ctx.font='italic 10px "Noto Sans",sans-serif';
-    haloText('One-vs-All classification  |  33 radionuclides  |  NaI scintillator detector', W/2, by+42, '#aaa');
-
+    haloText('Classifier Comparison for Radionuclide Identification', W/2, 40, '#1a1a1a');
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -558,7 +495,6 @@
     drawClassifiers(t);
     drawResults(t);
     drawWinner(t);
-    drawPipeline(t);
 
     ctx.globalAlpha=1;
     requestAnimationFrame(frame);

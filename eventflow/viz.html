@@ -45,7 +45,7 @@
   var TL = { x: 80, y: 110, w: 620, split: 0.55 }; // split = fraction that is history
   var TL_END = TL.x + TL.w;
   var TL_SPLIT = TL.x + TL.w * TL.split;
-  var DOT_R = 5;
+  var DOT_R = 8; // was 5
 
   // History events (times as fraction of history region 0-1)
   var histTimes = [0.05, 0.15, 0.22, 0.38, 0.45, 0.52, 0.68, 0.75, 0.88, 0.95];
@@ -83,7 +83,7 @@
 
   // Text with halo for readability
   function haloText(text, x, y, fill, haloPx){
-    var hp = haloPx || 3;
+    var hp = haloPx || 5; // was 3
     ctx.save();
     ctx.strokeStyle = BG;
     ctx.lineWidth = hp * 2;
@@ -135,30 +135,30 @@
     // Main line
     var endX = TL.x + TL.w * ease(ap);
     ctx.strokeStyle = '#888';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3; // was 2
     ctx.beginPath();
     ctx.moveTo(TL.x, TL.y);
     ctx.lineTo(endX, TL.y);
     ctx.stroke();
 
-    // Arrow at end
+    // Arrow at end (scaled up 50%)
     if(ap > 0.95){
       ctx.beginPath();
-      ctx.moveTo(TL_END + 8, TL.y);
-      ctx.lineTo(TL_END - 2, TL.y - 5);
-      ctx.lineTo(TL_END - 2, TL.y + 5);
+      ctx.moveTo(TL_END + 12, TL.y);
+      ctx.lineTo(TL_END - 3, TL.y - 7.5);
+      ctx.lineTo(TL_END - 3, TL.y + 7.5);
       ctx.closePath();
       ctx.fillStyle = '#888';
       ctx.fill();
     }
 
-    // "time" label
+    // "time" label — 22px (was 14px)
     if(ap > 0.8){
       var la = clamp01((ap - 0.8) / 0.2);
       ctx.globalAlpha = la;
-      ctx.font = 'italic 14px "Noto Sans", sans-serif';
+      ctx.font = 'italic 22px "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('time', TL.x + TL.w / 2, TL.y + 30, '#888');
+      haloText('time', TL.x + TL.w / 2, TL.y + 36, '#888');
       ctx.globalAlpha = 1;
     }
 
@@ -180,27 +180,27 @@
 
       // Vertical tick
       ctx.strokeStyle = BLUE;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3; // was 2
       ctx.globalAlpha = ea;
       ctx.beginPath();
       ctx.moveTo(x, TL.y);
       ctx.lineTo(x, TL.y + my * ea);
       ctx.stroke();
 
-      // Dot at top
+      // Dot at top — radius 8 (was 5, via DOT_R)
       ctx.beginPath();
       ctx.arc(x, TL.y + my * ea, DOT_R * ea, 0, Math.PI * 2);
       ctx.fillStyle = BLUE;
       ctx.fill();
     }
 
-    // "History" label
+    // "History" label — 26px (was 16px)
     var labAp = clamp01((t - P.A_end + 0.3) / 0.4);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
-      ctx.font = '600 16px "Google Sans", "Noto Sans", sans-serif';
+      ctx.font = '600 26px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('History', TL.x + TL.w * TL.split / 2, TL.y + 50, BLUE);
+      haloText('History', TL.x + TL.w * TL.split / 2, TL.y + 55, BLUE);
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -223,29 +223,29 @@
     ctx.globalAlpha = ea;
     ctx.setLineDash([5, 4]);
     ctx.strokeStyle = '#999';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2; // was 1.5
     ctx.beginPath();
     ctx.moveTo(TL_SPLIT, TL.y - 50);
     ctx.lineTo(TL_SPLIT, TL.y + 35);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // "Prediction Horizon" label
+    // "Prediction Horizon" label — 26px (was 16px)
     var labAp = clamp01((t - P.B_start - 0.4) / 0.5);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
-      ctx.font = '600 16px "Google Sans", "Noto Sans", sans-serif';
+      ctx.font = '600 26px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('Prediction Horizon', (TL_SPLIT + TL_END) / 2, TL.y + 50, GREEN);
+      haloText('Prediction Horizon', (TL_SPLIT + TL_END) / 2, TL.y + 55, GREEN);
     }
 
-    // "?" marks for unknown events
+    // "?" marks for unknown events — 36px (was 24px)
     var qAp = clamp01((t - P.B_start - 0.6) / 0.5);
     if(qAp > 0 && t < P.F_start){
       ctx.globalAlpha = 0.3 * ease(qAp);
-      ctx.font = '24px "Noto Sans", sans-serif';
+      ctx.font = '36px "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('? ? ?', (TL_SPLIT + TL_END) / 2, TL.y - 15, '#999');
+      haloText('? ? ?', (TL_SPLIT + TL_END) / 2, TL.y - 18, '#999');
     }
 
     ctx.globalAlpha = 1;
@@ -260,37 +260,38 @@
     var ea = ease(ap);
     ctx.globalAlpha = ea;
 
-    // Arrow from history to count
-    var ax1 = TL_SPLIT - 20, ay1 = TL.y + 60;
-    var ax2 = 240, ay2 = TL.y + 100;
+    // Arrow from history to count — line width 2.5px (was 1.5px)
+    var ax1 = TL_SPLIT - 20, ay1 = TL.y + 65;
+    var ax2 = 230, ay2 = TL.y + 110;
     ctx.strokeStyle = '#aaa';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2.5; // was 1.5
     ctx.beginPath();
     ctx.moveTo(ax1, ay1);
     ctx.quadraticCurveTo(ax1 - 30, ay2, ax2, ay2);
     ctx.stroke();
-    // arrowhead
+    // arrowhead (scaled up 50%)
     ctx.beginPath();
     ctx.moveTo(ax2, ay2);
-    ctx.lineTo(ax2 - 6, ay2 - 4);
-    ctx.lineTo(ax2 - 6, ay2 + 4);
+    ctx.lineTo(ax2 - 9, ay2 - 6);
+    ctx.lineTo(ax2 - 9, ay2 + 6);
     ctx.closePath();
     ctx.fillStyle = '#aaa';
     ctx.fill();
 
-    // Count box
-    var bx = 240, by = TL.y + 85;
+    // Count box — enlarged proportionally for 24px text
+    var bx = 230, by = TL.y + 93;
     ctx.fillStyle = '#f0f4f8';
     ctx.strokeStyle = '#ccc';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2; // was 1
     ctx.beginPath();
-    ctx.roundRect(bx, by, 140, 32, 6);
+    ctx.roundRect(bx, by, 180, 40, 7);
     ctx.fill();
     ctx.stroke();
 
-    ctx.font = '600 15px "Google Sans", "Noto Sans", sans-serif';
+    // Box text — 24px (was 15px)
+    ctx.font = '600 24px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('Predict n = ' + N_PRED, bx + 70, by + 22, '#444');
+    haloText('Predict n = ' + N_PRED, bx + 90, by + 29, '#444');
 
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -304,10 +305,10 @@
     var ea = ease(ap);
     ctx.globalAlpha = ea;
 
-    // Box background
+    // Box background — border 2px (was 1px)
     ctx.fillStyle = '#fafbfd';
     ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2; // was 1
     ctx.beginPath();
     ctx.roundRect(FP.x - 10, FP.y - 10, FP.w + 30, FP.h + 30, 8);
     ctx.fill();
@@ -315,16 +316,16 @@
 
     // Y axis (event time)
     ctx.strokeStyle = '#888';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2; // was 1.5
     ctx.beginPath();
     ctx.moveTo(FP.x, FP.y + FP.h);
     ctx.lineTo(FP.x, FP.y);
     ctx.stroke();
-    // arrow
+    // arrow (scaled up 50%)
     ctx.beginPath();
-    ctx.moveTo(FP.x, FP.y - 6);
-    ctx.lineTo(FP.x - 4, FP.y + 2);
-    ctx.lineTo(FP.x + 4, FP.y + 2);
+    ctx.moveTo(FP.x, FP.y - 9);
+    ctx.lineTo(FP.x - 6, FP.y + 3);
+    ctx.lineTo(FP.x + 6, FP.y + 3);
     ctx.closePath();
     ctx.fillStyle = '#888';
     ctx.fill();
@@ -334,37 +335,37 @@
     ctx.moveTo(FP.x, FP.y + FP.h);
     ctx.lineTo(FP.x + FP.w, FP.y + FP.h);
     ctx.stroke();
-    // arrow
+    // arrow (scaled up 50%)
     ctx.beginPath();
-    ctx.moveTo(FP.x + FP.w + 6, FP.y + FP.h);
-    ctx.lineTo(FP.x + FP.w - 2, FP.y + FP.h - 4);
-    ctx.lineTo(FP.x + FP.w - 2, FP.y + FP.h + 4);
+    ctx.moveTo(FP.x + FP.w + 9, FP.y + FP.h);
+    ctx.lineTo(FP.x + FP.w - 3, FP.y + FP.h - 6);
+    ctx.lineTo(FP.x + FP.w - 3, FP.y + FP.h + 6);
     ctx.closePath();
     ctx.fill();
 
-    // Labels
-    ctx.font = 'italic 13px "Noto Sans", sans-serif';
+    // Labels — 22px (was 13px)
+    ctx.font = 'italic 22px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 25, '#888');
+    haloText('flow time s', FP.x + FP.w / 2, FP.y + FP.h + 32, '#888');
 
     ctx.save();
-    ctx.translate(FP.x - 40, FP.y + FP.h / 2);
+    ctx.translate(FP.x - 50, FP.y + FP.h / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.font = 'italic 13px "Noto Sans", sans-serif';
+    ctx.font = 'italic 22px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
     haloText('event time', 0, 0, '#888');
     ctx.restore();
 
-    // s=0 and s=1 marks
-    ctx.font = '12px "Noto Sans", sans-serif';
+    // s=0 and s=1 marks — 20px (was 12px)
+    ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('0', FP.x, FP.y + FP.h + 15, '#aaa');
-    haloText('1', FP.x + FP.w, FP.y + FP.h + 15, '#aaa');
+    haloText('s=0', FP.x, FP.y + FP.h + 22, '#aaa');
+    haloText('s=1', FP.x + FP.w, FP.y + FP.h + 22, '#aaa');
 
-    // Title
-    ctx.font = '600 15px "Google Sans", "Noto Sans", sans-serif';
+    // Title — 24px bold (was 15px)
+    ctx.font = '700 24px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('Flow Matching', FP.x + FP.w / 2, FP.y - 20, '#555');
+    haloText('Flow Matching', FP.x + FP.w / 2, FP.y - 22, '#555');
 
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -383,18 +384,18 @@
 
       ctx.globalAlpha = ea;
       ctx.beginPath();
-      ctx.arc(FP.x + 2, initY[i], 6 * ea, 0, Math.PI * 2);
+      ctx.arc(FP.x + 2, initY[i], 10 * ea, 0, Math.PI * 2); // radius 10 (was 6)
       ctx.fillStyle = ORANGE;
       ctx.fill();
     }
 
-    // Label — positioned above the dots, inside the plot area
+    // Label — 20px (was 12px), positioned to avoid overlap with dots
     var labAp = clamp01((t - P.D_start - 0.3) / 0.4);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
-      ctx.font = '600 12px "Google Sans", "Noto Sans", sans-serif';
+      ctx.font = '600 20px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'left';
-      haloText('random init (s=0)', FP.x + 10, FP.y + 15, ORANGE);
+      haloText('random init (s=0)', FP.x + 16, FP.y + 20, ORANGE);
     }
 
     ctx.globalAlpha = 1;
@@ -411,7 +412,7 @@
       var x0 = FP.x + 2;
       var x1 = FP.x + FP.w - 2;
 
-      // Draw trail
+      // Draw trail — line width 3 (was 2)
       ctx.beginPath();
       ctx.moveTo(x0, initY[i]);
       var steps = Math.floor(s * 40);
@@ -426,18 +427,18 @@
       var curY = flowPath(i, s);
       ctx.lineTo(curX, curY);
       ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3; // was 2
       ctx.globalAlpha = 0.5;
       ctx.stroke();
 
-      // Current dot
+      // Current dot — radius 10 (was 6)
       ctx.globalAlpha = 1;
       ctx.beginPath();
-      ctx.arc(curX, curY, 6, 0, Math.PI * 2);
+      ctx.arc(curX, curY, 10, 0, Math.PI * 2);
       ctx.fillStyle = blendHex(ORANGE, GREEN, s);
       ctx.fill();
 
-      // Velocity arrow (small)
+      // Velocity arrow (small) — arrowhead scaled up 50%
       if(s > 0.02 && s < 0.98){
         var ds = 0.02;
         var nextY = flowPath(i, Math.min(s + ds, 1));
@@ -448,18 +449,18 @@
           var nx = dx / mag * 18;
           var ny = dy / mag * 18;
           ctx.strokeStyle = blendHex(ORANGE, GREEN, s);
-          ctx.lineWidth = 1.5;
+          ctx.lineWidth = 2; // was 1.5
           ctx.globalAlpha = 0.6;
           ctx.beginPath();
           ctx.moveTo(curX, curY);
           ctx.lineTo(curX + nx, curY + ny);
           ctx.stroke();
-          // small arrowhead
+          // small arrowhead (scaled up 50%: 5 -> 7.5)
           var ang = Math.atan2(ny, nx);
           ctx.beginPath();
           ctx.moveTo(curX + nx, curY + ny);
-          ctx.lineTo(curX + nx - 5*Math.cos(ang - 0.5), curY + ny - 5*Math.sin(ang - 0.5));
-          ctx.lineTo(curX + nx - 5*Math.cos(ang + 0.5), curY + ny - 5*Math.sin(ang + 0.5));
+          ctx.lineTo(curX + nx - 7.5*Math.cos(ang - 0.5), curY + ny - 7.5*Math.sin(ang - 0.5));
+          ctx.lineTo(curX + nx - 7.5*Math.cos(ang + 0.5), curY + ny - 7.5*Math.sin(ang + 0.5));
           ctx.closePath();
           ctx.fillStyle = blendHex(ORANGE, GREEN, s);
           ctx.globalAlpha = 0.6;
@@ -488,29 +489,29 @@
       var x = predX[i];
       var my = predMarkY[i];
 
-      // Vertical tick
+      // Vertical tick — line width 3 (was 2)
       ctx.strokeStyle = GREEN;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.globalAlpha = ea;
       ctx.beginPath();
       ctx.moveTo(x, TL.y);
       ctx.lineTo(x, TL.y + my * ea);
       ctx.stroke();
 
-      // Dot
+      // Dot — radius 8 (was 5, via DOT_R)
       ctx.beginPath();
       ctx.arc(x, TL.y + my * ea, DOT_R * ea, 0, Math.PI * 2);
       ctx.fillStyle = GREEN;
       ctx.fill();
     }
 
-    // "Predicted" label
+    // "Predicted Events" label — 22px (was 14px)
     var labAp = clamp01((ap - 0.5) / 0.4);
     if(labAp > 0){
       ctx.globalAlpha = ease(labAp);
-      ctx.font = '600 14px "Google Sans", "Noto Sans", sans-serif';
+      ctx.font = '600 22px "Google Sans", "Noto Sans", sans-serif';
       ctx.textAlign = 'center';
-      haloText('Predicted Events', (TL_SPLIT + TL_END) / 2, TL.y - 55, GREEN);
+      haloText('Predicted Events', (TL_SPLIT + TL_END) / 2, TL.y - 58, GREEN);
     }
 
     ctx.globalAlpha = 1;
@@ -523,31 +524,32 @@
     ctx.save();
     ctx.globalAlpha = ease(ap);
 
-    var lx = 580, ly = 185;
-    ctx.font = '12px "Noto Sans", sans-serif';
+    var lx = 570, ly = 185;
+    // Legend text — 20px (was 12px), dots radius 7 (was 4)
+    ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'left';
 
     // History
     ctx.beginPath();
-    ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+    ctx.arc(lx, ly, 7, 0, Math.PI * 2);
     ctx.fillStyle = BLUE;
     ctx.fill();
-    ctx.font = '12px "Noto Sans", sans-serif';
+    ctx.font = '20px "Noto Sans", sans-serif';
     ctx.textAlign = 'left';
-    haloText('History', lx + 10, ly + 4, '#666');
+    haloText('History', lx + 14, ly + 7, '#666');
 
     // Predicted (only after F)
     if(t > P.F_start + 0.5){
       var pa = clamp01((t - P.F_start - 0.5) / 0.4);
       ctx.globalAlpha = ease(pa);
-      ly += 18;
+      ly += 28; // increased spacing for larger text
       ctx.beginPath();
-      ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+      ctx.arc(lx, ly, 7, 0, Math.PI * 2);
       ctx.fillStyle = GREEN;
       ctx.fill();
-      ctx.font = '12px "Noto Sans", sans-serif';
+      ctx.font = '20px "Noto Sans", sans-serif';
       ctx.textAlign = 'left';
-      haloText('Predicted', lx + 10, ly + 4, '#666');
+      haloText('Predicted', lx + 14, ly + 7, '#666');
     }
 
     ctx.globalAlpha = 1;
@@ -558,12 +560,10 @@
     var ap = clamp01(t / 0.6);
     ctx.save();
     ctx.globalAlpha = ease(ap);
-    ctx.font = '700 20px "Google Sans", "Noto Sans", sans-serif';
+    // Title — 30px bold (was 20px). Subtitle removed entirely.
+    ctx.font = '700 30px "Google Sans", "Noto Sans", sans-serif';
     ctx.textAlign = 'center';
-    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 40, '#1a1a1a');
-
-    ctx.font = '13px "Noto Sans", sans-serif';
-    haloText('Continuous-time event prediction', W / 2, 60, '#999');
+    haloText('EventFlow: Forecasting with Flow Matching', W / 2, 44, '#1a1a1a');
     ctx.globalAlpha = 1;
     ctx.restore();
   }

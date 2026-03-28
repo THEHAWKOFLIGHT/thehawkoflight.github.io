@@ -38,7 +38,7 @@
   function lerp(a,b,t){ return a+(b-a)*t; }
 
   function haloText(text,x,y,fill,hp){
-    hp=hp||3; ctx.save();
+    hp=hp||5; ctx.save();
     ctx.strokeStyle=BG; ctx.lineWidth=hp*2;
     ctx.lineJoin='round'; ctx.miterLimit=2;
     ctx.strokeText(text,x,y);
@@ -124,23 +124,36 @@
   function getT(){ return ((performance.now()/1000)-startTime)%P.TOTAL; }
 
   function drawArrow(x1,y1,x2,y2,col,lw){
-    ctx.strokeStyle=col; ctx.lineWidth=lw||1.5;
+    ctx.strokeStyle=col; ctx.lineWidth=lw||2.25;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     var ang=Math.atan2(y2-y1,x2-x1);
     ctx.beginPath(); ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-7*Math.cos(ang-0.35),y2-7*Math.sin(ang-0.35));
-    ctx.lineTo(x2-7*Math.cos(ang+0.35),y2-7*Math.sin(ang+0.35));
+    ctx.lineTo(x2-10.5*Math.cos(ang-0.35),y2-10.5*Math.sin(ang-0.35));
+    ctx.lineTo(x2-10.5*Math.cos(ang+0.35),y2-10.5*Math.sin(ang+0.35));
     ctx.closePath(); ctx.fillStyle=col; ctx.fill();
   }
+
+  // Layout constants for the three-column arrangement
+  // Left column: spectrum panel
+  var SPEC_SX=30, SPEC_SY=90, SPEC_SW=240, SPEC_SH=140;
+  var SPEC_CX=SPEC_SX+SPEC_SW/2, SPEC_CY=SPEC_SY+SPEC_SH/2;
+
+  // Middle column: feature branch boxes
+  var BRANCH_X=310, BRANCH_BW=190, BRANCH_BH=85;
+  var BRANCH_Y=[75, 220, 370]; // y positions for three branches
+
+  // MLP boxes (between middle and right columns)
+  var MLP_X=540, MLP_W=90, MLP_H=55;
+
+  // Right column: results panels
+  var RESULTS_RX=660, RESULTS_RW=110;
 
   function drawTitle(t){
     var a=ease(clamp01(t/0.6));
     ctx.save(); ctx.globalAlpha=a;
-    ctx.font='700 19px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='700 28px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Feature Extraction for Radionuclide Identification', W/2, 32, '#1a1a1a');
-    ctx.font='12px "Noto Sans",sans-serif';
-    haloText('Comparing Raw Spectra, PCA, and BARNI peak features with MLP classifier', W/2, 50, '#999');
+    haloText('Feature Extraction for Radionuclide Identification', W/2, 42, '#1a1a1a');
     ctx.globalAlpha=1; ctx.restore();
   }
 
@@ -150,17 +163,17 @@
     if(a<=0) return;
     ctx.save(); ctx.globalAlpha=a;
 
-    var sx=30, sy=75, sw=200, sh=110;
+    var sx=SPEC_SX, sy=SPEC_SY, sw=SPEC_SW, sh=SPEC_SH;
 
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(sx-8,sy-18,sw+16,sh+38,8); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(sx-10,sy-28,sw+20,sh+50,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('NaI(Tl) Spectrum', sx+sw/2, sy-5, '#555');
+    haloText('NaI(Tl) Spectrum', sx+sw/2, sy-6, '#555');
 
     // Axes
-    ctx.strokeStyle='#ddd'; ctx.lineWidth=0.8;
+    ctx.strokeStyle='#ddd'; ctx.lineWidth=1.2;
     ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy+sh); ctx.lineTo(sx+sw,sy+sh); ctx.stroke();
 
     // Spectrum line
@@ -172,7 +185,7 @@
       var y=sy+sh-v*sh;
       if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
-    ctx.strokeStyle=BLUE; ctx.lineWidth=1;
+    ctx.strokeStyle=BLUE; ctx.lineWidth=1.5;
     ctx.stroke();
 
     // Fill
@@ -184,10 +197,10 @@
     ctx.lineTo(sx+(drawN-1)/SPEC_N*sw,sy+sh); ctx.closePath();
     ctx.fillStyle='rgba(108,142,191,0.08)'; ctx.fill();
 
-    ctx.font='7px "Noto Sans",sans-serif'; ctx.textAlign='center';
-    haloText('0', sx, sy+sh+8, '#ccc');
-    haloText('3000 keV', sx+sw, sy+sh+8, '#ccc');
-    haloText('33 radionuclides  \u00B7  variable SNR  \u00B7  SNM masking', sx+sw/2, sy+sh+20, '#bbb');
+    // Axis labels: just "0" and "3000 keV"
+    ctx.font='14px "Noto Sans",sans-serif'; ctx.textAlign='center';
+    haloText('0', sx, sy+sh+16, '#999');
+    haloText('3000 keV', sx+sw, sy+sh+16, '#999');
 
     ctx.globalAlpha=1; ctx.restore();
   }
@@ -198,9 +211,9 @@
     var a=ease(clamp01((t-P.B)/0.8));
     ctx.save();
 
-    var specCX=130, specCY=130; // center-right of spectrum
-    var branchX=280; // x where branches start their boxes
-    var yPositions=[80, 195, 310]; // y centers for three branches
+    // Arrow origin: right side of spectrum panel
+    var arrowOriginX=SPEC_SX+SPEC_SW+10;
+    var arrowOriginY=SPEC_CY;
 
     for(var m=0;m<3;m++){
       var delay=m*0.15;
@@ -208,60 +221,52 @@
       if(ma<=0) continue;
       ctx.globalAlpha=ma;
 
-      var by=yPositions[m];
+      var by=BRANCH_Y[m];
       var method=methods[m];
+      var bw=BRANCH_BW, bh=BRANCH_BH;
 
       // Arrow from spectrum to branch
-      drawArrow(240, specCY, branchX-4, by+25, '#ccc');
+      drawArrow(arrowOriginX, arrowOriginY, BRANCH_X-4, by+bh/2, '#ccc');
 
       // Branch box
-      var bw=165, bh=70;
-      ctx.fillStyle='#fafbfd'; ctx.strokeStyle=method.color; ctx.lineWidth=1.8;
-      ctx.beginPath(); ctx.roundRect(branchX,by,bw,bh,6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#fafbfd'; ctx.strokeStyle=method.color; ctx.lineWidth=2.7;
+      ctx.beginPath(); ctx.roundRect(BRANCH_X,by,bw,bh,6); ctx.fill(); ctx.stroke();
 
       // Method name
-      ctx.font='700 11px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='700 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText(method.name, branchX+bw/2, by+16, method.color);
+      haloText(method.name, BRANCH_X+bw/2, by+28, method.color);
 
-      ctx.font='9px "Noto Sans",sans-serif';
-      haloText(method.dim, branchX+bw/2, by+28, '#aaa');
+      // Dimension label
+      ctx.font='16px "Noto Sans",sans-serif';
+      haloText(method.dim, BRANCH_X+bw/2, by+52, '#aaa');
 
-      // Visualization inside box
+      // Mini visualizations inside box (bars only, no sub-labels)
       if(m===0){
-        // Raw: mini spectrum bars (many thin bars = high dim)
-        var barW=1, nBars=60;
-        var bsX=branchX+15, bsY=by+38, bsH=24;
+        var barW=1.5, nBars=60;
+        var bsX=BRANCH_X+20, bsY=by+58, bsH=20;
         for(var i=0;i<nBars;i++){
           var idx=Math.floor(i/nBars*SPEC_N);
           var v=spectrum[idx]*ma;
           ctx.fillStyle='rgba(108,142,191,'+(0.3+v*0.5)+')';
-          ctx.fillRect(bsX+i*(barW+1), bsY+bsH-v*bsH, barW, v*bsH);
+          ctx.fillRect(bsX+i*(barW+1.2), bsY+bsH-v*bsH, barW, v*bsH);
         }
-        ctx.font='7px "Noto Sans",sans-serif';
-        haloText('2000 channels', branchX+bw/2, by+bh-3, '#ccc');
       } else if(m===1){
-        // PCA: eigenvalue bars (fewer, decaying)
-        var bsX=branchX+18, bsY=by+38, bsH=24;
+        var bsX=BRANCH_X+25, bsY=by+58, bsH=20;
         for(var i=0;i<N_PCA;i++){
           var v=pcaBars[i]*ma;
           var barWp=5;
           ctx.fillStyle='rgba(150,115,166,'+(0.4+v*0.4)+')';
-          ctx.fillRect(bsX+i*(barWp+2), bsY+bsH-v*bsH, barWp, v*bsH);
+          ctx.fillRect(bsX+i*(barWp+2.5), bsY+bsH-v*bsH, barWp, v*bsH);
         }
-        ctx.font='7px "Noto Sans",sans-serif';
-        haloText('\u221A binning \u2192 top eigenvectors', branchX+bw/2, by+bh-3, '#ccc');
       } else {
-        // BARNI: ROI feature bars
-        var bsX=branchX+15, bsY=by+38, bsH=24;
+        var bsX=BRANCH_X+20, bsY=by+58, bsH=20;
         for(var i=0;i<roiFeatures.length;i++){
           var v=roiFeatures[i]*ma;
-          var barWr=7;
+          var barWr=9;
           ctx.fillStyle='rgba(130,179,102,'+(0.4+v*0.4)+')';
-          ctx.fillRect(bsX+i*(barWr+3), bsY+bsH-v*bsH, barWr, v*bsH);
+          ctx.fillRect(bsX+i*(barWr+3.5), bsY+bsH-v*bsH, barWr, v*bsH);
         }
-        ctx.font='7px "Noto Sans",sans-serif';
-        haloText('Peak ROI counts', branchX+bw/2, by+bh-3, '#ccc');
       }
     }
 
@@ -274,8 +279,7 @@
     var a=ease(clamp01((t-P.C)/0.6));
     ctx.save(); ctx.globalAlpha=a;
 
-    var mlpX=490, mlpW=70, mlpH=45;
-    var yPositions=[80, 195, 310];
+    var mlpX=MLP_X, mlpW=MLP_W, mlpH=MLP_H;
 
     for(var m=0;m<3;m++){
       var delay=m*0.1;
@@ -283,20 +287,20 @@
       if(ca<=0) continue;
       ctx.globalAlpha=a*ca;
 
-      var by=yPositions[m]+12;
+      var by=BRANCH_Y[m]+BRANCH_BH/2-mlpH/2;
 
       // Arrow from feature box to MLP
-      drawArrow(445, by+13, mlpX-4, by+13, '#ccc');
+      drawArrow(BRANCH_X+BRANCH_BW+4, BRANCH_Y[m]+BRANCH_BH/2, mlpX-4, by+mlpH/2, '#ccc');
 
       // MLP box
-      ctx.fillStyle='#fff8f0'; ctx.strokeStyle=ORANGE; ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.roundRect(mlpX,by-10,mlpW,mlpH,5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#fff8f0'; ctx.strokeStyle=ORANGE; ctx.lineWidth=2.25;
+      ctx.beginPath(); ctx.roundRect(mlpX,by,mlpW,mlpH,5); ctx.fill(); ctx.stroke();
 
-      ctx.font='700 10px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='700 18px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='center';
-      haloText('MLP', mlpX+mlpW/2, by+8, ORANGE);
-      ctx.font='7px "Noto Sans",sans-serif';
-      haloText('Classifier', mlpX+mlpW/2, by+20, '#ccc');
+      haloText('MLP', mlpX+mlpW/2, by+24, ORANGE);
+      ctx.font='14px "Noto Sans",sans-serif';
+      haloText('Classifier', mlpX+mlpW/2, by+42, '#ccc');
     }
 
     ctx.globalAlpha=1; ctx.restore();
@@ -308,18 +312,18 @@
     var a=ease(clamp01((t-P.D)/0.6));
     ctx.save(); ctx.globalAlpha=a;
 
-    var rx=585, ry=68, rw=180, rh=165;
+    var rx=20, ry=310, rw=260, rh=160;
 
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 20px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('F1-Score (High SNR)', rx+rw/2, ry+16, '#444');
+    haloText('F1-Score (High SNR)', rx+rw/2, ry+24, '#444');
 
     // Horizontal bars
-    var barX=rx+85, barMaxW=80, barH=22, barGap=8;
-    var barStartY=ry+32;
+    var barX=rx+100, barMaxW=100, barH=28, barGap=10;
+    var barStartY=ry+40;
 
     for(var m=0;m<3;m++){
       var delay=m*0.15;
@@ -331,13 +335,13 @@
       var method=methods[m];
       var barW=(method.f1_high/1.0)*barMaxW*ba;
 
-      // Arrow from MLP
-      var mlpRightX=560, mlpY=[105,220,335];
-      drawArrow(mlpRightX, mlpY[m], rx-4, by+barH/2, '#ccc');
+      // Arrow from MLP to F1 panel
+      var mlpCY=BRANCH_Y[m]+BRANCH_BH/2;
+      drawArrow(MLP_X+MLP_W+4, mlpCY, rx+rw+4, ry+rh/2, '#ccc');
 
-      ctx.font='600 9px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='600 16px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='right';
-      haloText(method.name, barX-6, by+barH/2+3, method.color);
+      haloText(method.name, barX-8, by+barH/2+5, method.color);
 
       ctx.fillStyle='#eef0f4';
       ctx.beginPath(); ctx.roundRect(barX,by,barMaxW,barH,3); ctx.fill();
@@ -347,47 +351,33 @@
 
       if(ba>0.5){
         ctx.globalAlpha=a*ease(clamp01((ba-0.5)/0.5));
-        ctx.font='700 10px "Google Sans","Noto Sans",sans-serif';
+        ctx.font='700 18px "Google Sans","Noto Sans",sans-serif';
         ctx.textAlign='left';
-        haloText(method.f1_high.toFixed(2), barX+barW+4, by+barH/2+4, method.color);
+        haloText(method.f1_high.toFixed(2), barX+barW+6, by+barH/2+6, method.color);
       }
-    }
-
-    // Low SNR comparison
-    var lowY=barStartY+3*(barH+barGap)+4;
-    var la=ease(clamp01((t-P.D-1.2)/0.6));
-    if(la>0){
-      ctx.globalAlpha=a*la;
-      ctx.font='600 10px "Google Sans","Noto Sans",sans-serif';
-      ctx.textAlign='center';
-      haloText('Low SNR (1\u20135):', rx+45, lowY, '#888');
-
-      ctx.font='9px "Noto Sans",sans-serif';
-      haloText('PCA best: 0.40', rx+rw/2+15, lowY+14, PURPLE);
-      haloText('Raw fails at high noise', rx+rw/2+15, lowY+26, RED);
     }
 
     ctx.globalAlpha=1; ctx.restore();
   }
 
-  // Phase E: key insights + training time
+  // Phase E: training time
   function drawInsights(t){
     if(t<P.E) return;
     var a=ease(clamp01((t-P.E)/0.8));
     ctx.save(); ctx.globalAlpha=a;
 
-    var ix=585, iy=250, iw=180, ih=150;
+    var ix=20, iy=490, iw=260, ih=120;
 
     ctx.fillStyle='#fafbfd'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(ix,iy,iw,ih,8); ctx.fill(); ctx.stroke();
 
-    ctx.font='600 11px "Google Sans","Noto Sans",sans-serif';
+    ctx.font='600 18px "Google Sans","Noto Sans",sans-serif';
     ctx.textAlign='center';
-    haloText('Training Time', ix+iw/2, iy+16, '#444');
+    haloText('Training Time', ix+iw/2, iy+24, '#444');
 
     // Time bars (proportional)
     var times=[{name:'Raw',t:120,col:BLUE},{name:'PCA',t:45,col:PURPLE},{name:'BARNI',t:30,col:GREEN}];
-    var tbX=ix+55, tbMaxW=95, tbH=16, tbGap=6, tbY=iy+30;
+    var tbX=ix+80, tbMaxW=130, tbH=22, tbGap=8, tbY=iy+38;
 
     for(var i=0;i<times.length;i++){
       var ta=ease(clamp01((a-i*0.1-0.1)/0.5));
@@ -397,59 +387,15 @@
       var ty=tbY+i*(tbH+tbGap);
       var tw=(times[i].t/120)*tbMaxW*ta;
 
-      ctx.font='600 8px "Google Sans","Noto Sans",sans-serif';
+      ctx.font='600 14px "Google Sans","Noto Sans",sans-serif';
       ctx.textAlign='right';
-      haloText(times[i].name, tbX-5, ty+tbH/2+3, times[i].col);
+      haloText(times[i].name, tbX-8, ty+tbH/2+5, times[i].col);
 
       ctx.fillStyle='#eef0f4';
       ctx.beginPath(); ctx.roundRect(tbX,ty,tbMaxW,tbH,3); ctx.fill();
       ctx.fillStyle=times[i].col;
       ctx.beginPath(); ctx.roundRect(tbX,ty,tw,tbH,3); ctx.fill();
     }
-
-    // Key insight text
-    var ka=ease(clamp01((a-0.4)/0.6));
-    if(ka>0){
-      ctx.globalAlpha=a*ka;
-      ctx.font='italic 8.5px "Noto Sans",sans-serif';
-      ctx.textAlign='center';
-      haloText('Pre-processing cuts', ix+iw/2, iy+100, '#888');
-      haloText('training time >50%', ix+iw/2, iy+112, '#888');
-
-      ctx.font='600 8.5px "Google Sans","Noto Sans",sans-serif';
-      haloText('BARNI best for masked', ix+iw/2, iy+130, GREEN);
-      haloText('SNM identification', ix+iw/2, iy+142, GREEN);
-    }
-
-    ctx.globalAlpha=1; ctx.restore();
-  }
-
-  // Bottom pipeline
-  function drawPipeline(t){
-    if(t<2) return;
-    var a=ease(clamp01((t-2)/0.6));
-    ctx.save(); ctx.globalAlpha=a*0.8;
-
-    var by=430;
-    ctx.fillStyle='#f5f6f9'; ctx.strokeStyle='#e0e4ec'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(30,by,720,55,8); ctx.fill(); ctx.stroke();
-
-    ctx.textAlign='center';
-    var labels=[
-      {text:'NaI Spectrum', x:90, col:BLUE},
-      {text:'\u2192', x:155, col:'#bbb'},
-      {text:'Raw / PCA / BARNI', x:265, col:'#555'},
-      {text:'\u2192', x:380, col:'#bbb'},
-      {text:'MLP Classifier', x:460, col:ORANGE},
-      {text:'\u2192', x:540, col:'#bbb'},
-      {text:'Radionuclide ID', x:640, col:GREEN}
-    ];
-    for(var i=0;i<labels.length;i++){
-      ctx.font=labels[i].text==='\u2192'?'16px sans-serif':'600 11px "Google Sans","Noto Sans",sans-serif';
-      haloText(labels[i].text, labels[i].x, by+22, labels[i].col);
-    }
-    ctx.font='italic 10px "Noto Sans",sans-serif';
-    haloText('Feature design impacts noise robustness, SNM detection, and training efficiency', W/2, by+42, '#aaa');
 
     ctx.globalAlpha=1; ctx.restore();
   }
@@ -470,7 +416,6 @@
     drawClassifier(t);
     drawResults(t);
     drawInsights(t);
-    drawPipeline(t);
 
     ctx.globalAlpha=1;
     requestAnimationFrame(frame);
