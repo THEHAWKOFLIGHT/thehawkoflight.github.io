@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="description"
-        content="Bridging the Simulation-to-Experiment Gap with ADAPO: Adversarial Distribution Alignment from Partial Observations">
-  <meta name="keywords" content="adversarial, distribution, alignment, partial, observations, simulation, experiment, gap, bridging, adapo">
+        content="Bridging the Simulation-to-Experiment Gap with Adversarial Distribution Alignment (ADA)">
+  <meta name="keywords" content="adversarial, distribution, alignment, simulation, experiment, gap, bridging, ada">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-  <title>Bridging the Simulation-to-Experiment Gap with ADAPO: Adversarial Distribution Alignment from Partial Observations</title>
+  <title>Bridging the Simulation-to-Experiment Gap with Adversarial Distribution Alignment (ADA)</title>
 
  
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Castoro&display=swap"
@@ -68,7 +68,7 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title publication-title">Bridging the Simulation-to-Experiment Gap with ADAPO: Adversarial Distribution Alignment from Partial Observations</h1>
+          <h1 class="title publication-title">Bridging the Simulation-to-Experiment Gap with Adversarial Distribution Alignment (ADA)</h1>
           <div class="is-size-5 publication-authors" style="margin-bottom: 0.15rem;">
             <span class="author-block">
               <a href="https://kaityrusnelson.com">Kai Nelson</a>*<sup>1</sup>,</span>
@@ -117,7 +117,7 @@
   <section class="section" style="padding-top: 0.5rem; padding-bottom: 0.8rem; border-top: none;">
     <div class="container is-max-desktop">
       <figure class="paper-figure narrow">
-        <img id="teaser" src="./images/teaser.png" alt="Overview of the ADAPO framework">
+        <img id="teaser" src="./images/teaser.png" alt="Overview of the ADA framework">
       </figure>
     </div>
   </section>
@@ -134,7 +134,7 @@
         <p>We want to bridge the gap between the two to build better computational models of the physical world.</p>
 
         <h2 class="title section-heading" style="margin-top: 1.4rem; margin-bottom: 0.6rem;">Approach</h2>
-        <p>We propose ADAPO, an adversarial algorithm that aligns generative models of underlying states to datasets of experimental observables.</p>
+        <p>We propose ADA, an adversarial algorithm that aligns generative models of underlying states to datasets of experimental observables.</p>
         <p>We present the first algorithm that aligns generative models to the full distribution of multiple noisy experimental observations, without requiring explicit knowledge of joint structure.</p>
       </div>
 
@@ -147,7 +147,7 @@
   <script>
   (function () {
     /* ============================================================
-       ADAPO – Distributional Alignment Visualization
+       ADA – Distributional Alignment Visualization
        Axes: Rg (nm) vs Ree (nm)  ·  3×3 conformational ensemble
        ============================================================ */
     var canvas = document.getElementById('alignCanvas');
@@ -443,7 +443,7 @@
         outlinedText('W\u2081(x\u2081) = '+w1x.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+12);
         outlinedText('W\u2081(x\u2082) = '+w1y.toFixed(3)+(isAligned?' \u2713':' \u2716'),lx,pl.y+30);
         ctx.font='bold 14px "Google Sans","Noto Sans",sans-serif';ctx.beginPath();ctx.arc(lx,pl.y+55,5,0,6.28);ctx.fillStyle=BLUE;ctx.fill();
-        ctx.fillStyle=TH.textBody;outlinedText(isAligned?'ADAPO':'Physical Prior',lx+12,pl.y+55);
+        ctx.fillStyle=TH.textBody;outlinedText(isAligned?'ADA':'Physical Prior',lx+12,pl.y+55);
         ctx.setLineDash([5,3]);ctx.strokeStyle=RED;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(lx-5,pl.y+73);ctx.lineTo(lx+7,pl.y+73);ctx.stroke();ctx.setLineDash([]);
         ctx.fillStyle=TH.textBody;outlinedText('Experimentally observed data',lx+12,pl.y+73);}
     }
@@ -947,7 +947,7 @@
         var bmY=curY.map(function(v,i){return v*(1-ap)+ty[i]*ap;});
         var gbmX=uniX.map(function(v,i){return v*(1-ap)+tx[i]*ap;});
         var gbmY=uniY.map(function(v,i){return v*(1-ap)+ty[i]*ap;});
-        drawBigMarginals(bmX,bmY,tx,ty,1,eCfn,'ADAPO',gbmX,gbmY,'Uniform Prior');
+        drawBigMarginals(bmX,bmY,tx,ty,1,eCfn,'ADA',gbmX,gbmY,'Uniform Prior');
         if(done) drawBottom('\u2713 Both models match marginals \u2014 prior shapes the joint',true,PURPLE);
       }
 
@@ -959,7 +959,7 @@
         drawScatterFull(PL,algn,tx,ty,true,false,1,uniAlgn,1,purpleA);
         drawDotsIn(tgt,N,redA,0.28,2.0,PL);
         drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
-        drawBigMarginals(tx,ty,tx,ty,1,purpleA,'ADAPO',tx,ty,'Without Physical Prior');
+        drawBigMarginals(tx,ty,tx,ty,1,purpleA,'ADA',tx,ty,'Without Physical Prior');
 
         /* Data-space → canvas coords */
         var cA=_d2c(PL,TMA.mx,TMA.my), cB=_d2c(PL,TMB.mx,TMB.my), cC=_d2c(PL,TMC.mx,TMC.my);
@@ -1032,13 +1032,13 @@
         ctx.fillStyle=TH.textLbl(1);outlinedText('True',llx+14,lly);
         var nx1=llx+14+ctx.measureText('True').width+18;
         ctx.beginPath();ctx.arc(nx1+4,lly-5,5,0,6.28);ctx.fillStyle=PURPLE;ctx.fill();
-        ctx.fillStyle=TH.textLbl(1);outlinedText('ADAPO',nx1+14,lly);
-        var nx2=nx1+14+ctx.measureText('ADAPO').width+18;
+        ctx.fillStyle=TH.textLbl(1);outlinedText('ADA',nx1+14,lly);
+        var nx2=nx1+14+ctx.measureText('ADA').width+18;
         ctx.beginPath();ctx.arc(nx2+4,lly-5,5,0,6.28);ctx.fillStyle=greyA(0.7);ctx.fill();
         ctx.fillStyle=TH.textLbl(1);outlinedText('Without Physical Prior',nx2+14,lly);
 
         drawConfGridMorph(1.0,t,1,GRID_CX,GRID_CY,GRID_R);
-        drawBigMarginals(tx,ty,tx,ty,1,purpleA,'ADAPO',tx,ty,'Without Physical Prior');
+        drawBigMarginals(tx,ty,tx,ty,1,purpleA,'ADA',tx,ty,'Without Physical Prior');
         drawBottom('\u2713 Same marginals \u2014 prior determines 2D recovery quality',true,PURPLE);
       }
     }
@@ -1058,7 +1058,7 @@
   <section class="section">
     <div class="container is-max-desktop">
       <div class="highlight-box">
-        <h2 class="title section-heading" style="margin-bottom: 0.6rem;">What Can ADAPO Do?</h2>
+        <h2 class="title section-heading" style="margin-bottom: 0.6rem;">What Can ADA Do?</h2>
         <div class="content has-text-justified">
           <p>
             Experimental measurements such as cryo-EM images are inherently noisy and capture only a partial view of the full molecular state. Below, cryo-EM micrographs of Trp-Cage (PDB ID: 2JOF) illustrate the challenge: each image is a noisy 2-D projection of the underlying 3-D atomic coordinates.
@@ -1070,12 +1070,12 @@
           </figure>
 
           <p>
-            ADAPO takes these noisy, high-dimensional images and uses them to improve a generative model of the underlying atom positions. The base model, trained on classical MD simulations, oversamples the unfolded state. After alignment, ADAPO concentrates the distribution around the folded state reported experimentally in the PDB &mdash; having only seen the noisy cryo-EM images.
+            ADA takes these noisy, high-dimensional images and uses them to improve a generative model of the underlying atom positions. The base model, trained on classical MD simulations, oversamples the unfolded state. After alignment, ADA concentrates the distribution around the folded state reported experimentally in the PDB &mdash; having only seen the noisy cryo-EM images.
           </p>
 
           <figure class="paper-figure narrow">
-            <img id="trp_rg_cryo" src="./images/trp_rg_cryo.png" alt="Radius-of-gyration improvement after ADAPO alignment">
-            <figcaption>Distribution of R<sub>g</sub> before and after alignment. ADAPO shifts the model toward the experimentally observed folded state.</figcaption>
+            <img id="trp_rg_cryo" src="./images/trp_rg_cryo.png" alt="Radius-of-gyration improvement after ADA alignment">
+            <figcaption>Distribution of R<sub>g</sub> before and after alignment. ADA shifts the model toward the experimentally observed folded state.</figcaption>
           </figure>
 
           <p>
@@ -1084,7 +1084,7 @@
 
           <figure class="paper-figure narrow">
             <img id="protein_viz" src="./images/protein_viz.png" alt="Aligned protein conformations">
-            <figcaption>Representative generated conformations before (left) and after (right) ADAPO alignment.</figcaption>
+            <figcaption>Representative generated conformations before (left) and after (right) ADA alignment.</figcaption>
           </figure>
         </div>
       </div>
@@ -1098,7 +1098,7 @@
 
         <figure class="paper-figure narrow">
           <img id="constraint" src="./images/constraint.gif" alt="Constrained optimization visualized">
-          <figcaption>The ADAPO optimization landscape: minimizing divergence from the simulation prior subject to matching experimental observable distributions.</figcaption>
+          <figcaption>The ADA optimization landscape: minimizing divergence from the simulation prior subject to matching experimental observable distributions.</figcaption>
         </figure>
 
         <div class="content has-text-justified">
@@ -1162,7 +1162,7 @@
           </p>
 
           <div class="takeaway">
-            ADAPO combines prior physical knowledge while circumventing the approximation errors of simulations by aligning directly to experimental data.
+            ADA combines prior physical knowledge while circumventing the approximation errors of simulations by aligning directly to experimental data.
           </div>
         </div>
       </div>
@@ -1175,7 +1175,7 @@
         <h2 class="title section-heading" style="margin-bottom: 0.6rem;">Outlook</h2>
         <div class="content has-text-justified">
           <p>
-            Obtaining large amounts of fully observed experimental data is expensive and simulations can incur modeling errors. ADAPO provides a general framework that leverages prior knowledge through simulation data while aligning to experimental data to learn accurate models of the physical world. For example, ADAPO could be scaled up to learn a generative model of the underlying atom positions of a protein from a large dataset of noisy cryo-EM images. We hope that frameworks like ADAPO that use experimental data also motivate the development of larger experimental datasets.
+            Obtaining large amounts of fully observed experimental data is expensive and simulations can incur modeling errors. ADA provides a general framework that leverages prior knowledge through simulation data while aligning to experimental data to learn accurate models of the physical world. For example, ADA could be scaled up to learn a generative model of the underlying atom positions of a protein from a large dataset of noisy cryo-EM images. We hope that frameworks like ADA that use experimental data also motivate the development of larger experimental datasets.
           </p>
           <p>
             For more details, see <a href="" target="_blank">our paper</a>.
