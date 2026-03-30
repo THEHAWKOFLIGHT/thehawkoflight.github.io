@@ -692,7 +692,7 @@
         <p style="margin-top: 0.3rem;">&#x1F418; &#x1F6AB; &#x26D3;&#xFE0F; &#x26D3;&#xFE0F; &#x1F6AB; &#x1FAB5;</p>
       </div>
       <div class="header-bio">
-        Hello! I am Kai, and I am broadly interested in applications generative modeling and reinforcement learning for molecular systems and proteins! I am proud to be advised by Aditi S. Krishnapriyan and Sergey Levine. In other studies, I am currently learning functional analysis, probability and martingales!
+        Hello! I am Kai, and I am broadly interested in applications of generative modeling and reinforcement learning for molecular systems and proteins! I am proud to be advised by Aditi S. Krishnapriyan and Sergey Levine. In other studies, I am currently learning functional analysis, probability and martingales!
       </div>
     </div>
   </div>
@@ -809,8 +809,7 @@
   if (!overlay) return;
 
   // Skip if already seen this session or reduced motion
-  if (sessionStorage.getItem('gacha-seen') ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     overlay.remove();
     return;
   }
@@ -868,7 +867,6 @@
     overlay.classList.add('gacha-dissolving');
     setTimeout(function(){ if (overlay.parentNode) overlay.remove(); }, 800);
     document.body.classList.remove('gacha-locked');
-    sessionStorage.setItem('gacha-seen', '1');
   }
 
   // Skip: only via skip button or Escape key
@@ -975,7 +973,6 @@
     if (pubSection) pubSection.classList.remove('pub-section-animating');
     if (overlay.parentNode) overlay.remove();
     document.body.classList.remove('gacha-locked');
-    sessionStorage.setItem('gacha-seen', '1');
   }, 5500);
 })();
 
