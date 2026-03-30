@@ -394,6 +394,237 @@
       transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
 
+    /* ---- Gacha pack opening overlay ---- */
+    #gacha-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 50% 40%, rgba(42,32,48,0.82) 0%, rgba(10,8,16,0.88) 100%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      overflow: hidden;
+    }
+    #gacha-overlay.visible { opacity: 1; }
+    #gacha-overlay.gacha-dissolving {
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+    body.gacha-locked { overflow: hidden; }
+
+    /* Card pack */
+    .gacha-pack {
+      width: 200px;
+      height: 280px;
+      background: linear-gradient(135deg, #3a1828 0%, #5a2040 40%, #4a1838 70%, #2a1020 100%);
+      border: 2px solid rgba(200,120,160,0.3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .gacha-pack::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(30deg, transparent 0, transparent 2.5px, rgba(200,140,180,0.08) 2.5px, rgba(200,140,180,0.12) 3px, rgba(200,140,180,0.08) 3.5px, transparent 3.5px, transparent 6px),
+        repeating-linear-gradient(-30deg, transparent 0, transparent 2.5px, rgba(200,140,180,0.08) 2.5px, rgba(200,140,180,0.12) 3px, rgba(200,140,180,0.08) 3.5px, transparent 3.5px, transparent 6px);
+      border-radius: 12px;
+    }
+    .gacha-pack::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1px solid rgba(200,140,180,0.2);
+      border-radius: 8px;
+    }
+    .gacha-pack.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Pack rattle — 3 wobbles with increasing intensity */
+    @keyframes pack-rattle {
+      0%   { transform: rotate(0deg) translateX(0); }
+      8%   { transform: rotate(-2deg) translateX(-3px); }
+      16%  { transform: rotate(2deg) translateX(3px); }
+      24%  { transform: rotate(-1deg) translateX(-1px); }
+      33%  { transform: rotate(0deg) translateX(0); }
+      41%  { transform: rotate(-4deg) translateX(-6px); }
+      49%  { transform: rotate(4deg) translateX(6px); }
+      57%  { transform: rotate(-2deg) translateX(-3px); }
+      66%  { transform: rotate(0deg) translateX(0); }
+      74%  { transform: rotate(-7deg) translateX(-10px); }
+      82%  { transform: rotate(7deg) translateX(10px); }
+      90%  { transform: rotate(-3deg) translateX(-4px); }
+      100% { transform: rotate(0deg) translateX(0); }
+    }
+    .gacha-pack.rattling {
+      animation: pack-rattle 1.2s ease-in-out forwards;
+    }
+
+    /* Pack burst */
+    @keyframes pack-burst {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.3); opacity: 0.6; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    .gacha-pack.bursting {
+      animation: pack-burst 0.35s ease-out forwards;
+    }
+
+    /* Burst particles */
+    .burst-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,180,200,0.9);
+      pointer-events: none;
+      animation: burst-particle 0.7s ease-out forwards;
+      --burst-tx: 0px;
+      --burst-ty: 0px;
+    }
+    @keyframes burst-particle {
+      0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--burst-tx), var(--burst-ty)) scale(0.2); }
+    }
+
+    /* Card FLIP animation states */
+    .highlight-box.gacha-hidden {
+      opacity: 0 !important;
+      pointer-events: none;
+    }
+    .highlight-box.gacha-at-pack {
+      transform: var(--gacha-from) !important;
+      opacity: 0 !important;
+      pointer-events: none;
+      transition: none !important;
+      will-change: transform, opacity;
+    }
+    /* Fly from pack center to grid position */
+    .highlight-box.gacha-shooting {
+      transform: none !important;
+      opacity: 1 !important;
+      pointer-events: none;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease !important;
+    }
+
+    /* Elevated section during animation so cards render above overlay */
+    .pub-section-animating {
+      position: relative;
+      z-index: 10001;
+    }
+
+    /* Award sheen sweep */
+    .award-sheen-sweep {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 6px;
+    }
+    /* Colored rose-to-violet gradient beam */
+    .award-sheen-sweep::before {
+      content: '';
+      position: absolute;
+      top: -15%;
+      left: 0;
+      width: 90%;
+      height: 130%;
+      background: linear-gradient(
+        105deg,
+        transparent 0%,
+        rgba(180,60,80,0.08) 8%,
+        rgba(210,80,110,0.25) 18%,
+        rgba(240,120,150,0.45) 28%,
+        rgba(255,160,180,0.6) 38%,
+        rgba(255,200,210,0.75) 46%,
+        rgba(255,220,230,0.8) 50%,
+        rgba(255,200,210,0.75) 54%,
+        rgba(240,140,180,0.6) 62%,
+        rgba(200,100,160,0.45) 72%,
+        rgba(160,70,140,0.25) 82%,
+        rgba(130,50,120,0.08) 92%,
+        transparent 100%
+      );
+      transform: translateX(-130%);
+      animation: sheen-sweep 0.7s ease-in-out forwards;
+    }
+    /* Rose crosshatch foil pattern on the sweep */
+    .award-sheen-sweep::after {
+      content: '';
+      position: absolute;
+      top: -15%;
+      left: 0;
+      width: 90%;
+      height: 130%;
+      background:
+        repeating-linear-gradient(
+          30deg,
+          transparent 0, transparent 2.5px,
+          rgba(255,180,200,0.3) 2.5px,
+          rgba(255,210,220,0.45) 3px,
+          rgba(255,180,200,0.3) 3.5px,
+          transparent 3.5px, transparent 6px
+        ),
+        repeating-linear-gradient(
+          -30deg,
+          transparent 0, transparent 2.5px,
+          rgba(255,180,200,0.3) 2.5px,
+          rgba(255,210,220,0.45) 3px,
+          rgba(255,180,200,0.3) 3.5px,
+          transparent 3.5px, transparent 6px
+        );
+      mix-blend-mode: screen;
+      transform: translateX(-130%);
+      animation: sheen-sweep 0.7s ease-in-out forwards;
+    }
+    @keyframes sheen-sweep {
+      0%   { transform: translateX(-130%); }
+      100% { transform: translateX(200%); }
+    }
+
+    /* Skip button */
+    .gacha-skip {
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 0.4rem 1.2rem;
+      font-family: 'Google Sans', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      z-index: 10;
+      transition: background 0.2s;
+    }
+    .gacha-skip:hover { background: rgba(255,255,255,0.2); }
+    .gacha-skip:focus { outline: 2px solid rgba(255,180,200,0.6); outline-offset: 2px; }
+
+    /* Mobile */
+    @media screen and (max-width: 768px) {
+      .gacha-pack { width: 160px; height: 224px; font-size: 2.5rem; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      #gacha-overlay { display: none !important; }
+    }
+
     /* ---- Theme toggle ---- */
     .theme-toggle {
       position: fixed;
@@ -435,6 +666,11 @@
   </style>
 </head>
 <body>
+
+<div id="gacha-overlay">
+  <div class="gacha-pack" id="gacha-pack">&#x1F339;</div>
+  <button class="gacha-skip" id="gacha-skip">Skip</button>
+</div>
 
 <!-- <button class="theme-toggle" aria-label="Toggle dark mode" onclick="toggleTheme()">
   <span class="icon-moon">&#x1F319;</span>
@@ -567,6 +803,182 @@
 <footer class="site-footer">Kai Nelson &middot; UC Berkeley</footer>
 
 <script>
+/* ---- Gacha pack opening animation ---- */
+(function(){
+  var overlay = document.getElementById('gacha-overlay');
+  if (!overlay) return;
+
+  // Skip if already seen this session or reduced motion
+  if (sessionStorage.getItem('gacha-seen') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    overlay.remove();
+    return;
+  }
+
+  document.body.classList.add('gacha-locked');
+  var pack = document.getElementById('gacha-pack');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.pub-grid .highlight-box'));
+  var pubSection = document.querySelector('.pub-grid').closest('.section');
+  var timers = [];
+  var done = false;
+
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  // Measure each card's natural position before hiding
+  var cardRects = [];
+  for (var i = 0; i < cards.length; i++) {
+    cardRects.push(cards[i].getBoundingClientRect());
+    cards[i].classList.add('gacha-hidden');
+  }
+
+  // Burst particles from a point
+  function createBurst(cx, cy) {
+    for (var j = 0; j < 30; j++) {
+      var dot = document.createElement('span');
+      dot.className = 'burst-dot';
+      var angle = (Math.PI * 2 / 30) * j + (Math.random() - 0.5) * 0.5;
+      var dist = 80 + Math.random() * 140;
+      dot.style.left = cx + 'px';
+      dot.style.top = cy + 'px';
+      dot.style.setProperty('--burst-tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+      dot.style.setProperty('--burst-ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
+      var colors = ['rgba(255,180,200,0.9)','rgba(200,140,220,0.9)','rgba(255,220,180,0.9)','rgba(180,200,255,0.9)'];
+      dot.style.background = colors[j % colors.length];
+      var size = (3 + Math.random() * 6).toFixed(0) + 'px';
+      dot.style.width = size;
+      dot.style.height = size;
+      overlay.appendChild(dot);
+    }
+  }
+
+  // Finish: clean up everything and end animation
+  function finish() {
+    if (done) return;
+    done = true;
+    for (var k = 0; k < timers.length; k++) clearTimeout(timers[k]);
+    timers = [];
+    document.removeEventListener('keydown', onKey);
+    // Restore all cards to normal state
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].classList.remove('gacha-hidden', 'gacha-at-pack', 'gacha-shooting');
+      cards[i].style.removeProperty('--gacha-from');
+    }
+    if (pubSection) pubSection.classList.remove('pub-section-animating');
+    // Fade overlay out
+    overlay.classList.add('gacha-dissolving');
+    setTimeout(function(){ if (overlay.parentNode) overlay.remove(); }, 800);
+    document.body.classList.remove('gacha-locked');
+    sessionStorage.setItem('gacha-seen', '1');
+  }
+
+  // Skip: only via skip button or Escape key
+  overlay.addEventListener('click', function(e) {
+    if (e.target.id === 'gacha-skip' || e.target.closest('.gacha-skip')) finish();
+  });
+  function onKey(e) { if (e.key === 'Escape') finish(); }
+  document.addEventListener('keydown', onKey);
+  var skipBtn = document.getElementById('gacha-skip');
+  if (skipBtn) skipBtn.focus();
+
+  // === Animation timeline ===
+
+  // 0ms: overlay fades in
+  later(function(){ overlay.classList.add('visible'); }, 0);
+
+  // 200ms: pack appears
+  later(function(){ if (!done) pack.classList.add('visible'); }, 200);
+
+  // 600ms: pack rattles (1.2s duration, 3 escalating wobbles)
+  later(function(){ if (!done) pack.classList.add('rattling'); }, 600);
+
+  // 1800ms: pack bursts, cards fly to grid
+  later(function(){
+    if (done) return;
+    var pr = pack.getBoundingClientRect();
+    var pcx = pr.left + pr.width / 2;
+    var pcy = pr.top + pr.height / 2;
+
+    // Burst particles from pack center
+    createBurst(pcx, pcy);
+
+    // Burst the pack (scale up + fade)
+    pack.classList.remove('rattling');
+    pack.classList.add('bursting');
+
+    // Elevate pub section so cards render above overlay
+    if (pubSection) pubSection.classList.add('pub-section-animating');
+
+    // FLIP: place each card at pack center using inverse transform
+    for (var i = 0; i < cards.length; i++) {
+      var r = cardRects[i];
+      var dx = pcx - (r.left + r.width / 2);
+      var dy = pcy - (r.top + r.height / 2);
+      cards[i].style.setProperty('--gacha-from', 'translate(' + dx.toFixed(0) + 'px,' + dy.toFixed(0) + 'px) scale(0.3)');
+      cards[i].classList.remove('gacha-hidden');
+      cards[i].classList.add('gacha-at-pack');
+    }
+
+    // Force reflow
+    void document.body.offsetHeight;
+
+    // Start fading overlay as cards fly
+    overlay.classList.add('gacha-dissolving');
+
+    // Stagger each card's shoot-out (120ms apart)
+    for (var j = 0; j < cards.length; j++) {
+      (function(idx) {
+        later(function(){
+          if (done) return;
+          cards[idx].classList.remove('gacha-at-pack');
+          cards[idx].classList.add('gacha-shooting');
+        }, 60 + idx * 120);
+      })(j);
+    }
+  }, 1800);
+
+  // 3000ms: all cards landed — clean up animation classes
+  later(function(){
+    if (done) return;
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].classList.remove('gacha-shooting');
+      cards[i].style.removeProperty('--gacha-from');
+    }
+  }, 3000);
+
+  // 3800ms: award sheens after a deliberate pause (700ms apart)
+  later(function(){
+    if (done) return;
+    var awards = [];
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].querySelector('.award-tag')) awards.push(cards[i]);
+    }
+    for (var j = 0; j < awards.length; j++) {
+      (function(card, delay) {
+        later(function(){
+          if (done) return;
+          var sheen = document.createElement('div');
+          sheen.className = 'award-sheen-sweep';
+          card.appendChild(sheen);
+          setTimeout(function(){ if (sheen.parentNode) sheen.remove(); }, 900);
+        }, delay);
+      })(awards[j], j * 700);
+    }
+  }, 3800);
+
+  // 5500ms: final cleanup
+  later(function(){
+    if (done) return;
+    done = true;
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].style.removeProperty('--gacha-from');
+    }
+    if (pubSection) pubSection.classList.remove('pub-section-animating');
+    if (overlay.parentNode) overlay.remove();
+    document.body.classList.remove('gacha-locked');
+    sessionStorage.setItem('gacha-seen', '1');
+  }, 5500);
+})();
+
 function scaleViz(){
   var frames=document.querySelectorAll('.viz-frame');
   for(var i=0;i<frames.length;i++){
