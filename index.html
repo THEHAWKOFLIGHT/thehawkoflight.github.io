@@ -958,85 +958,15 @@
     [data-theme="light"] .theme-toggle .icon-sun,
     :root:not([data-theme="dark"]) .theme-toggle .icon-sun { display: none; }
 
-    /* ---- View toggle tabs ---- */
-    .view-toggle {
-      display: flex;
-      gap: 0;
-      margin-bottom: 1.2rem;
-    }
-    .view-toggle button {
-      font-family: 'Google Sans', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      padding: 0.45rem 1.3rem;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-    }
-    .view-toggle button:first-child {
-      border-radius: 6px 0 0 6px;
-      border-right: none;
-    }
-    .view-toggle button:last-child {
-      border-radius: 0 6px 6px 0;
-    }
-    .view-toggle button.active {
-      background: var(--bg-card);
-      color: var(--text-heading);
-      border-color: var(--border);
-      box-shadow: 0 1px 4px var(--shadow);
-    }
-    .view-toggle button:not(.active):hover {
-      color: var(--text-secondary);
-      background: var(--bg-card);
-    }
-
-    .view-panel { display: none; }
-    .view-panel.active { display: grid; }
-
-    /* Notes grid: same as pub-grid */
-    .notes-grid {
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 1rem;
-    }
-    /* Notes cards: reuse highlight-box but styled for notes */
-    .notes-grid .highlight-box {
-      text-decoration: none;
-      color: inherit;
-    }
-    .notes-grid .highlight-box:hover {
-      text-decoration: none;
-      color: inherit;
-    }
-    .note-card-title {
-      font-family: 'Google Sans', sans-serif;
-      font-size: 1.02rem;
-      font-weight: 600;
-      color: var(--text-heading);
-      margin-bottom: 0.15rem;
-    }
-    .note-card-date {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 0.3rem;
-    }
-    .note-card-desc {
-      font-size: 0.9rem;
-      color: var(--text-card);
-      line-height: 1.55;
-    }
-
     @media screen and (max-width: 1100px) {
-      .pub-grid, .notes-grid { grid-template-columns: 1fr 1fr; }
+      .pub-grid { grid-template-columns: 1fr 1fr; }
     }
     @media screen and (max-width: 768px) {
       .name-title { font-size: 1.5rem; }
       .section { padding: 1.2rem 1rem; }
       .highlight-box { padding: 1rem 1.1rem; }
       .header-columns { flex-direction: column; gap: 0.8rem; }
-      .pub-grid, .notes-grid { grid-template-columns: 1fr; }
+      .pub-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1076,11 +1006,7 @@
 <!-- ===== Publications / Notes ===== -->
 <section class="section">
   <div class="container is-max-widescreen">
-    <div class="view-toggle">
-      <button class="active" data-view="research">Research</button>
-      <button data-view="notes">Notes</button>
-    </div>
-    <div class="pub-grid view-panel active" data-panel="research">
+    <div class="pub-grid">
 
       <!-- ADA -->
       <div class="highlight-box">
@@ -1176,15 +1102,6 @@
       </div>
 
     </div>
-
-    <div class="notes-grid view-panel" data-panel="notes">
-      <a class="highlight-box" href="../notes/example-measure-theory/" style="text-decoration:none;color:inherit;">
-        <p class="note-card-title">Measure Theory Fundamentals</p>
-        <p class="note-card-date">March 2026</p>
-        <p class="note-card-desc">Sigma-algebras, measurable functions, and the Lebesgue integral — building measure theory from the ground up.</p>
-      </a>
-    </div>
-
   </div>
 </section>
 
@@ -1711,22 +1628,6 @@ setTimeout(function(){ clearInterval(_themeInterval); },15000);
   }
 })();
 
-/* ---- Research / Notes view toggle ---- */
-(function(){
-  var btns = document.querySelectorAll('.view-toggle button');
-  var panels = document.querySelectorAll('.view-panel');
-  btns.forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var view = btn.getAttribute('data-view');
-      btns.forEach(function(b){ b.classList.remove('active'); });
-      btn.classList.add('active');
-      panels.forEach(function(p){
-        if(p.getAttribute('data-panel') === view) p.classList.add('active');
-        else p.classList.remove('active');
-      });
-    });
-  });
-})();
 
 </script>
 
